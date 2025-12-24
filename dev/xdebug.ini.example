@@ -1,0 +1,6 @@
+# client_host might be 172.24.0.1 or something like that in Linux. It is the IP of the container's inner gateway
+# Use this inside container to discover the real gateway IP: /sbin/ip route|awk '/default/ { print $3 }'
+# In Windows, it is always 'host.docker.internal'
+xdebug.client_host=host.docker.internal
+xdebug.client_port=9000
+xdebug.idekey=PHPSTORM

@@ -1,0 +1,33 @@
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+composer.phar
+phpunit.xml
+.DS_Store
+.php_cs.cache
+.hg
+.phpunit.result.cache
+/.idea/
+/codenow/config/*.local*
+auth.json
+.vscode
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.result.cache
+/.phpunit.cache
+###< phpunit/phpunit ###
+
+###> squizlabs/php_codesniffer ###
+/.phpcs-cache
+/phpcs.xml
+###< squizlabs/php_codesniffer ###
+
+
+###> symfony/config ###
+.env
+.env.test
+xdebug.ini
+*.local
+###< symfony/config ###

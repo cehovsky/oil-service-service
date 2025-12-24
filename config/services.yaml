@@ -1,0 +1,48 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Auth\EventListener\AuthenticationHeaderListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 255 }
+
+    App\Core\EventListener\ExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+
+    App\Auth\Validation\Validator\EmailDuplicityValidator:
+        arguments:
+            $userRepository: '@App\Auth\DBAL\Repository\UserRepository'
+
+    Google\Cloud\Translate\V2\TranslateClient:
+        arguments:
+            $config:
+                'key': '%env(GOOGLE_TRANSLATE_API_KEY)%'
+
+    azureBlobStorageAdapter:
+        class: 'AzureOss\FlysystemAzureBlobStorage\AzureBlobStorageAdapter'
+        factory: [ 'App\Blob\AzureBlobAdapterFactory', 'create' ]
+        arguments:
+            $azureConnectionString: '%env(AZURE_BLOB_CONNECTION_STRING)%'
+            $container: '%env(AZURE_BLOB_CONTAINER)%'
+            $prefix: '%env(AZURE_BLOB_PREFIX)%'
+
+    App\Files\FileManager:
+        arguments:
+            $blobFileSystem: '@azureBlobStorageAdapter'

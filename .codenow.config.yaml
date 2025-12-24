@@ -1,0 +1,11 @@
+---
+codenow:
+  connections:
+  - name: "DATABASE"
+    type: "f9995cee-d884-4633-aa58-a01d7cedc0f3"
+  runtime:
+    replicas: 1
+    resources:
+      limits: {}
+      requests: {}
+    "null": false
