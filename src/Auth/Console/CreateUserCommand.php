@@ -30,10 +30,11 @@ class CreateUserCommand extends Command
     {
         $this
             ->setName('app:auth:create-user')
-            ->setDescription('Creates an active non-admin user for authentication purposes.')
+            ->setDescription('Creates an active user for authentication purposes.')
             ->addArgument('email', InputArgument::REQUIRED, 'Email of the user to create')
             ->addArgument('password', InputArgument::REQUIRED, 'Plain password of the user to create')
-            ->addArgument('fullName', InputArgument::REQUIRED, 'Full name of the user to create');
+            ->addArgument('fullName', InputArgument::REQUIRED, 'Full name of the user to create')
+            ->addArgument('isAdmin', InputArgument::OPTIONAL, 'Whether the user should be admin (true/false)', 'false');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -43,6 +44,8 @@ class CreateUserCommand extends Command
         $email = (string) $input->getArgument('email');
         $password = (string) $input->getArgument('password');
         $fullName = (string) $input->getArgument('fullName');
+        $isAdminArg = (string) $input->getArgument('isAdmin');
+        $isAdmin = filter_var($isAdminArg, FILTER_VALIDATE_BOOLEAN);
 
         $existingUser = $this->userRepository->findByEmail($email);
 
@@ -57,7 +60,7 @@ class CreateUserCommand extends Command
             $this->hashPassword($password),
             $fullName,
             true,
-            false,
+            $isAdmin,
         );
 
         $this->entityManager->persist($user);
