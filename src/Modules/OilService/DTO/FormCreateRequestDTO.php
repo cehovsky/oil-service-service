@@ -2,123 +2,67 @@
 
 declare(strict_types=1);
 
-namespace App\OilService\DBAL\Entity;
+namespace App\Modules\OilService\DTO;
 
-use App\OilService\DBAL\Repository\FormRepository;
-use DateTimeImmutable;
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Types\UuidType;
-use Symfony\Component\Uid\Uuid;
+use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Table(name: 'oil_service_form')]
-#[ORM\Entity(repositoryClass: FormRepository::class)]
-class Form
+class FormCreateRequestDTO
 {
-    #[ORM\Id]
-    #[ORM\Column(type: UuidType::NAME)]
-    private Uuid $id;
-
+    #[OA\Property(example: 'Jan Novák')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[ORM\Column(length: 255)]
     private string $fullName;
 
+    #[OA\Property(example: '+420 123 456 789')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 50)]
-    #[ORM\Column(length: 50)]
     private string $phone;
 
+    #[OA\Property(example: 'jan.novak@example.com')]
     #[Assert\NotBlank]
     #[Assert\Email]
     #[Assert\Length(max: 180)]
-    #[ORM\Column(length: 180)]
     private string $email;
 
+    #[OA\Property(example: 'Škoda Octavia 2.0 TDI')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[ORM\Column(length: 255)]
     private string $carModel;
 
+    #[OA\Property(example: '1A2 3456')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
-    #[ORM\Column(length: 20)]
     private string $licensePlate;
 
+    #[OA\Property(example: 'Václavské náměstí 1, Praha 1, 110 00')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 500)]
-    #[ORM\Column(length: 500)]
     private string $address;
 
+    #[OA\Property(example: 'Preferuji odpolední termín', nullable: true)]
     #[Assert\Length(max: 1000)]
-    #[ORM\Column(length: 1000, nullable: true)]
     private ?string $note = null;
 
+    #[OA\Property(example: false)]
     #[Assert\NotNull]
-    #[ORM\Column]
     private bool $isCompany;
 
+    #[OA\Property(example: 'Novák s.r.o.', nullable: true)]
     #[Assert\Length(max: 255)]
-    #[ORM\Column(length: 255, nullable: true)]
     private ?string $companyName = null;
 
+    #[OA\Property(example: '12345678', nullable: true)]
     #[Assert\Length(max: 20)]
-    #[ORM\Column(length: 20, nullable: true)]
     private ?string $companyIdentificationNumber = null;
 
+    #[OA\Property(example: 'CZ12345678', nullable: true)]
     #[Assert\Length(max: 20)]
-    #[ORM\Column(length: 20, nullable: true)]
     private ?string $companyTaxId = null;
 
+    #[OA\Property(example: 'Firemní 123, Praha 5, 150 00', nullable: true)]
     #[Assert\Length(max: 500)]
-    #[ORM\Column(length: 500, nullable: true)]
     private ?string $companyAddress = null;
-
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'forms')]
-    #[ORM\JoinColumn(nullable: false)]
-    private User $user;
-
-    #[ORM\Column]
-    private DateTimeImmutable $createdAt;
-
-    public function __construct(
-        Uuid $id,
-        string $fullName,
-        string $phone,
-        string $email,
-        string $carModel,
-        string $licensePlate,
-        string $address,
-        ?string $note,
-        bool $isCompany,
-        ?string $companyName,
-        ?string $companyIdentificationNumber,
-        ?string $companyTaxId,
-        ?string $companyAddress,
-        User $user,
-        DateTimeImmutable $createdAt,
-    ) {
-        $this->id = $id;
-        $this->fullName = $fullName;
-        $this->phone = $phone;
-        $this->email = $email;
-        $this->carModel = $carModel;
-        $this->licensePlate = $licensePlate;
-        $this->address = $address;
-        $this->note = $note;
-        $this->isCompany = $isCompany;
-        $this->companyName = $companyName;
-        $this->companyIdentificationNumber = $companyIdentificationNumber;
-        $this->companyTaxId = $companyTaxId;
-        $this->companyAddress = $companyAddress;
-        $this->user = $user;
-        $this->createdAt = $createdAt;
-    }
-
-    public function getId(): Uuid
-    {
-        return $this->id;
-    }
 
     public function getFullName(): string
     {
@@ -262,22 +206,5 @@ class Form
         $this->companyAddress = $companyAddress;
 
         return $this;
-    }
-
-    public function getUser(): User
-    {
-        return $this->user;
-    }
-
-    public function setUser(User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): DateTimeImmutable
-    {
-        return $this->createdAt;
     }
 }
