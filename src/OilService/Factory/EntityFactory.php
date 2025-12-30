@@ -6,6 +6,7 @@ namespace App\OilService\Factory;
 
 use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\User;
+use App\OilService\DBAL\Repository\FormRepository;
 use DateTimeImmutable;
 use Symfony\Component\Uid\Factory\UuidFactory;
 
@@ -13,6 +14,7 @@ class EntityFactory
 {
     public function __construct(
         private readonly UuidFactory $uuidFactory,
+        private readonly FormRepository $formRepository,
     ) {
     }
 
@@ -47,6 +49,7 @@ class EntityFactory
     ): Form {
         return new Form(
             $this->uuidFactory->timeBased()->create(),
+            $this->formRepository->getNextIdent(),
             $fullName,
             $phone,
             $email,

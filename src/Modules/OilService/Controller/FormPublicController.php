@@ -45,7 +45,7 @@ class FormPublicController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'OilService Public',
         ],
         responses: [
             new OA\Response(
@@ -69,8 +69,8 @@ class FormPublicController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/form',
-        name: 'oil_service_form_create',
+        '/oil-service/forms/submit',
+        name: 'oil_service_form_submit',
         methods: ['POST']
     )]
     public function create(Request $request): JsonResponse
