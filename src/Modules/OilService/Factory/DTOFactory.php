@@ -75,6 +75,9 @@ class DTOFactory
             $form->getCompanyIdentificationNumber(),
             $form->getCompanyTaxId(),
             $form->getCompanyAddress(),
+            $form->getStatus()->value,
+            $form->getRealizationTimeSlot()->value,
+            $form->getRealizationDate()->format('Y-m-d'),
             $form->getCreatedAt()->format(\DateTimeInterface::ATOM),
             $this->createOilServiceUserDTO($form->getUser()),
         );

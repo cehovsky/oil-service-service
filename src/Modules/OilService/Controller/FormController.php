@@ -22,13 +22,17 @@ use App\Modules\OilService\DTO\FormUpdateRequestDTO;
 use App\Modules\OilService\DTO\FormUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\FormGridSortEnum;
+use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Repository\FormRepository;
 use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\Factory\EntityFactory;
 use App\OilService\FormService;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use DateTimeImmutable;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -51,6 +55,9 @@ class FormController extends AbstractController
     private const string FILTER_LICENSE_PLATE_KEY = 'licensePlate';
     private const string FILTER_IS_COMPANY_KEY = 'isCompany';
     private const string FILTER_USER_EMAIL_KEY = 'userEmail';
+    private const string FILTER_STATUS_KEY = 'status';
+    private const string FILTER_REALIZATION_TIME_SLOT_KEY = 'realizationTimeSlot';
+    private const string FILTER_REALIZATION_DATE_KEY = 'realizationDate';
 
     public function __construct(
         private readonly DTOValueResolver $dtoValueResolver,
@@ -142,6 +149,9 @@ class FormController extends AbstractController
                 $formCreateRequestDTO->getCompanyIdentificationNumber(),
                 $formCreateRequestDTO->getCompanyTaxId(),
                 $formCreateRequestDTO->getCompanyAddress(),
+                FormStatusEnum::from($formCreateRequestDTO->getStatus()),
+                FormRealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
+                $this->createRealizationDate($formCreateRequestDTO->getRealizationDate()),
             );
 
             $formInfoResponseDTO = $this->dtoFactory->createFormInfoResponseDTO($form);
@@ -242,6 +252,9 @@ class FormController extends AbstractController
             $form->setCompanyIdentificationNumber($formUpdateRequestDTO->getCompanyIdentificationNumber());
             $form->setCompanyTaxId($formUpdateRequestDTO->getCompanyTaxId());
             $form->setCompanyAddress($formUpdateRequestDTO->getCompanyAddress());
+            $form->setStatus(FormStatusEnum::from($formUpdateRequestDTO->getStatus()));
+            $form->setRealizationTimeSlot(FormRealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()));
+            $form->setRealizationDate($this->createRealizationDate($formUpdateRequestDTO->getRealizationDate()));
 
             // Handle user change by email
             $currentUserEmail = $form->getUser()->getEmail();
@@ -423,6 +436,38 @@ class FormController extends AbstractController
                     type: 'string'
                 ),
                 example: 'jan.novak@example.com'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_STATUS_KEY,
+                description: 'Filter by status',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string',
+                    enum: FormStatusEnum::VALUES
+                ),
+                example: 'new'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_REALIZATION_TIME_SLOT_KEY,
+                description: 'Filter by realization time slot',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string',
+                    enum: FormRealizationTimeSlotEnum::VALUES
+                ),
+                example: 'morning'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_REALIZATION_DATE_KEY,
+                description: 'Filter by realization date (YYYY-MM-DD)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string'
+                ),
+                example: '2025-01-15'
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::PAGE_KEY,
@@ -635,6 +680,66 @@ class FormController extends AbstractController
             } catch (Throwable) {
                 // pass
             }
+
+            try {
+                $status = $request->query->get(self::FILTER_STATUS_KEY);
+
+                assert(is_string($status));
+
+                $statusEnum = FormStatusEnum::tryFrom($status);
+
+                if ($statusEnum !== null) {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            FormRepository::ALIAS . '.status',
+                            ':status'
+                        )
+                    );
+                    $qb->setParameter('status', $statusEnum->value);
+                }
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $realizationTimeSlot = $request->query->get(self::FILTER_REALIZATION_TIME_SLOT_KEY);
+
+                assert(is_string($realizationTimeSlot));
+
+                $realizationTimeSlotEnum = FormRealizationTimeSlotEnum::tryFrom($realizationTimeSlot);
+
+                if ($realizationTimeSlotEnum !== null) {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            FormRepository::ALIAS . '.realizationTimeSlot',
+                            ':realizationTimeSlot'
+                        )
+                    );
+                    $qb->setParameter('realizationTimeSlot', $realizationTimeSlotEnum->value);
+                }
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $realizationDateRaw = $request->query->get(self::FILTER_REALIZATION_DATE_KEY);
+
+                assert(is_string($realizationDateRaw));
+
+                $realizationDate = DateTimeImmutable::createFromFormat('!Y-m-d', $realizationDateRaw);
+
+                if ($realizationDate !== false) {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            FormRepository::ALIAS . '.realizationDate',
+                            ':realizationDate'
+                        )
+                    );
+                    $qb->setParameter('realizationDate', $realizationDate, Types::DATE_IMMUTABLE);
+                }
+            } catch (Throwable) {
+                // pass
+            }
         };
 
         $maxResults = $this->apiGridPropertyHelper->createMaxResults($request);
@@ -741,5 +846,16 @@ class FormController extends AbstractController
         }
 
         return $user;
+    }
+
+    private function createRealizationDate(string $realizationDate): DateTimeImmutable
+    {
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $realizationDate);
+
+        if ($date === false) {
+            throw new InvalidDataException('Invalid realization date format.');
+        }
+
+        return $date;
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\FormStatusEnum;
 use OpenApi\Attributes as OA;
 
 class FormDTO
@@ -50,6 +52,15 @@ class FormDTO
     #[OA\Property(example: 'Firemní 123, Praha 5, 150 00', nullable: true)]
     private ?string $companyAddress;
 
+    #[OA\Property(enum: FormStatusEnum::VALUES, example: 'new')]
+    private string $status;
+
+    #[OA\Property(enum: FormRealizationTimeSlotEnum::VALUES, example: 'morning')]
+    private string $realizationTimeSlot;
+
+    #[OA\Property(example: '2025-01-15')]
+    private string $realizationDate;
+
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
 
@@ -70,6 +81,9 @@ class FormDTO
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        string $status,
+        string $realizationTimeSlot,
+        string $realizationDate,
         string $createdAt,
         OilServiceUserDTO $user,
     ) {
@@ -87,6 +101,9 @@ class FormDTO
         $this->companyIdentificationNumber = $companyIdentificationNumber;
         $this->companyTaxId = $companyTaxId;
         $this->companyAddress = $companyAddress;
+        $this->status = $status;
+        $this->realizationTimeSlot = $realizationTimeSlot;
+        $this->realizationDate = $realizationDate;
         $this->createdAt = $createdAt;
         $this->user = $user;
     }
@@ -159,6 +176,21 @@ class FormDTO
     public function getCompanyAddress(): ?string
     {
         return $this->companyAddress;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function getRealizationTimeSlot(): string
+    {
+        return $this->realizationTimeSlot;
+    }
+
+    public function getRealizationDate(): string
+    {
+        return $this->realizationDate;
     }
 
     public function getCreatedAt(): string

@@ -23,6 +23,8 @@ enum FormGridSortEnum: string implements OrderEnumInterface
 
     case IS_COMPANY = 'isCompany';
 
+    case REALIZATION_DATE = 'realizationDate';
+
     case CREATED_AT = 'createdAt';
 
     public function toSql(): string

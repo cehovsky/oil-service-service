@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\OilService\Factory;
 
+use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\User;
 use App\OilService\DBAL\Repository\FormRepository;
@@ -45,6 +47,9 @@ class EntityFactory
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        FormStatusEnum $status,
+        FormRealizationTimeSlotEnum $realizationTimeSlot,
+        DateTimeImmutable $realizationDate,
         User $user,
     ): Form {
         return new Form(
@@ -62,6 +67,9 @@ class EntityFactory
             $companyIdentificationNumber,
             $companyTaxId,
             $companyAddress,
+            $status,
+            $realizationTimeSlot,
+            $realizationDate,
             $user,
             new DateTimeImmutable(),
         );

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Entity;
 
+use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Repository\FormRepository;
 use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
@@ -79,6 +82,18 @@ class Form
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $companyAddress = null;
 
+    #[Assert\NotNull]
+    #[ORM\Column(type: Types::STRING, enumType: FormStatusEnum::class)]
+    private FormStatusEnum $status;
+
+    #[Assert\NotNull]
+    #[ORM\Column(type: Types::STRING, enumType: FormRealizationTimeSlotEnum::class)]
+    private FormRealizationTimeSlotEnum $realizationTimeSlot;
+
+    #[Assert\NotNull]
+    #[ORM\Column(type: Types::DATE_IMMUTABLE)]
+    private DateTimeImmutable $realizationDate;
+
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'forms')]
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
@@ -101,6 +116,9 @@ class Form
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        FormStatusEnum $status,
+        FormRealizationTimeSlotEnum $realizationTimeSlot,
+        DateTimeImmutable $realizationDate,
         User $user,
         DateTimeImmutable $createdAt,
     ) {
@@ -118,6 +136,9 @@ class Form
         $this->companyIdentificationNumber = $companyIdentificationNumber;
         $this->companyTaxId = $companyTaxId;
         $this->companyAddress = $companyAddress;
+        $this->status = $status;
+        $this->realizationTimeSlot = $realizationTimeSlot;
+        $this->realizationDate = $realizationDate;
         $this->user = $user;
         $this->createdAt = $createdAt;
     }
@@ -282,6 +303,42 @@ class Form
     public function setCompanyAddress(?string $companyAddress): self
     {
         $this->companyAddress = $companyAddress;
+
+        return $this;
+    }
+
+    public function getStatus(): FormStatusEnum
+    {
+        return $this->status;
+    }
+
+    public function setStatus(FormStatusEnum $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getRealizationTimeSlot(): FormRealizationTimeSlotEnum
+    {
+        return $this->realizationTimeSlot;
+    }
+
+    public function setRealizationTimeSlot(FormRealizationTimeSlotEnum $realizationTimeSlot): self
+    {
+        $this->realizationTimeSlot = $realizationTimeSlot;
+
+        return $this;
+    }
+
+    public function getRealizationDate(): DateTimeImmutable
+    {
+        return $this->realizationDate;
+    }
+
+    public function setRealizationDate(DateTimeImmutable $realizationDate): self
+    {
+        $this->realizationDate = $realizationDate;
 
         return $this;
     }

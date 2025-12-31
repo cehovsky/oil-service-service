@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\FormStatusEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -43,6 +45,21 @@ class FormUpdateRequestDTO
     #[OA\Property(example: 'Preferuji odpolední termín', nullable: true)]
     #[Assert\Length(max: 1000)]
     private ?string $note = null;
+
+    #[OA\Property(enum: FormStatusEnum::VALUES, example: 'new')]
+    #[Assert\NotBlank]
+    #[Assert\Choice(callback: [FormStatusEnum::class, 'values'])]
+    private string $status;
+
+    #[OA\Property(enum: FormRealizationTimeSlotEnum::VALUES, example: 'morning')]
+    #[Assert\NotBlank]
+    #[Assert\Choice(callback: [FormRealizationTimeSlotEnum::class, 'values'])]
+    private string $realizationTimeSlot;
+
+    #[OA\Property(example: '2025-01-15', description: 'Realization date in format YYYY-MM-DD')]
+    #[Assert\NotBlank]
+    #[Assert\Date]
+    private string $realizationDate;
 
     #[OA\Property(example: false)]
     #[Assert\NotNull]
@@ -150,6 +167,42 @@ class FormUpdateRequestDTO
     public function setNote(?string $note): self
     {
         $this->note = $note;
+
+        return $this;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getRealizationTimeSlot(): string
+    {
+        return $this->realizationTimeSlot;
+    }
+
+    public function setRealizationTimeSlot(string $realizationTimeSlot): self
+    {
+        $this->realizationTimeSlot = $realizationTimeSlot;
+
+        return $this;
+    }
+
+    public function getRealizationDate(): string
+    {
+        return $this->realizationDate;
+    }
+
+    public function setRealizationDate(string $realizationDate): self
+    {
+        $this->realizationDate = $realizationDate;
 
         return $this;
     }

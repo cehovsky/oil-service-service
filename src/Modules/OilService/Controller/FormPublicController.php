@@ -13,7 +13,10 @@ use App\Domain\Http\ResponseFactory;
 use App\Modules\OilService\DTO\FormCreateRequestDTO;
 use App\Modules\OilService\DTO\FormCreateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
+use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\FormService;
+use DateTimeImmutable;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -96,6 +99,9 @@ class FormPublicController extends AbstractController
                 $formCreateRequestDTO->getCompanyIdentificationNumber(),
                 $formCreateRequestDTO->getCompanyTaxId(),
                 $formCreateRequestDTO->getCompanyAddress(),
+                FormStatusEnum::from($formCreateRequestDTO->getStatus()),
+                FormRealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
+                $this->createRealizationDate($formCreateRequestDTO->getRealizationDate()),
             );
 
             $formCreateResponseDTO = $this->dtoFactory->createFormCreateResponseDTO();
@@ -110,5 +116,16 @@ class FormPublicController extends AbstractController
         } catch (Throwable $e) {
             throw new ServerErrorHttpException($e->getMessage(), $e);
         }
+    }
+
+    private function createRealizationDate(string $realizationDate): DateTimeImmutable
+    {
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $realizationDate);
+
+        if ($date === false) {
+            throw new InvalidDataException('Invalid realization date format.');
+        }
+
+        return $date;
     }
 }
