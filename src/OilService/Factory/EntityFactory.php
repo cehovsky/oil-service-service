@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\OilService\Factory;
 
-use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
-use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
+use App\OilService\DBAL\Enum\FormStatusEnum;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\FormRepository;
 use DateTimeImmutable;
 use Symfony\Component\Uid\Factory\UuidFactory;
@@ -48,9 +49,10 @@ class EntityFactory
         ?string $companyTaxId,
         ?string $companyAddress,
         FormStatusEnum $status,
-        FormRealizationTimeSlotEnum $realizationTimeSlot,
+        RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         User $user,
+        ?Term $term = null,
     ): Form {
         return new Form(
             $this->uuidFactory->timeBased()->create(),
@@ -72,6 +74,7 @@ class EntityFactory
             $realizationDate,
             $user,
             new DateTimeImmutable(),
+            $term,
         );
     }
 }

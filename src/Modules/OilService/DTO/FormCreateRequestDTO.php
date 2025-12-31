@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
-use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -51,15 +51,19 @@ class FormCreateRequestDTO
     #[Assert\Choice(callback: [FormStatusEnum::class, 'values'])]
     private string $status;
 
-    #[OA\Property(enum: FormRealizationTimeSlotEnum::VALUES, example: 'morning')]
+    #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning')]
     #[Assert\NotBlank]
-    #[Assert\Choice(callback: [FormRealizationTimeSlotEnum::class, 'values'])]
+    #[Assert\Choice(callback: [RealizationTimeSlotEnum::class, 'values'])]
     private string $realizationTimeSlot;
 
     #[OA\Property(example: '2025-01-15', description: 'Realization date in format YYYY-MM-DD')]
     #[Assert\NotBlank]
     #[Assert\Date]
     private string $realizationDate;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    private ?string $termId = null;
 
     #[OA\Property(example: false)]
     #[Assert\NotNull]
@@ -252,6 +256,18 @@ class FormCreateRequestDTO
     public function getCompanyAddress(): ?string
     {
         return $this->companyAddress;
+    }
+
+    public function getTermId(): ?string
+    {
+        return $this->termId;
+    }
+
+    public function setTermId(?string $termId): self
+    {
+        $this->termId = $termId;
+
+        return $this;
     }
 
     public function setCompanyAddress(?string $companyAddress): self

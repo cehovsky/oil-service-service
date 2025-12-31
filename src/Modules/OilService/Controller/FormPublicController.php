@@ -13,7 +13,7 @@ use App\Domain\Http\ResponseFactory;
 use App\Modules\OilService\DTO\FormCreateRequestDTO;
 use App\Modules\OilService\DTO\FormCreateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
-use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\FormService;
 use DateTimeImmutable;
@@ -100,8 +100,9 @@ class FormPublicController extends AbstractController
                 $formCreateRequestDTO->getCompanyTaxId(),
                 $formCreateRequestDTO->getCompanyAddress(),
                 FormStatusEnum::from($formCreateRequestDTO->getStatus()),
-                FormRealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
+                RealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
                 $this->createRealizationDate($formCreateRequestDTO->getRealizationDate()),
+                null,
             );
 
             $formCreateResponseDTO = $this->dtoFactory->createFormCreateResponseDTO();

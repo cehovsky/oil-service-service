@@ -60,6 +60,8 @@ class DTOFactory
 
     public function createFormDTO(Form $form): FormDTO
     {
+        $term = $form->getTerm();
+
         return new FormDTO(
             $form->getId()->__toString(),
             $form->getFormattedIdent(),
@@ -79,6 +81,9 @@ class DTOFactory
             $form->getRealizationTimeSlot()->value,
             $form->getRealizationDate()->format('Y-m-d'),
             $form->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $term?->getId()->__toString(),
+            $term?->getDate()->format('Y-m-d'),
+            $term?->getTimeSlot()->value,
             $this->createOilServiceUserDTO($form->getUser()),
         );
     }

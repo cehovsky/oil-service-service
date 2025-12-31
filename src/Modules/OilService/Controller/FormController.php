@@ -22,10 +22,12 @@ use App\Modules\OilService\DTO\FormUpdateRequestDTO;
 use App\Modules\OilService\DTO\FormUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\FormGridSortEnum;
-use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Repository\FormRepository;
+use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\Factory\EntityFactory;
 use App\OilService\FormService;
@@ -64,6 +66,7 @@ class FormController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly FormRepository $formRepository,
+        private readonly TermRepository $termRepository,
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
@@ -136,6 +139,8 @@ class FormController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($formCreateRequestDTO);
 
+            $term = $this->findTerm($formCreateRequestDTO->getTermId());
+
             $form = $this->formService->createFormWithUser(
                 $formCreateRequestDTO->getFullName(),
                 $formCreateRequestDTO->getPhone(),
@@ -150,8 +155,9 @@ class FormController extends AbstractController
                 $formCreateRequestDTO->getCompanyTaxId(),
                 $formCreateRequestDTO->getCompanyAddress(),
                 FormStatusEnum::from($formCreateRequestDTO->getStatus()),
-                FormRealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
+                RealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
                 $this->createRealizationDate($formCreateRequestDTO->getRealizationDate()),
+                $term,
             );
 
             $formInfoResponseDTO = $this->dtoFactory->createFormInfoResponseDTO($form);
@@ -240,6 +246,12 @@ class FormController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($formUpdateRequestDTO);
 
+            $term = $form->getTerm();
+
+            if ($this->isFieldProvided($request, 'termId')) {
+                $term = $this->findTerm($formUpdateRequestDTO->getTermId());
+            }
+
             $form->setFullName($formUpdateRequestDTO->getFullName());
             $form->setPhone($formUpdateRequestDTO->getPhone());
             $form->setEmail($formUpdateRequestDTO->getEmail());
@@ -253,8 +265,15 @@ class FormController extends AbstractController
             $form->setCompanyTaxId($formUpdateRequestDTO->getCompanyTaxId());
             $form->setCompanyAddress($formUpdateRequestDTO->getCompanyAddress());
             $form->setStatus(FormStatusEnum::from($formUpdateRequestDTO->getStatus()));
-            $form->setRealizationTimeSlot(FormRealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()));
-            $form->setRealizationDate($this->createRealizationDate($formUpdateRequestDTO->getRealizationDate()));
+            $form->setTerm($term);
+
+            if ($term !== null) {
+                $form->setRealizationTimeSlot($term->getTimeSlot());
+                $form->setRealizationDate($term->getDate());
+            } else {
+                $form->setRealizationTimeSlot(RealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()));
+                $form->setRealizationDate($this->createRealizationDate($formUpdateRequestDTO->getRealizationDate()));
+            }
 
             // Handle user change by email
             $currentUserEmail = $form->getUser()->getEmail();
@@ -455,7 +474,7 @@ class FormController extends AbstractController
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
-                    enum: FormRealizationTimeSlotEnum::VALUES
+                    enum: RealizationTimeSlotEnum::VALUES
                 ),
                 example: 'morning'
             ),
@@ -706,7 +725,7 @@ class FormController extends AbstractController
 
                 assert(is_string($realizationTimeSlot));
 
-                $realizationTimeSlotEnum = FormRealizationTimeSlotEnum::tryFrom($realizationTimeSlot);
+                $realizationTimeSlotEnum = RealizationTimeSlotEnum::tryFrom($realizationTimeSlot);
 
                 if ($realizationTimeSlotEnum !== null) {
                     $qb->andWhere(
@@ -846,6 +865,32 @@ class FormController extends AbstractController
         }
 
         return $user;
+    }
+
+    private function findTerm(?string $termId): ?Term
+    {
+        if ($termId === null) {
+            return null;
+        }
+
+        $term = $this->termRepository->find($termId);
+
+        if ($term === null) {
+            throw new NotFoundHttpException();
+        }
+
+        return $term;
+    }
+
+    private function isFieldProvided(Request $request, string $field): bool
+    {
+        try {
+            $data = $request->toArray();
+
+            return array_key_exists($field, $data);
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     private function createRealizationDate(string $realizationDate): DateTimeImmutable

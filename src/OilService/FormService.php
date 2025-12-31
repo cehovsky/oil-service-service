@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\OilService;
 
-use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\User;
+use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\Factory\EntityFactory;
 use DateTimeImmutable;
@@ -36,9 +37,15 @@ class FormService
         ?string $companyTaxId,
         ?string $companyAddress,
         FormStatusEnum $status,
-        FormRealizationTimeSlotEnum $realizationTimeSlot,
+        RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
+        ?Term $term = null,
     ): Form {
+        if ($term !== null) {
+            $realizationTimeSlot = $term->getTimeSlot();
+            $realizationDate = $term->getDate();
+        }
+
         $user = $this->findOrCreateUser($email, $phone, $fullName);
 
         $form = $this->entityFactory->createForm(
@@ -58,6 +65,7 @@ class FormService
             $realizationTimeSlot,
             $realizationDate,
             $user,
+            $term,
         );
 
         $this->entityManager->persist($form);

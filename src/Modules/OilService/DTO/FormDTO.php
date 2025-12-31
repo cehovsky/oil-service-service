@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
-use App\OilService\DBAL\Enum\FormRealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use OpenApi\Attributes as OA;
 
@@ -55,7 +55,7 @@ class FormDTO
     #[OA\Property(enum: FormStatusEnum::VALUES, example: 'new')]
     private string $status;
 
-    #[OA\Property(enum: FormRealizationTimeSlotEnum::VALUES, example: 'morning')]
+    #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning')]
     private string $realizationTimeSlot;
 
     #[OA\Property(example: '2025-01-15')]
@@ -63,6 +63,15 @@ class FormDTO
 
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    private ?string $termId;
+
+    #[OA\Property(example: '2025-01-15', nullable: true)]
+    private ?string $termDate;
+
+    #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning', nullable: true)]
+    private ?string $termTimeSlot;
 
     private OilServiceUserDTO $user;
 
@@ -85,6 +94,9 @@ class FormDTO
         string $realizationTimeSlot,
         string $realizationDate,
         string $createdAt,
+        ?string $termId,
+        ?string $termDate,
+        ?string $termTimeSlot,
         OilServiceUserDTO $user,
     ) {
         $this->id = $id;
@@ -105,6 +117,9 @@ class FormDTO
         $this->realizationTimeSlot = $realizationTimeSlot;
         $this->realizationDate = $realizationDate;
         $this->createdAt = $createdAt;
+        $this->termId = $termId;
+        $this->termDate = $termDate;
+        $this->termTimeSlot = $termTimeSlot;
         $this->user = $user;
     }
 
@@ -196,6 +211,21 @@ class FormDTO
     public function getCreatedAt(): string
     {
         return $this->createdAt;
+    }
+
+    public function getTermId(): ?string
+    {
+        return $this->termId;
+    }
+
+    public function getTermDate(): ?string
+    {
+        return $this->termDate;
+    }
+
+    public function getTermTimeSlot(): ?string
+    {
+        return $this->termTimeSlot;
     }
 
     public function getUser(): OilServiceUserDTO

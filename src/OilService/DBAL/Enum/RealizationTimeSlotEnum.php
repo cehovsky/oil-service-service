@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Enum;
 
-enum FormRealizationTimeSlotEnum: string
+enum RealizationTimeSlotEnum: string
 {
     public const array VALUES = [
         'morning',
