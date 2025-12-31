@@ -61,10 +61,6 @@ class FormCreateRequestDTO
     #[Assert\Date]
     private string $realizationDate;
 
-    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
-    #[Assert\Uuid]
-    private ?string $termId = null;
-
     #[OA\Property(example: false)]
     #[Assert\NotNull]
     private bool $isCompany;
@@ -256,18 +252,6 @@ class FormCreateRequestDTO
     public function getCompanyAddress(): ?string
     {
         return $this->companyAddress;
-    }
-
-    public function getTermId(): ?string
-    {
-        return $this->termId;
-    }
-
-    public function setTermId(?string $termId): self
-    {
-        $this->termId = $termId;
-
-        return $this;
     }
 
     public function setCompanyAddress(?string $companyAddress): self

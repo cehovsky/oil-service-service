@@ -14,7 +14,7 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
-use App\Modules\OilService\DTO\FormCreateRequestDTO;
+use App\Modules\OilService\DTO\FormCreateWithTermRequestDTO;
 use App\Modules\OilService\DTO\FormDeleteResponseDTO;
 use App\Modules\OilService\DTO\FormInfoResponseDTO;
 use App\Modules\OilService\DTO\FormListResponseDTO;
@@ -86,7 +86,7 @@ class FormController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: FormCreateRequestDTO::class
+                    type: FormCreateWithTermRequestDTO::class
                 ),
             )
         ),
@@ -134,7 +134,7 @@ class FormController extends AbstractController
         try {
             $formCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                FormCreateRequestDTO::class
+                FormCreateWithTermRequestDTO::class
             );
 
             $this->dtoValueResolver->validateDTO($formCreateRequestDTO);

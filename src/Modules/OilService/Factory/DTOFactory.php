@@ -21,7 +21,10 @@ use App\Modules\OilService\DTO\OilServiceUserInfoResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserListDTO;
 use App\Modules\OilService\DTO\OilServiceUserListResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserUpdateResponseDTO;
+use App\Modules\OilService\DTO\AvailableTermDTO;
+use App\Modules\OilService\DTO\AvailableTermListResponseDTO;
 use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 
 class DTOFactory
@@ -145,6 +148,32 @@ class DTOFactory
         return new FormDeleteResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
+        );
+    }
+
+    public function createAvailableTermDTO(Term $term): AvailableTermDTO
+    {
+        return new AvailableTermDTO(
+            $term->getDate()->format('Y-m-d'),
+            $term->getTimeSlot()->value,
+        );
+    }
+
+    /**
+     * @param Term[] $terms
+     */
+    public function createAvailableTermListResponseDTO(array $terms): AvailableTermListResponseDTO
+    {
+        $termDTOs = [];
+
+        foreach ($terms as $term) {
+            $termDTOs[] = $this->createAvailableTermDTO($term);
+        }
+
+        return new AvailableTermListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $termDTOs,
         );
     }
 

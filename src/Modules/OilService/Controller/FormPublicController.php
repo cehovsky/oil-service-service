@@ -12,10 +12,12 @@ use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
 use App\Modules\OilService\DTO\FormCreateRequestDTO;
 use App\Modules\OilService\DTO\FormCreateResponseDTO;
+use App\Modules\OilService\DTO\AvailableTermListResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\FormService;
+use App\OilService\DBAL\Repository\TermRepository;
 use DateTimeImmutable;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -33,7 +35,44 @@ class FormPublicController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly FormService $formService,
+        private readonly TermRepository $termRepository,
     ) {
+    }
+
+    #[OA\Get(
+        tags: [
+            'OilService Public',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Available future terms ordered by date',
+                content: new Model(
+                    type: AvailableTermListResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/terms/available',
+        name: 'oil_service_available_terms',
+        methods: ['GET']
+    )]
+    public function listAvailableTerms(): JsonResponse
+    {
+        try {
+            $terms = $this->termRepository->findUpcomingAvailableTerms(new DateTimeImmutable('today'));
+
+            $responseDTO = $this->dtoFactory->createAvailableTermListResponseDTO($terms);
+
+            return $this->json($responseDTO);
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
     }
 
     /**
