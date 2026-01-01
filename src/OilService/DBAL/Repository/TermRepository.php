@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\OilService\DBAL\Repository;
 
 use App\OilService\DBAL\Entity\Term;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -50,5 +51,26 @@ class TermRepository extends ServiceEntityRepository
         $qb->setParameter('dateFrom', $dateFrom->setTime(0, 0));
 
         return $qb->getQuery()->getResult();
+    }
+
+    public function existsByDateAndTimeSlot(
+        DateTimeImmutable $date,
+        RealizationTimeSlotEnum $timeSlot,
+        ?string $ignoreId = null,
+    ): bool {
+        $qb = $this->createQueryBuilder(self::ALIAS);
+
+        $qb->select($qb->expr()->count(self::ALIAS . '.id'))
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.date', ':date'))
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.timeSlot', ':timeSlot'))
+            ->setParameter('date', $date)
+            ->setParameter('timeSlot', $timeSlot);
+
+        if ($ignoreId !== null) {
+            $qb->andWhere($qb->expr()->neq(self::ALIAS . '.id', ':ignoreId'))
+                ->setParameter('ignoreId', $ignoreId);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
     }
 }

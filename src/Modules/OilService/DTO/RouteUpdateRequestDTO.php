@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\OilService\Validation\Constraint\ExistingCar;
+use App\Modules\OilService\Validation\Constraint\ExistingTermIds;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -11,6 +13,7 @@ class RouteUpdateRequestDTO
 {
     #[OA\Property(example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', nullable: true)]
     #[Assert\Uuid]
+    #[ExistingCar]
     private ?string $carId = null;
 
     #[OA\Property(example: true)]
@@ -29,6 +32,7 @@ class RouteUpdateRequestDTO
     #[Assert\All([
         new Assert\Uuid(),
     ])]
+    #[ExistingTermIds]
     private ?array $termIds = null;
 
     public function getCarId(): ?string

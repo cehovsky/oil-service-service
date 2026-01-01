@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\OilService\Validation\Constraint\UniqueTermDateTimeSlot;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[UniqueTermDateTimeSlot]
 class TermCreateRequestDTO
 {
     #[OA\Property(example: '2025-01-15', description: 'Date in format YYYY-MM-DD')]

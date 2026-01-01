@@ -24,10 +24,8 @@ use App\Modules\OilService\DTO\OilServiceUserUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\OilServiceUserGridSortEnum;
 use App\Modules\OilService\Validation\Constraint\UniqueOilServiceUserEmail;
-use App\OilService\DBAL\Entity\User;
 use App\OilService\DBAL\Repository\UserRepository;
-use App\OilService\Factory\EntityFactory;
-use Doctrine\ORM\EntityManagerInterface;
+use App\OilService\OilServiceUserService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -52,11 +50,10 @@ class OilServiceUserController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly UserRepository $userRepository,
-        private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly EntityFactory $entityFactory,
+        private readonly OilServiceUserService $oilServiceUserService,
     ) {
     }
 
@@ -125,14 +122,11 @@ class OilServiceUserController extends AbstractController
                 new UniqueOilServiceUserEmail(),
             );
 
-            $user = $this->entityFactory->createUser(
+            $user = $this->oilServiceUserService->createUser(
                 $userCreateRequestDTO->getEmail(),
                 $userCreateRequestDTO->getPhone(),
                 $userCreateRequestDTO->getFullName(),
             );
-
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
 
             $userCreateResponseDTO = $this->dtoFactory->createOilServiceUserCreateResponseDTO($user);
 
@@ -223,11 +217,12 @@ class OilServiceUserController extends AbstractController
                 new UniqueOilServiceUserEmail($user->getId()->__toString()),
             );
 
-            $user->setEmail($userUpdateRequestDTO->getEmail());
-            $user->setPhone($userUpdateRequestDTO->getPhone());
-            $user->setFullName($userUpdateRequestDTO->getFullName());
-
-            $this->entityManager->flush();
+            $user = $this->oilServiceUserService->updateUser(
+                $user,
+                $userUpdateRequestDTO->getEmail(),
+                $userUpdateRequestDTO->getPhone(),
+                $userUpdateRequestDTO->getFullName(),
+            );
 
             $userUpdateResponseDTO = $this->dtoFactory->createOilServiceUserUpdateResponseDTO($user);
 
@@ -536,8 +531,7 @@ class OilServiceUserController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $this->entityManager->remove($user);
-        $this->entityManager->flush();
+        $this->oilServiceUserService->deleteUser($user);
 
         $userDeleteResponseDTO = $this->dtoFactory->createOilServiceUserDeleteResponseDTO();
 

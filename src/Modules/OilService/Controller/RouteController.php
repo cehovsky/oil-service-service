@@ -24,12 +24,9 @@ use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\RouteGridSortEnum;
 use App\OilService\DBAL\Entity\Route as RouteEntity;
-use App\OilService\DBAL\Repository\CarRepository;
 use App\OilService\DBAL\Repository\RouteRepository;
-use App\OilService\DBAL\Repository\TermRepository;
-use App\OilService\Factory\EntityFactory;
+use App\OilService\RouteService;
 use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -54,13 +51,10 @@ class RouteController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly RouteRepository $routeRepository,
-        private readonly CarRepository $carRepository,
-        private readonly TermRepository $termRepository,
-        private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly EntityFactory $entityFactory,
+        private readonly RouteService $routeService,
     ) {
     }
 
@@ -130,23 +124,12 @@ class RouteController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($routeCreateRequestDTO);
 
-            $car = null;
-            if ($routeCreateRequestDTO->getCarId() !== null) {
-                $car = $this->carRepository->find($routeCreateRequestDTO->getCarId());
-
-                if ($car === null) {
-                    throw new NotFoundHttpException('Car not found');
-                }
-            }
-
-            $route = $this->entityFactory->createRoute(
-                $car,
+            $route = $this->routeService->createRoute(
+                $routeCreateRequestDTO->getCarId(),
                 $routeCreateRequestDTO->getIsActive(),
                 new DateTimeImmutable($routeCreateRequestDTO->getDate()),
+                $routeCreateRequestDTO->getTermIds(),
             );
-
-            $this->entityManager->persist($route);
-            $this->entityManager->flush();
 
             $routeCreateResponseDTO = $this->dtoFactory->createRouteCreateResponseDTO($route);
 
@@ -234,40 +217,13 @@ class RouteController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($routeUpdateRequestDTO);
 
-            // Update Car
-            $car = null;
-            if ($routeUpdateRequestDTO->getCarId() !== null) {
-                $car = $this->carRepository->find($routeUpdateRequestDTO->getCarId());
-
-                if ($car === null) {
-                    throw new NotFoundHttpException('Car not found');
-                }
-            }
-
-            $route->setCar($car);
-            $route->setIsActive($routeUpdateRequestDTO->getIsActive());
-            $route->setDate(new DateTimeImmutable($routeUpdateRequestDTO->getDate()));
-
-            // Update Terms relationship
-            if ($routeUpdateRequestDTO->getTermIds() !== null) {
-                // Remove all existing terms
-                foreach ($route->getTerms() as $term) {
-                    $route->removeTerm($term);
-                }
-
-                // Add new terms
-                foreach ($routeUpdateRequestDTO->getTermIds() as $termId) {
-                    $term = $this->termRepository->find($termId);
-
-                    if ($term === null) {
-                        throw new NotFoundHttpException('Term not found: ' . $termId);
-                    }
-
-                    $route->addTerm($term);
-                }
-            }
-
-            $this->entityManager->flush();
+            $route = $this->routeService->updateRoute(
+                $route,
+                $routeUpdateRequestDTO->getCarId(),
+                $routeUpdateRequestDTO->getIsActive(),
+                new DateTimeImmutable($routeUpdateRequestDTO->getDate()),
+                $routeUpdateRequestDTO->getTermIds(),
+            );
 
             $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);
 
@@ -590,8 +546,7 @@ class RouteController extends AbstractController
             throw new NotFoundHttpException('Route not found');
         }
 
-        $this->entityManager->remove($route);
-        $this->entityManager->flush();
+        $this->routeService->deleteRoute($route);
 
         $routeDeleteResponseDTO = $this->dtoFactory->createRouteDeleteResponseDTO();
 

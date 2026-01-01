@@ -28,11 +28,8 @@ use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\Route as RouteEntity;
 use App\OilService\DBAL\Repository\FormRepository;
 use App\OilService\DBAL\Repository\RouteRepository;
-use App\OilService\DBAL\Repository\UserRepository;
-use App\OilService\Factory\EntityFactory;
 use App\OilService\FormService;
 use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use DateTimeImmutable;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -67,13 +64,10 @@ class FormController extends AbstractController
         private readonly ResponseFactory $responseFactory,
         private readonly FormRepository $formRepository,
         private readonly RouteRepository $routeRepository,
-        private readonly UserRepository $userRepository,
-        private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
         private readonly FormService $formService,
-        private readonly EntityFactory $entityFactory,
     ) {
     }
 
@@ -246,58 +240,29 @@ class FormController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($formUpdateRequestDTO);
 
-            $route = $form->getRoute();
+            $routeProvided = $this->isFieldProvided($request, 'routeId');
 
-            if ($this->isFieldProvided($request, 'routeId')) {
-                $route = $this->findRoute($formUpdateRequestDTO->getRouteId());
-            }
-
-            $form->setFullName($formUpdateRequestDTO->getFullName());
-            $form->setPhone($formUpdateRequestDTO->getPhone());
-            $form->setEmail($formUpdateRequestDTO->getEmail());
-            $form->setCarModel($formUpdateRequestDTO->getCarModel());
-            $form->setLicensePlate($formUpdateRequestDTO->getLicensePlate());
-            $form->setAddress($formUpdateRequestDTO->getAddress());
-            $form->setNote($formUpdateRequestDTO->getNote());
-            $form->setIsCompany($formUpdateRequestDTO->getIsCompany());
-            $form->setCompanyName($formUpdateRequestDTO->getCompanyName());
-            $form->setCompanyIdentificationNumber($formUpdateRequestDTO->getCompanyIdentificationNumber());
-            $form->setCompanyTaxId($formUpdateRequestDTO->getCompanyTaxId());
-            $form->setCompanyAddress($formUpdateRequestDTO->getCompanyAddress());
-            $form->setStatus(FormStatusEnum::from($formUpdateRequestDTO->getStatus()));
-            $form->setRoute($route);
-
-            if ($route !== null) {
-                // When route is provided, use its date
-                $form->setRealizationDate($route->getDate());
-                // TimeSlot from update request
-                $form->setRealizationTimeSlot(RealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()));
-            } else {
-                $form->setRealizationTimeSlot(RealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()));
-                $form->setRealizationDate($this->createRealizationDate($formUpdateRequestDTO->getRealizationDate()));
-            }
-
-            // Handle user change by email
-            $currentUserEmail = $form->getUser()->getEmail();
-            $newUserEmail = $formUpdateRequestDTO->getUserEmail();
-
-            if ($currentUserEmail !== $newUserEmail) {
-                $user = $this->userRepository->findByEmail($newUserEmail);
-
-                if ($user === null) {
-                    // Create new user with data from form
-                    $user = $this->entityFactory->createUser(
-                        $newUserEmail,
-                        $formUpdateRequestDTO->getPhone(),
-                        $formUpdateRequestDTO->getFullName(),
-                    );
-                    $this->entityManager->persist($user);
-                }
-
-                $form->setUser($user);
-            }
-
-            $this->entityManager->flush();
+            $form = $this->formService->updateForm(
+                $form,
+                $formUpdateRequestDTO->getFullName(),
+                $formUpdateRequestDTO->getPhone(),
+                $formUpdateRequestDTO->getEmail(),
+                $formUpdateRequestDTO->getCarModel(),
+                $formUpdateRequestDTO->getLicensePlate(),
+                $formUpdateRequestDTO->getAddress(),
+                $formUpdateRequestDTO->getNote(),
+                FormStatusEnum::from($formUpdateRequestDTO->getStatus()),
+                RealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()),
+                $this->formService->createRealizationDate($formUpdateRequestDTO->getRealizationDate()),
+                $formUpdateRequestDTO->getIsCompany(),
+                $formUpdateRequestDTO->getCompanyName(),
+                $formUpdateRequestDTO->getCompanyIdentificationNumber(),
+                $formUpdateRequestDTO->getCompanyTaxId(),
+                $formUpdateRequestDTO->getCompanyAddress(),
+                $formUpdateRequestDTO->getUserEmail(),
+                $routeProvided,
+                $formUpdateRequestDTO->getRouteId(),
+            );
 
             $formUpdateResponseDTO = $this->dtoFactory->createFormUpdateResponseDTO($form);
 
@@ -846,8 +811,7 @@ class FormController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $this->entityManager->remove($form);
-        $this->entityManager->flush();
+        $this->formService->deleteForm($form);
 
         $formDeleteResponseDTO = $this->dtoFactory->createFormDeleteResponseDTO();
 

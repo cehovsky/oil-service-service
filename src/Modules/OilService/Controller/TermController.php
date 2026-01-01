@@ -23,12 +23,12 @@ use App\Modules\OilService\DTO\TermUpdateRequestDTO;
 use App\Modules\OilService\DTO\TermUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\TermGridSortEnum;
+use App\Modules\OilService\Validation\Constraint\UniqueTermDateTimeSlot;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\TermRepository;
-use App\OilService\Factory\EntityFactory;
+use App\OilService\TermService;
 use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -53,11 +53,10 @@ class TermController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly TermRepository $termRepository,
-        private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly EntityFactory $entityFactory,
+        private readonly TermService $termService,
     ) {
     }
 
@@ -123,15 +122,12 @@ class TermController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($termCreateRequestDTO);
 
-            $term = $this->entityFactory->createTerm(
+            $term = $this->termService->createTerm(
                 new DateTimeImmutable($termCreateRequestDTO->getDate()),
                 RealizationTimeSlotEnum::from($termCreateRequestDTO->getTimeSlot()),
                 $termCreateRequestDTO->getIsActive(),
                 $termCreateRequestDTO->getMaxCount(),
             );
-
-            $this->entityManager->persist($term);
-            $this->entityManager->flush();
 
             $termCreateResponseDTO = $this->dtoFactory->createTermCreateResponseDTO($term);
 
@@ -217,14 +213,18 @@ class TermController extends AbstractController
                 TermUpdateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($termUpdateRequestDTO);
+            $this->dtoValueResolver->validateDTO(
+                $termUpdateRequestDTO,
+                new UniqueTermDateTimeSlot(ignoreTermId: $term->getId()->__toString()),
+            );
 
-            $term->setDate(new DateTimeImmutable($termUpdateRequestDTO->getDate()));
-            $term->setTimeSlot(RealizationTimeSlotEnum::from($termUpdateRequestDTO->getTimeSlot()));
-            $term->setIsActive($termUpdateRequestDTO->getIsActive());
-            $term->setMaxCount($termUpdateRequestDTO->getMaxCount());
-
-            $this->entityManager->flush();
+            $this->termService->updateTerm(
+                $term,
+                new DateTimeImmutable($termUpdateRequestDTO->getDate()),
+                RealizationTimeSlotEnum::from($termUpdateRequestDTO->getTimeSlot()),
+                $termUpdateRequestDTO->getIsActive(),
+                $termUpdateRequestDTO->getMaxCount(),
+            );
 
             $termUpdateResponseDTO = $this->dtoFactory->createTermUpdateResponseDTO($term);
 
@@ -542,8 +542,7 @@ class TermController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $this->entityManager->remove($term);
-        $this->entityManager->flush();
+        $this->termService->deleteTerm($term);
 
         $termDeleteResponseDTO = $this->dtoFactory->createTermDeleteResponseDTO();
 

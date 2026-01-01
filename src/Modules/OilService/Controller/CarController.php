@@ -26,8 +26,7 @@ use App\Modules\OilService\Grid\Enum\CarGridSortEnum;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Enum\CarStatusEnum;
 use App\OilService\DBAL\Repository\CarRepository;
-use App\OilService\Factory\EntityFactory;
-use Doctrine\ORM\EntityManagerInterface;
+use App\OilService\CarService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -53,11 +52,10 @@ class CarController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly CarRepository $carRepository,
-        private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly EntityFactory $entityFactory,
+        private readonly CarService $carService,
     ) {
     }
 
@@ -123,15 +121,12 @@ class CarController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($carCreateRequestDTO);
 
-            $car = $this->entityFactory->createCar(
+            $car = $this->carService->createCar(
                 $carCreateRequestDTO->getLabel(),
                 $carCreateRequestDTO->getIdent(),
                 $carCreateRequestDTO->getLicensePlate(),
                 CarStatusEnum::from($carCreateRequestDTO->getStatus()),
             );
-
-            $this->entityManager->persist($car);
-            $this->entityManager->flush();
 
             $carCreateResponseDTO = $this->dtoFactory->createCarCreateResponseDTO($car);
 
@@ -219,12 +214,13 @@ class CarController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($carUpdateRequestDTO);
 
-            $car->setLabel($carUpdateRequestDTO->getLabel());
-            $car->setIdent($carUpdateRequestDTO->getIdent());
-            $car->setLicensePlate($carUpdateRequestDTO->getLicensePlate());
-            $car->setStatus(CarStatusEnum::from($carUpdateRequestDTO->getStatus()));
-
-            $this->entityManager->flush();
+            $this->carService->updateCar(
+                $car,
+                $carUpdateRequestDTO->getLabel(),
+                $carUpdateRequestDTO->getIdent(),
+                $carUpdateRequestDTO->getLicensePlate(),
+                CarStatusEnum::from($carUpdateRequestDTO->getStatus()),
+            );
 
             $carUpdateResponseDTO = $this->dtoFactory->createCarUpdateResponseDTO($car);
 
@@ -564,8 +560,11 @@ class CarController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $this->entityManager->remove($car);
-        $this->entityManager->flush();
+        try {
+            $this->carService->deleteCar($car);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection($e->getErrorCollection());
+        }
 
         $carDeleteResponseDTO = $this->dtoFactory->createCarDeleteResponseDTO();
 
