@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\OilService\Factory;
 
+use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
+use App\OilService\DBAL\Enum\CarStatusEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\FormRepository;
@@ -52,7 +55,7 @@ class EntityFactory
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         User $user,
-        ?Term $term = null,
+        ?Route $route = null,
     ): Form {
         return new Form(
             $this->uuidFactory->timeBased()->create(),
@@ -74,7 +77,53 @@ class EntityFactory
             $realizationDate,
             $user,
             new DateTimeImmutable(),
-            $term,
+            $route,
+        );
+    }
+
+    public function createTerm(
+        DateTimeImmutable $date,
+        RealizationTimeSlotEnum $timeSlot,
+        bool $isActive,
+        int $maxCount,
+    ): Term {
+        return new Term(
+            $this->uuidFactory->timeBased()->create(),
+            $date,
+            $timeSlot,
+            $isActive,
+            $maxCount,
+            new DateTimeImmutable(),
+        );
+    }
+
+    public function createRoute(
+        ?Car $car,
+        bool $isActive,
+        DateTimeImmutable $date,
+    ): Route {
+        return new Route(
+            $this->uuidFactory->timeBased()->create(),
+            $car,
+            $isActive,
+            $date,
+            new DateTimeImmutable(),
+        );
+    }
+
+    public function createCar(
+        string $label,
+        string $ident,
+        string $licensePlate,
+        CarStatusEnum $status,
+    ): Car {
+        return new Car(
+            $this->uuidFactory->timeBased()->create(),
+            $label,
+            $ident,
+            $licensePlate,
+            $status,
+            new DateTimeImmutable(),
         );
     }
 }

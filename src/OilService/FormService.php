@@ -8,7 +8,7 @@ use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\User;
-use App\OilService\DBAL\Entity\Term;
+use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\Factory\EntityFactory;
 use DateTimeImmutable;
@@ -39,11 +39,12 @@ class FormService
         FormStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
-        ?Term $term = null,
+        ?Route $route = null,
     ): Form {
-        if ($term !== null) {
-            $realizationTimeSlot = $term->getTimeSlot();
-            $realizationDate = $term->getDate();
+        if ($route !== null) {
+            // When route is provided, use its date
+            // TimeSlot stays from user choice
+            $realizationDate = $route->getDate();
         }
 
         $user = $this->findOrCreateUser($email, $phone, $fullName);
@@ -65,7 +66,7 @@ class FormService
             $realizationTimeSlot,
             $realizationDate,
             $user,
-            $term,
+            $route,
         );
 
         $this->entityManager->persist($form);

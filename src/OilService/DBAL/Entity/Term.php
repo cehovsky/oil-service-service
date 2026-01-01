@@ -43,10 +43,6 @@ class Term
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
-    /** @var Collection<int, Form> */
-    #[ORM\OneToMany(mappedBy: 'term', targetEntity: Form::class)]
-    private Collection $forms;
-
     /** @var Collection<int, Route> */
     #[ORM\ManyToMany(targetEntity: Route::class, mappedBy: 'terms')]
     private Collection $routes;
@@ -65,7 +61,6 @@ class Term
         $this->isActive = $isActive;
         $this->maxCount = $maxCount;
         $this->createdAt = $createdAt;
-        $this->forms = new ArrayCollection();
         $this->routes = new ArrayCollection();
     }
 
@@ -98,7 +93,7 @@ class Term
         return $this;
     }
 
-    public function isActive(): bool
+    public function getIsActive(): bool
     {
         return $this->isActive;
     }
@@ -125,14 +120,6 @@ class Term
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
-    }
-
-    /**
-     * @return Collection<int, Form>
-     */
-    public function getForms(): Collection
-    {
-        return $this->forms;
     }
 
     /**

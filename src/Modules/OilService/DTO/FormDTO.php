@@ -65,13 +65,10 @@ class FormDTO
     private string $createdAt;
 
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
-    private ?string $termId;
+    private ?string $routeId;
 
     #[OA\Property(example: '2025-01-15', nullable: true)]
-    private ?string $termDate;
-
-    #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning', nullable: true)]
-    private ?string $termTimeSlot;
+    private ?string $routeDate;
 
     private OilServiceUserDTO $user;
 
@@ -94,9 +91,8 @@ class FormDTO
         string $realizationTimeSlot,
         string $realizationDate,
         string $createdAt,
-        ?string $termId,
-        ?string $termDate,
-        ?string $termTimeSlot,
+        ?string $routeId,
+        ?string $routeDate,
         OilServiceUserDTO $user,
     ) {
         $this->id = $id;
@@ -117,9 +113,8 @@ class FormDTO
         $this->realizationTimeSlot = $realizationTimeSlot;
         $this->realizationDate = $realizationDate;
         $this->createdAt = $createdAt;
-        $this->termId = $termId;
-        $this->termDate = $termDate;
-        $this->termTimeSlot = $termTimeSlot;
+        $this->routeId = $routeId;
+        $this->routeDate = $routeDate;
         $this->user = $user;
     }
 
@@ -213,19 +208,14 @@ class FormDTO
         return $this->createdAt;
     }
 
-    public function getTermId(): ?string
+    public function getRouteId(): ?string
     {
-        return $this->termId;
+        return $this->routeId;
     }
 
-    public function getTermDate(): ?string
+    public function getRouteDate(): ?string
     {
-        return $this->termDate;
-    }
-
-    public function getTermTimeSlot(): ?string
-    {
-        return $this->termTimeSlot;
+        return $this->routeDate;
     }
 
     public function getUser(): OilServiceUserDTO

@@ -23,7 +23,27 @@ use App\Modules\OilService\DTO\OilServiceUserListResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserUpdateResponseDTO;
 use App\Modules\OilService\DTO\AvailableTermDTO;
 use App\Modules\OilService\DTO\AvailableTermListResponseDTO;
+use App\Modules\OilService\DTO\TermDTO;
+use App\Modules\OilService\DTO\TermCreateResponseDTO;
+use App\Modules\OilService\DTO\TermUpdateResponseDTO;
+use App\Modules\OilService\DTO\TermDeleteResponseDTO;
+use App\Modules\OilService\DTO\TermInfoResponseDTO;
+use App\Modules\OilService\DTO\TermListResponseDTO;
+use App\Modules\OilService\DTO\RouteDTO;
+use App\Modules\OilService\DTO\RouteCreateResponseDTO;
+use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
+use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
+use App\Modules\OilService\DTO\RouteInfoResponseDTO;
+use App\Modules\OilService\DTO\RouteListResponseDTO;
+use App\Modules\OilService\DTO\CarDTO;
+use App\Modules\OilService\DTO\CarCreateResponseDTO;
+use App\Modules\OilService\DTO\CarUpdateResponseDTO;
+use App\Modules\OilService\DTO\CarDeleteResponseDTO;
+use App\Modules\OilService\DTO\CarInfoResponseDTO;
+use App\Modules\OilService\DTO\CarListResponseDTO;
+use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 
@@ -63,7 +83,7 @@ class DTOFactory
 
     public function createFormDTO(Form $form): FormDTO
     {
-        $term = $form->getTerm();
+        $route = $form->getRoute();
 
         return new FormDTO(
             $form->getId()->__toString(),
@@ -84,9 +104,8 @@ class DTOFactory
             $form->getRealizationTimeSlot()->value,
             $form->getRealizationDate()->format('Y-m-d'),
             $form->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $term?->getId()->__toString(),
-            $term?->getDate()->format('Y-m-d'),
-            $term?->getTimeSlot()->value,
+            $route?->getId()->__toString(),
+            $route?->getDate()->format('Y-m-d'),
             $this->createOilServiceUserDTO($form->getUser()),
         );
     }
@@ -241,6 +260,212 @@ class DTOFactory
     public function createOilServiceUserDeleteResponseDTO(): OilServiceUserDeleteResponseDTO
     {
         return new OilServiceUserDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createTermDTO(Term $term): TermDTO
+    {
+        return new TermDTO(
+            $term->getId()->__toString(),
+            $term->getDate()->format('Y-m-d'),
+            $term->getTimeSlot()->value,
+            $term->getIsActive(),
+            $term->getMaxCount(),
+            $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param Term[] $terms
+     */
+    public function createTermListResponseDTO(array $terms, int $pageCount): TermListResponseDTO
+    {
+        $termDTOs = [];
+
+        foreach ($terms as $term) {
+            $termDTOs[] = $this->createTermDTO($term);
+        }
+
+        return new TermListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $termDTOs,
+            $pageCount,
+        );
+    }
+
+    public function createTermInfoResponseDTO(Term $term): TermInfoResponseDTO
+    {
+        return new TermInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createTermDTO($term),
+        );
+    }
+
+    public function createTermCreateResponseDTO(Term $term): TermCreateResponseDTO
+    {
+        return new TermCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createTermDTO($term),
+        );
+    }
+
+    public function createTermUpdateResponseDTO(Term $term): TermUpdateResponseDTO
+    {
+        return new TermUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createTermDTO($term),
+        );
+    }
+
+    public function createTermDeleteResponseDTO(): TermDeleteResponseDTO
+    {
+        return new TermDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createRouteDTO(Route $route): RouteDTO
+    {
+        $car = $route->getCar();
+        $termIds = [];
+
+        foreach ($route->getTerms() as $term) {
+            $termIds[] = $term->getId()->__toString();
+        }
+
+        return new RouteDTO(
+            $route->getId()->__toString(),
+            $car?->getId()->__toString(),
+            $car ? sprintf('%s (%s)', $car->getLabel(), $car->getLicensePlate()) : null,
+            $route->getIsActive(),
+            $route->getDate()->format('Y-m-d'),
+            $route->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $termIds,
+        );
+    }
+
+    /**
+     * @param Route[] $routes
+     */
+    public function createRouteListResponseDTO(array $routes, int $pageCount): RouteListResponseDTO
+    {
+        $routeDTOs = [];
+
+        foreach ($routes as $route) {
+            $routeDTOs[] = $this->createRouteDTO($route);
+        }
+
+        return new RouteListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $routeDTOs,
+            $pageCount,
+        );
+    }
+
+    public function createRouteInfoResponseDTO(Route $route): RouteInfoResponseDTO
+    {
+        return new RouteInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createRouteDTO($route),
+        );
+    }
+
+    public function createRouteCreateResponseDTO(Route $route): RouteCreateResponseDTO
+    {
+        return new RouteCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createRouteDTO($route),
+        );
+    }
+
+    public function createRouteUpdateResponseDTO(Route $route): RouteUpdateResponseDTO
+    {
+        return new RouteUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createRouteDTO($route),
+        );
+    }
+
+    public function createRouteDeleteResponseDTO(): RouteDeleteResponseDTO
+    {
+        return new RouteDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createCarDTO(Car $car): CarDTO
+    {
+        return new CarDTO(
+            $car->getId()->__toString(),
+            $car->getLabel(),
+            $car->getIdent(),
+            $car->getLicensePlate(),
+            $car->getStatus()->value,
+            $car->getCreatedAt()->format(\DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param Car[] $cars
+     */
+    public function createCarListResponseDTO(array $cars, int $pageCount): CarListResponseDTO
+    {
+        $carDTOs = [];
+
+        foreach ($cars as $car) {
+            $carDTOs[] = $this->createCarDTO($car);
+        }
+
+        return new CarListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $carDTOs,
+            $pageCount,
+        );
+    }
+
+    public function createCarInfoResponseDTO(Car $car): CarInfoResponseDTO
+    {
+        return new CarInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCarDTO($car),
+        );
+    }
+
+    public function createCarCreateResponseDTO(Car $car): CarCreateResponseDTO
+    {
+        return new CarCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCarDTO($car),
+        );
+    }
+
+    public function createCarUpdateResponseDTO(Car $car): CarUpdateResponseDTO
+    {
+        return new CarUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCarDTO($car),
+        );
+    }
+
+    public function createCarDeleteResponseDTO(): CarDeleteResponseDTO
+    {
+        return new CarDeleteResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
         );

@@ -7,6 +7,7 @@ namespace App\OilService\DBAL\Repository;
 use App\OilService\DBAL\Entity\Term;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -23,6 +24,11 @@ class TermRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Term::class);
+    }
+
+    public function getQueryBuilderWithAlias(): QueryBuilder
+    {
+        return $this->createQueryBuilder(self::ALIAS);
     }
 
     /**

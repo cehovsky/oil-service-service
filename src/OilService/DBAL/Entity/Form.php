@@ -7,7 +7,7 @@ namespace App\OilService\DBAL\Entity;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Repository\FormRepository;
-use App\OilService\DBAL\Entity\Term;
+use App\OilService\DBAL\Entity\Route;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -95,9 +95,9 @@ class Form
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private DateTimeImmutable $realizationDate;
 
-    #[ORM\ManyToOne(targetEntity: Term::class, inversedBy: 'forms')]
+    #[ORM\ManyToOne(targetEntity: Route::class, inversedBy: 'forms')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
-    private ?Term $term = null;
+    private ?Route $route = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'forms')]
     #[ORM\JoinColumn(nullable: false)]
@@ -126,7 +126,7 @@ class Form
         DateTimeImmutable $realizationDate,
         User $user,
         DateTimeImmutable $createdAt,
-        ?Term $term = null,
+        ?Route $route = null,
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -147,7 +147,7 @@ class Form
         $this->realizationDate = $realizationDate;
         $this->user = $user;
         $this->createdAt = $createdAt;
-        $this->term = $term;
+        $this->route = $route;
     }
 
     public function getId(): Uuid
@@ -367,14 +367,14 @@ class Form
         return $this->createdAt;
     }
 
-    public function getTerm(): ?Term
+    public function getRoute(): ?Route
     {
-        return $this->term;
+        return $this->route;
     }
 
-    public function setTerm(?Term $term): self
+    public function setRoute(?Route $route): self
     {
-        $this->term = $term;
+        $this->route = $route;
 
         return $this;
     }

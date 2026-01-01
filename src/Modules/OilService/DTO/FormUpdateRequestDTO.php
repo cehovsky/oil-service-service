@@ -89,7 +89,7 @@ class FormUpdateRequestDTO
 
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
     #[Assert\Uuid]
-    private ?string $termId = null;
+    private ?string $routeId = null;
 
     public function getFullName(): string
     {
@@ -283,14 +283,14 @@ class FormUpdateRequestDTO
         return $this;
     }
 
-    public function getTermId(): ?string
+    public function getRouteId(): ?string
     {
-        return $this->termId;
+        return $this->routeId;
     }
 
-    public function setTermId(?string $termId): self
+    public function setRouteId(?string $routeId): self
     {
-        $this->termId = $termId;
+        $this->routeId = $routeId;
 
         return $this;
     }

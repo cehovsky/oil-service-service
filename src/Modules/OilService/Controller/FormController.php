@@ -25,9 +25,9 @@ use App\Modules\OilService\Grid\Enum\FormGridSortEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Entity\Form;
-use App\OilService\DBAL\Entity\Term;
+use App\OilService\DBAL\Entity\Route as RouteEntity;
 use App\OilService\DBAL\Repository\FormRepository;
-use App\OilService\DBAL\Repository\TermRepository;
+use App\OilService\DBAL\Repository\RouteRepository;
 use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\Factory\EntityFactory;
 use App\OilService\FormService;
@@ -66,7 +66,7 @@ class FormController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly FormRepository $formRepository,
-        private readonly TermRepository $termRepository,
+        private readonly RouteRepository $routeRepository,
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
@@ -139,7 +139,7 @@ class FormController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($formCreateRequestDTO);
 
-            $term = $this->findTerm($formCreateRequestDTO->getTermId());
+            $route = $this->findRoute($formCreateRequestDTO->getRouteId());
 
             $form = $this->formService->createFormWithUser(
                 $formCreateRequestDTO->getFullName(),
@@ -157,7 +157,7 @@ class FormController extends AbstractController
                 FormStatusEnum::from($formCreateRequestDTO->getStatus()),
                 RealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
                 $this->createRealizationDate($formCreateRequestDTO->getRealizationDate()),
-                $term,
+                $route,
             );
 
             $formInfoResponseDTO = $this->dtoFactory->createFormInfoResponseDTO($form);
@@ -246,10 +246,10 @@ class FormController extends AbstractController
 
             $this->dtoValueResolver->validateDTO($formUpdateRequestDTO);
 
-            $term = $form->getTerm();
+            $route = $form->getRoute();
 
-            if ($this->isFieldProvided($request, 'termId')) {
-                $term = $this->findTerm($formUpdateRequestDTO->getTermId());
+            if ($this->isFieldProvided($request, 'routeId')) {
+                $route = $this->findRoute($formUpdateRequestDTO->getRouteId());
             }
 
             $form->setFullName($formUpdateRequestDTO->getFullName());
@@ -265,11 +265,13 @@ class FormController extends AbstractController
             $form->setCompanyTaxId($formUpdateRequestDTO->getCompanyTaxId());
             $form->setCompanyAddress($formUpdateRequestDTO->getCompanyAddress());
             $form->setStatus(FormStatusEnum::from($formUpdateRequestDTO->getStatus()));
-            $form->setTerm($term);
+            $form->setRoute($route);
 
-            if ($term !== null) {
-                $form->setRealizationTimeSlot($term->getTimeSlot());
-                $form->setRealizationDate($term->getDate());
+            if ($route !== null) {
+                // When route is provided, use its date
+                $form->setRealizationDate($route->getDate());
+                // TimeSlot from update request
+                $form->setRealizationTimeSlot(RealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()));
             } else {
                 $form->setRealizationTimeSlot(RealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()));
                 $form->setRealizationDate($this->createRealizationDate($formUpdateRequestDTO->getRealizationDate()));
@@ -867,19 +869,19 @@ class FormController extends AbstractController
         return $user;
     }
 
-    private function findTerm(?string $termId): ?Term
+    private function findRoute(?string $routeId): ?RouteEntity
     {
-        if ($termId === null) {
+        if ($routeId === null) {
             return null;
         }
 
-        $term = $this->termRepository->find($termId);
+        $route = $this->routeRepository->find($routeId);
 
-        if ($term === null) {
+        if ($route === null) {
             throw new NotFoundHttpException();
         }
 
-        return $term;
+        return $route;
     }
 
     private function isFieldProvided(Request $request, string $field): bool

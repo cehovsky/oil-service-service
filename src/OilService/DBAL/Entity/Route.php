@@ -42,6 +42,10 @@ class Route
     #[ORM\JoinTable(name: 'oil_service_route_term')]
     private Collection $terms;
 
+    /** @var Collection<int, Form> */
+    #[ORM\OneToMany(mappedBy: 'route', targetEntity: Form::class)]
+    private Collection $forms;
+
     public function __construct(
         Uuid $id,
         ?Car $car,
@@ -55,6 +59,7 @@ class Route
         $this->date = $date;
         $this->createdAt = $createdAt;
         $this->terms = new ArrayCollection();
+        $this->forms = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -74,7 +79,7 @@ class Route
         return $this;
     }
 
-    public function isActive(): bool
+    public function getIsActive(): bool
     {
         return $this->isActive;
     }
@@ -128,5 +133,13 @@ class Route
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Form>
+     */
+    public function getForms(): Collection
+    {
+        return $this->forms;
     }
 }
