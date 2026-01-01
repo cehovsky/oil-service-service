@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
 class RouteDTO
@@ -11,11 +12,8 @@ class RouteDTO
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7')]
     private string $id;
 
-    #[OA\Property(example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', nullable: true)]
-    private ?string $carId;
-
-    #[OA\Property(example: 'Vozidlo A (AB-123-CD)', nullable: true)]
-    private ?string $carLabel;
+    #[OA\Property(ref: new Model(type: CarDTO::class), nullable: true)]
+    private ?CarDTO $car;
 
     #[OA\Property(example: true)]
     private bool $isActive;
@@ -37,16 +35,14 @@ class RouteDTO
      */
     public function __construct(
         string $id,
-        ?string $carId,
-        ?string $carLabel,
+        ?CarDTO $car,
         bool $isActive,
         string $date,
         string $createdAt,
         array $termIds,
     ) {
         $this->id = $id;
-        $this->carId = $carId;
-        $this->carLabel = $carLabel;
+        $this->car = $car;
         $this->isActive = $isActive;
         $this->date = $date;
         $this->createdAt = $createdAt;
@@ -58,14 +54,9 @@ class RouteDTO
         return $this->id;
     }
 
-    public function getCarId(): ?string
+    public function getCar(): ?CarDTO
     {
-        return $this->carId;
-    }
-
-    public function getCarLabel(): ?string
-    {
-        return $this->carLabel;
+        return $this->car;
     }
 
     public function getIsActive(): bool

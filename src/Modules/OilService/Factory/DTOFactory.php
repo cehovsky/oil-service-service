@@ -342,8 +342,7 @@ class DTOFactory
 
         return new RouteDTO(
             $route->getId()->__toString(),
-            $car?->getId()->__toString(),
-            $car ? sprintf('%s (%s)', $car->getLabel(), $car->getLicensePlate()) : null,
+            $car ? $this->createCarDTO($car) : null,
             $route->getIsActive(),
             $route->getDate()->format('Y-m-d'),
             $route->getCreatedAt()->format(\DateTimeInterface::ATOM),
