@@ -64,13 +64,9 @@ class FormDTO
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
 
-    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
-    private ?string $routeId;
-
-    #[OA\Property(example: '2025-01-15', nullable: true)]
-    private ?string $routeDate;
-
     private OilServiceUserDTO $user;
+
+    private ?RouteDTO $route;
 
     public function __construct(
         string $id,
@@ -91,9 +87,8 @@ class FormDTO
         string $realizationTimeSlot,
         string $realizationDate,
         string $createdAt,
-        ?string $routeId,
-        ?string $routeDate,
         OilServiceUserDTO $user,
+        ?RouteDTO $route = null
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -113,9 +108,8 @@ class FormDTO
         $this->realizationTimeSlot = $realizationTimeSlot;
         $this->realizationDate = $realizationDate;
         $this->createdAt = $createdAt;
-        $this->routeId = $routeId;
-        $this->routeDate = $routeDate;
         $this->user = $user;
+        $this->route = $route;
     }
 
     public function getId(): string
@@ -208,18 +202,13 @@ class FormDTO
         return $this->createdAt;
     }
 
-    public function getRouteId(): ?string
-    {
-        return $this->routeId;
-    }
-
-    public function getRouteDate(): ?string
-    {
-        return $this->routeDate;
-    }
-
     public function getUser(): OilServiceUserDTO
     {
         return $this->user;
+    }
+
+    public function getRoute(): ?RouteDTO
+    {
+        return $this->route;
     }
 }

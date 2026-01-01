@@ -104,9 +104,8 @@ class DTOFactory
             $form->getRealizationTimeSlot()->value,
             $form->getRealizationDate()->format('Y-m-d'),
             $form->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $route?->getId()->__toString(),
-            $route?->getDate()->format('Y-m-d'),
             $this->createOilServiceUserDTO($form->getUser()),
+            $route ? $this->createRouteDTO($route) : null
         );
     }
 
@@ -267,6 +266,12 @@ class DTOFactory
 
     public function createTermDTO(Term $term): TermDTO
     {
+        $routes = [];
+
+        foreach ($term->getRoutes() as $route) {
+            $routes[] = $this->createRouteDTO($route);
+        }
+
         return new TermDTO(
             $term->getId()->__toString(),
             $term->getDate()->format('Y-m-d'),
@@ -274,6 +279,7 @@ class DTOFactory
             $term->getIsActive(),
             $term->getMaxCount(),
             $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $routes,
         );
     }
 

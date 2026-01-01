@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\DTO;
 
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
 class TermDTO
@@ -27,6 +28,15 @@ class TermDTO
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
 
+    /**
+     * @var RouteDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: RouteDTO::class)))]
+    private array $routes;
+
+    /**
+     * @param RouteDTO[] $routes
+     */
     public function __construct(
         string $id,
         string $date,
@@ -34,6 +44,7 @@ class TermDTO
         bool $isActive,
         int $maxCount,
         string $createdAt,
+        array $routes,
     ) {
         $this->id = $id;
         $this->date = $date;
@@ -41,6 +52,7 @@ class TermDTO
         $this->isActive = $isActive;
         $this->maxCount = $maxCount;
         $this->createdAt = $createdAt;
+        $this->routes = $routes;
     }
 
     public function getId(): string
@@ -71,5 +83,13 @@ class TermDTO
     public function getCreatedAt(): string
     {
         return $this->createdAt;
+    }
+
+    /**
+     * @return RouteDTO[]
+     */
+    public function getRoutes(): array
+    {
+        return $this->routes;
     }
 }
