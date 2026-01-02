@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\OilService\DBAL\Repository;
 
 use App\OilService\DBAL\Entity\Route;
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -28,5 +29,23 @@ class RouteRepository extends ServiceEntityRepository
     public function getQueryBuilderWithAlias(): QueryBuilder
     {
         return $this->createQueryBuilder(self::ALIAS);
+    }
+
+    /**
+     * @return Route[]
+     */
+    public function findUpcomingActiveRoutes(DateTimeImmutable $fromDate, int $maxResults = 10): array
+    {
+        $qb = $this->createQueryBuilder(self::ALIAS);
+
+        $qb->andWhere($qb->expr()->eq(self::ALIAS . '.isActive', ':isActive'))
+            ->andWhere($qb->expr()->gte(self::ALIAS . '.date', ':fromDate'))
+            ->orderBy(self::ALIAS . '.date', 'DESC')
+            ->addOrderBy(self::ALIAS . '.createdAt', 'ASC')
+            ->setMaxResults($maxResults)
+            ->setParameter('isActive', true)
+            ->setParameter('fromDate', $fromDate);
+
+        return $qb->getQuery()->getResult();
     }
 }

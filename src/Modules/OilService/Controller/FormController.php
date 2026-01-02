@@ -761,6 +761,59 @@ class FormController extends AbstractController
         return $this->json($formListResponseDTO);
     }
 
+    #[OA\Get(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'OilService',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Last 10 forms without filters',
+                content: new Model(
+                    type: FormListResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/forms/recent',
+        name: 'oil_service_form_recent',
+        methods: ['GET']
+    )]
+    public function listRecent(): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $qb = $this->formRepository->createQueryBuilder(FormRepository::ALIAS);
+
+        $qb->orderBy(FormRepository::ALIAS . '.createdAt', 'DESC')
+            ->setMaxResults(10);
+
+        /** @var Form[] $forms */
+        $forms = $qb->getQuery()->getResult();
+
+        $formListResponseDTO = $this->dtoFactory->createFormListResponseDTO($forms, 1);
+
+        return $this->json($formListResponseDTO);
+    }
+
     #[OA\Delete(
         security: [
             [

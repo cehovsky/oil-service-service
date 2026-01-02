@@ -21,11 +21,13 @@ use App\Modules\OilService\DTO\TermInfoResponseDTO;
 use App\Modules\OilService\DTO\TermListResponseDTO;
 use App\Modules\OilService\DTO\TermUpdateRequestDTO;
 use App\Modules\OilService\DTO\TermUpdateResponseDTO;
+use App\Modules\OilService\DTO\TermWithFormCountListResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\TermGridSortEnum;
 use App\Modules\OilService\Validation\Constraint\UniqueTermDateTimeSlot;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use App\OilService\DBAL\Repository\FormRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\TermService;
 use DateTimeImmutable;
@@ -53,6 +55,7 @@ class TermController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly TermRepository $termRepository,
+        private readonly FormRepository $formRepository,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
@@ -490,6 +493,82 @@ class TermController extends AbstractController
         );
 
         return $this->json($termListResponseDTO);
+    }
+
+    #[OA\Get(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'OilService',
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'year',
+                description: 'Year of the requested month',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 2025
+            ),
+            new OA\Parameter(
+                name: 'month',
+                description: 'Month of the requested year (1-12)',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'List of terms for a month with form counts',
+                content: new Model(
+                    type: TermWithFormCountListResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/terms/monthly',
+        name: 'oil_service_term_monthly',
+        methods: ['GET']
+    )]
+    public function listByMonth(Request $request): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $year = $request->query->getInt('year');
+        $month = $request->query->getInt('month');
+
+        if ($year <= 0 || $month < 1 || $month > 12) {
+            throw new BadRequestHttpException('Invalid month or year.');
+        }
+
+        $start = (new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->setTime(0, 0);
+        $end = $start->modify('last day of this month');
+
+        $terms = $this->termRepository->findByDateRange($start, $end);
+        $formCounts = $this->formRepository->getActiveFormCountsByDateRange($start, $end);
+
+        $responseDTO = $this->dtoFactory->createTermWithFormCountListResponseDTO($terms, $formCounts);
+
+        return $this->json($responseDTO);
     }
 
     #[OA\Delete(

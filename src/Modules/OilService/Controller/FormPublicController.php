@@ -65,7 +65,7 @@ class FormPublicController extends AbstractController
     public function listAvailableTerms(): JsonResponse
     {
         try {
-            $terms = $this->termRepository->findUpcomingAvailableTerms(new DateTimeImmutable('today'));
+            $terms = $this->termRepository->findUpcomingAvailableTerms(new DateTimeImmutable('tomorrow'));
 
             $responseDTO = $this->dtoFactory->createAvailableTermListResponseDTO($terms);
 

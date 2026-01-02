@@ -29,12 +29,15 @@ use App\Modules\OilService\DTO\TermUpdateResponseDTO;
 use App\Modules\OilService\DTO\TermDeleteResponseDTO;
 use App\Modules\OilService\DTO\TermInfoResponseDTO;
 use App\Modules\OilService\DTO\TermListResponseDTO;
+use App\Modules\OilService\DTO\TermWithFormCountDTO;
+use App\Modules\OilService\DTO\TermWithFormCountListResponseDTO;
 use App\Modules\OilService\DTO\RouteDTO;
 use App\Modules\OilService\DTO\RouteCreateResponseDTO;
 use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
 use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
 use App\Modules\OilService\DTO\RouteInfoResponseDTO;
 use App\Modules\OilService\DTO\RouteListResponseDTO;
+use App\Modules\OilService\DTO\RouteTermDTO;
 use App\Modules\OilService\DTO\CarDTO;
 use App\Modules\OilService\DTO\CarCreateResponseDTO;
 use App\Modules\OilService\DTO\CarUpdateResponseDTO;
@@ -337,13 +340,48 @@ class DTOFactory
         );
     }
 
+    public function createTermWithFormCountDTO(Term $term, int $formCount): TermWithFormCountDTO
+    {
+        return new TermWithFormCountDTO(
+            $term->getId()->__toString(),
+            $term->getDate()->format('Y-m-d'),
+            $term->getTimeSlot()->value,
+            $term->getIsActive(),
+            $term->getMaxCount(),
+            $formCount,
+            $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param Term[] $terms
+     * @param array<string, int> $formCounts
+     */
+    public function createTermWithFormCountListResponseDTO(array $terms, array $formCounts): TermWithFormCountListResponseDTO
+    {
+        $termDTOs = [];
+
+        foreach ($terms as $term) {
+            $key = $term->getDate()->format('Y-m-d') . '|' . $term->getTimeSlot()->value;
+            $formCount = $formCounts[$key] ?? 0;
+
+            $termDTOs[] = $this->createTermWithFormCountDTO($term, $formCount);
+        }
+
+        return new TermWithFormCountListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $termDTOs,
+        );
+    }
+
     public function createRouteDTO(Route $route): RouteDTO
     {
         $car = $route->getCar();
-        $termIds = [];
+        $routeTerms = [];
 
         foreach ($route->getTerms() as $term) {
-            $termIds[] = $term->getId()->__toString();
+            $routeTerms[] = $this->createRouteTermDTO($term);
         }
 
         return new RouteDTO(
@@ -352,7 +390,19 @@ class DTOFactory
             $route->getIsActive(),
             $route->getDate()->format('Y-m-d'),
             $route->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $termIds,
+            $routeTerms,
+        );
+    }
+
+    private function createRouteTermDTO(Term $term): RouteTermDTO
+    {
+        return new RouteTermDTO(
+            $term->getId()->__toString(),
+            $term->getDate()->format('Y-m-d'),
+            $term->getTimeSlot()->value,
+            $term->getIsActive(),
+            $term->getMaxCount(),
+            $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
         );
     }
 

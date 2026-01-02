@@ -25,13 +25,13 @@ class RouteDTO
     private string $createdAt;
 
     /**
-     * @var string[]
+     * @var RouteTermDTO[]
      */
-    #[OA\Property(type: 'array', items: new OA\Items(type: 'string', example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7'))]
-    private array $termIds;
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: RouteTermDTO::class)))]
+    private array $terms;
 
     /**
-     * @param string[] $termIds
+     * @param RouteTermDTO[] $terms
      */
     public function __construct(
         string $id,
@@ -39,14 +39,14 @@ class RouteDTO
         bool $isActive,
         string $date,
         string $createdAt,
-        array $termIds,
+        array $terms,
     ) {
         $this->id = $id;
         $this->car = $car;
         $this->isActive = $isActive;
         $this->date = $date;
         $this->createdAt = $createdAt;
-        $this->termIds = $termIds;
+        $this->terms = $terms;
     }
 
     public function getId(): string
@@ -75,10 +75,10 @@ class RouteDTO
     }
 
     /**
-     * @return string[]
+     * @return RouteTermDTO[]
      */
-    public function getTermIds(): array
+    public function getTerms(): array
     {
-        return $this->termIds;
+        return $this->terms;
     }
 }

@@ -496,6 +496,57 @@ class RouteController extends AbstractController
         return $this->json($routeListResponseDTO);
     }
 
+    #[OA\Get(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'OilService',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Next 10 active routes from today',
+                content: new Model(
+                    type: RouteListResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/routes/upcoming',
+        name: 'oil_service_route_upcoming',
+        methods: ['GET']
+    )]
+    public function listUpcoming(): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        /** @var RouteEntity[] $routes */
+        $routes = $this->routeRepository->findUpcomingActiveRoutes(
+            new DateTimeImmutable('today'),
+            10,
+        );
+
+        $routeListResponseDTO = $this->dtoFactory->createRouteListResponseDTO($routes, 1);
+
+        return $this->json($routeListResponseDTO);
+    }
+
     #[OA\Delete(
         security: [
             [

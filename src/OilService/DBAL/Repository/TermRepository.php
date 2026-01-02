@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Repository;
 
+use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\Term;
+use App\OilService\DBAL\Enum\FormStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -39,16 +41,44 @@ class TermRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder(self::ALIAS);
 
-        $qb->leftJoin(self::ALIAS . '.forms', 'f');
-        $qb->andWhere($qb->expr()->eq(self::ALIAS . '.isActive', ':isActive'));
-        $qb->andWhere($qb->expr()->gte(self::ALIAS . '.date', ':dateFrom'));
-        $qb->groupBy(self::ALIAS . '.id');
-        $qb->having($qb->expr()->lt('COUNT(f.id)', self::ALIAS . '.maxCount'));
-        $qb->orderBy(self::ALIAS . '.date', 'ASC');
-        $qb->addOrderBy(self::ALIAS . '.timeSlot', 'ASC');
+        $subQb = $this->getEntityManager()->createQueryBuilder();
 
-        $qb->setParameter('isActive', true);
-        $qb->setParameter('dateFrom', $dateFrom->setTime(0, 0));
+        $subQb->select('COUNT(f.id)')
+            ->from(Form::class, 'f')
+            ->andWhere($subQb->expr()->eq('f.realizationDate', self::ALIAS . '.date'))
+            ->andWhere($subQb->expr()->eq('f.realizationTimeSlot', self::ALIAS . '.timeSlot'))
+            ->andWhere($subQb->expr()->neq('f.status', ':canceledStatus'));
+
+        $qb->andWhere($qb->expr()->eq(self::ALIAS . '.isActive', ':isActive'))
+            ->andWhere($qb->expr()->gte(self::ALIAS . '.date', ':dateFrom'))
+            ->andWhere(
+                $qb->expr()->gt(
+                    self::ALIAS . '.maxCount',
+                    '(' . $subQb->getDQL() . ')'
+                )
+            )
+            ->orderBy(self::ALIAS . '.date', 'ASC')
+            ->addOrderBy(self::ALIAS . '.timeSlot', 'ASC')
+            ->setParameter('isActive', true)
+            ->setParameter('dateFrom', $dateFrom->setTime(0, 0))
+            ->setParameter('canceledStatus', FormStatusEnum::CANCELED->value);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return Term[]
+     */
+    public function findByDateRange(DateTimeImmutable $from, DateTimeImmutable $to): array
+    {
+        $qb = $this->createQueryBuilder(self::ALIAS);
+
+        $qb->andWhere($qb->expr()->gte(self::ALIAS . '.date', ':dateFrom'))
+            ->andWhere($qb->expr()->lte(self::ALIAS . '.date', ':dateTo'))
+            ->orderBy(self::ALIAS . '.date', 'ASC')
+            ->addOrderBy(self::ALIAS . '.timeSlot', 'ASC')
+            ->setParameter('dateFrom', $from)
+            ->setParameter('dateTo', $to);
 
         return $qb->getQuery()->getResult();
     }

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\OilService\Validation\Constraint\AvailableTermSlot;
+use App\Modules\OilService\Validation\Constraint\FutureRealizationDate;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\FormStatusEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[AvailableTermSlot]
 class FormCreateRequestDTO
 {
     #[OA\Property(example: 'Jan Novák')]
@@ -59,6 +62,7 @@ class FormCreateRequestDTO
     #[OA\Property(example: '2025-01-15', description: 'Realization date in format YYYY-MM-DD')]
     #[Assert\NotBlank]
     #[Assert\Date]
+    #[FutureRealizationDate]
     private string $realizationDate;
 
     #[OA\Property(example: false)]
