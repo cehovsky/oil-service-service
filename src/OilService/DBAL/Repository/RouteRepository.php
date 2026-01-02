@@ -40,7 +40,7 @@ class RouteRepository extends ServiceEntityRepository
 
         $qb->andWhere($qb->expr()->eq(self::ALIAS . '.isActive', ':isActive'))
             ->andWhere($qb->expr()->gte(self::ALIAS . '.date', ':fromDate'))
-            ->orderBy(self::ALIAS . '.date', 'DESC')
+            ->orderBy(self::ALIAS . '.date', 'ASC')
             ->addOrderBy(self::ALIAS . '.createdAt', 'ASC')
             ->setMaxResults($maxResults)
             ->setParameter('isActive', true)

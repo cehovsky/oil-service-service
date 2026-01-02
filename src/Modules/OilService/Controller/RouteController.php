@@ -528,8 +528,8 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/upcoming',
-        name: 'oil_service_route_upcoming',
+        '/oil-service/dashboard/routes/upcoming',
+        name: 'oil_service_dashboard_route_upcoming',
         methods: ['GET']
     )]
     public function listUpcoming(): JsonResponse

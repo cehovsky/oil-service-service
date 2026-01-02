@@ -793,8 +793,8 @@ class FormController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/forms/recent',
-        name: 'oil_service_form_recent',
+        '/oil-service/dashboard/forms/recent',
+        name: 'oil_service_dashboard_form_recent',
         methods: ['GET']
     )]
     public function listRecent(): JsonResponse

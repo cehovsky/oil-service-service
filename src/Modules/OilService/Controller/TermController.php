@@ -545,8 +545,8 @@ class TermController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/terms/monthly',
-        name: 'oil_service_term_monthly',
+        '/oil-service/dashboard/terms/monthly',
+        name: 'oil_service_dashboard_term_monthly',
         methods: ['GET']
     )]
     public function listByMonth(Request $request): JsonResponse
