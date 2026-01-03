@@ -6,6 +6,7 @@ namespace App\Auth\DBAL\Entity;
 
 use App\Auth\DBAL\Repository\UserRepository;
 use App\Auth\Validation\Constraint as AuthAssert;
+use App\Files\DBAL\Entity\File;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -44,6 +45,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: RefreshToken::class, cascade: ['persist'])]
     private Collection $refreshTokens;
 
+    /** @var Collection<int, File> */
+    #[ORM\OneToMany(mappedBy: 'createdUser', targetEntity: File::class)]
+    private Collection $files;
+
     public function __construct(
         Uuid $id,
         string $email,
@@ -59,6 +64,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->isActive = $isActive;
         $this->isAdmin = $isAdmin;
         $this->refreshTokens = new ArrayCollection();
+        $this->files = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -94,6 +100,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRefreshTokens(): Collection
     {
         return $this->refreshTokens;
+    }
+
+    /**
+     * @return Collection<int, File>
+     */
+    public function getFiles(): Collection
+    {
+        return $this->files;
     }
 
     public function getUserIdentifier(): string
