@@ -63,6 +63,15 @@ class StorageContainer
     #[ORM\OrderBy(['movedAt' => 'ASC'])]
     private Collection $locations;
 
+    /** @var Collection<int, WasteMaterial>&Selectable */
+    #[ORM\ManyToMany(targetEntity: WasteMaterial::class, inversedBy: 'preferredStorageContainers', fetch: 'EXTRA_LAZY')]
+    #[ORM\JoinTable(
+        name: 'warehouse_storage_container_preferred_waste_materials',
+        joinColumns: [new ORM\JoinColumn(name: 'storage_container_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'waste_material_id', referencedColumnName: 'id')]
+    )]
+    private Collection $preferredWasteMaterials;
+
     public function __construct(
         Uuid $id,
         string $code,
@@ -84,6 +93,7 @@ class StorageContainer
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
         $this->locations = new ArrayCollection();
+        $this->preferredWasteMaterials = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -233,5 +243,29 @@ class StorageContainer
         $criteria = Criteria::create()->orderBy(['movedAt' => Order::Ascending]);
 
         return $this->locations->matching($criteria);
+    }
+
+    /**
+     * @return Collection<int, WasteMaterial>&Selectable
+     */
+    public function getPreferredWasteMaterials(): Collection
+    {
+        return $this->preferredWasteMaterials;
+    }
+
+    public function addPreferredWasteMaterial(WasteMaterial $wasteMaterial): self
+    {
+        if (!$this->preferredWasteMaterials->contains($wasteMaterial)) {
+            $this->preferredWasteMaterials->add($wasteMaterial);
+        }
+
+        return $this;
+    }
+
+    public function removePreferredWasteMaterial(WasteMaterial $wasteMaterial): self
+    {
+        $this->preferredWasteMaterials->removeElement($wasteMaterial);
+
+        return $this;
     }
 }

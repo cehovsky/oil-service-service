@@ -7,6 +7,9 @@ namespace App\Warehouse\DBAL\Entity;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\WasteMaterialRepository;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Selectable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -50,6 +53,10 @@ class WasteMaterial
     #[ORM\Column]
     private DateTimeImmutable $updatedAt;
 
+    /** @var Collection<int, StorageContainer>&Selectable */
+    #[ORM\ManyToMany(targetEntity: StorageContainer::class, mappedBy: 'preferredWasteMaterials', fetch: 'EXTRA_LAZY')]
+    private Collection $preferredStorageContainers;
+
     public function __construct(
         Uuid $id,
         string $code,
@@ -68,6 +75,7 @@ class WasteMaterial
         $this->volumeUnit = $volumeUnit;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
+        $this->preferredStorageContainers = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -148,6 +156,33 @@ class WasteMaterial
     public function setUpdatedAt(DateTimeImmutable $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, StorageContainer>&Selectable
+     */
+    public function getPreferredStorageContainers(): Collection
+    {
+        return $this->preferredStorageContainers;
+    }
+
+    public function addPreferredStorageContainer(StorageContainer $storageContainer): self
+    {
+        if (!$this->preferredStorageContainers->contains($storageContainer)) {
+            $this->preferredStorageContainers->add($storageContainer);
+            $storageContainer->addPreferredWasteMaterial($this);
+        }
+
+        return $this;
+    }
+
+    public function removePreferredStorageContainer(StorageContainer $storageContainer): self
+    {
+        if ($this->preferredStorageContainers->removeElement($storageContainer)) {
+            $storageContainer->removePreferredWasteMaterial($this);
+        }
 
         return $this;
     }
