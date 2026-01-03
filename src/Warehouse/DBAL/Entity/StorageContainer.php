@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Warehouse\DBAL\Entity;
 
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
-use App\Warehouse\DBAL\Enum\StorageVolumeUnitEnum;
+use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\StorageContainerRepository;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
@@ -44,8 +44,8 @@ class StorageContainer
     private float $capacity;
 
     #[Assert\NotNull]
-    #[ORM\Column(type: Types::STRING, enumType: StorageVolumeUnitEnum::class, length: 8)]
-    private StorageVolumeUnitEnum $volumeUnit;
+    #[ORM\Column(type: Types::STRING, enumType: VolumeUnitEnum::class, length: 8)]
+    private VolumeUnitEnum $volumeUnit;
 
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
@@ -60,7 +60,7 @@ class StorageContainer
         bool $isActive,
         StorageContainerTypeEnum $type,
         float $capacity,
-        StorageVolumeUnitEnum $volumeUnit,
+        VolumeUnitEnum $volumeUnit,
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt,
     ) {
@@ -140,12 +140,12 @@ class StorageContainer
         return $this;
     }
 
-    public function getVolumeUnit(): StorageVolumeUnitEnum
+    public function getVolumeUnit(): VolumeUnitEnum
     {
         return $this->volumeUnit;
     }
 
-    public function setVolumeUnit(StorageVolumeUnitEnum $volumeUnit): self
+    public function setVolumeUnit(VolumeUnitEnum $volumeUnit): self
     {
         $this->volumeUnit = $volumeUnit;
 

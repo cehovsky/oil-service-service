@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Warehouse\DBAL\Entity;
 
+use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\WasteMaterialRepository;
 use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
@@ -38,6 +40,10 @@ class WasteMaterial
     #[ORM\Column]
     private bool $isActive;
 
+    #[Assert\NotNull]
+    #[ORM\Column(type: Types::STRING, enumType: VolumeUnitEnum::class, length: 8)]
+    private VolumeUnitEnum $volumeUnit;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -50,6 +56,7 @@ class WasteMaterial
         string $label,
         string $shortLabel,
         bool $isActive,
+        VolumeUnitEnum $volumeUnit,
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt,
     ) {
@@ -58,6 +65,7 @@ class WasteMaterial
         $this->label = $label;
         $this->shortLabel = $shortLabel;
         $this->isActive = $isActive;
+        $this->volumeUnit = $volumeUnit;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
     }
@@ -111,6 +119,18 @@ class WasteMaterial
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    public function getVolumeUnit(): VolumeUnitEnum
+    {
+        return $this->volumeUnit;
+    }
+
+    public function setVolumeUnit(VolumeUnitEnum $volumeUnit): self
+    {
+        $this->volumeUnit = $volumeUnit;
 
         return $this;
     }

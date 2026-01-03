@@ -7,7 +7,7 @@ namespace App\Warehouse\Factory;
 use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\DBAL\Entity\WasteMaterial;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
-use App\Warehouse\DBAL\Enum\StorageVolumeUnitEnum;
+use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use DateTimeImmutable;
 use Symfony\Component\Uid\Factory\UuidFactory;
 
@@ -23,6 +23,7 @@ class EntityFactory
         string $label,
         string $shortLabel,
         bool $isActive,
+        VolumeUnitEnum $volumeUnit,
     ): WasteMaterial {
         $now = new DateTimeImmutable();
 
@@ -32,6 +33,7 @@ class EntityFactory
             $label,
             $shortLabel,
             $isActive,
+            $volumeUnit,
             $now,
             $now,
         );
@@ -41,7 +43,7 @@ class EntityFactory
         string $code,
         StorageContainerTypeEnum $type,
         float $capacity,
-        StorageVolumeUnitEnum $volumeUnit,
+        VolumeUnitEnum $volumeUnit,
         bool $isActive,
         ?string $description = null,
     ): StorageContainer {

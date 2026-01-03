@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Warehouse\DBAL\Enum;
 
-enum StorageVolumeUnitEnum: string
+enum VolumeUnitEnum: string
 {
     public const array VALUES = [
         'l',
