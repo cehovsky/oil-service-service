@@ -6,6 +6,7 @@ namespace App\Warehouse\Factory;
 
 use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\DBAL\Entity\WasteMaterial;
+use App\Warehouse\DBAL\Entity\Warehouse;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use DateTimeImmutable;
@@ -57,6 +58,25 @@ class EntityFactory
             $type,
             $capacity,
             $volumeUnit,
+            $now,
+            $now,
+        );
+    }
+
+    public function createWarehouse(
+        string $label,
+        string $shortLabel,
+        bool $isActive,
+        ?string $address = null,
+    ): Warehouse {
+        $now = new DateTimeImmutable();
+
+        return new Warehouse(
+            $this->uuidFactory->timeBased()->create(),
+            $label,
+            $shortLabel,
+            $address,
+            $isActive,
             $now,
             $now,
         );
