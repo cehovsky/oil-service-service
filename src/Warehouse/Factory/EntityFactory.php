@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Warehouse\Factory;
 
+use App\OilService\DBAL\Entity\Route;
 use App\Warehouse\DBAL\Entity\StorageContainer;
+use App\Warehouse\DBAL\Entity\StorageContainerLocation;
 use App\Warehouse\DBAL\Entity\WasteMaterial;
 use App\Warehouse\DBAL\Entity\Warehouse;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
@@ -77,6 +79,25 @@ class EntityFactory
             $shortLabel,
             $address,
             $isActive,
+            $now,
+            $now,
+        );
+    }
+
+    public function createStorageContainerLocation(
+        StorageContainer $storageContainer,
+        DateTimeImmutable $movedAt,
+        ?Warehouse $warehouse,
+        ?Route $route,
+    ): StorageContainerLocation {
+        $now = new DateTimeImmutable();
+
+        return new StorageContainerLocation(
+            $this->uuidFactory->timeBased()->create(),
+            $storageContainer,
+            $movedAt,
+            $warehouse,
+            $route,
             $now,
             $now,
         );

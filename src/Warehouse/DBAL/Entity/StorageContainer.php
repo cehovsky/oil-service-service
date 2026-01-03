@@ -7,7 +7,12 @@ namespace App\Warehouse\DBAL\Entity;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\StorageContainerRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Selectable;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\Order;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -53,6 +58,11 @@ class StorageContainer
     #[ORM\Column]
     private DateTimeImmutable $updatedAt;
 
+    /** @var Collection<int, StorageContainerLocation>&Selectable */
+    #[ORM\OneToMany(mappedBy: 'storageContainer', targetEntity: StorageContainerLocation::class, fetch: 'EXTRA_LAZY')]
+    #[ORM\OrderBy(['movedAt' => 'ASC'])]
+    private Collection $locations;
+
     public function __construct(
         Uuid $id,
         string $code,
@@ -73,6 +83,7 @@ class StorageContainer
         $this->volumeUnit = $volumeUnit;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
+        $this->locations = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -167,5 +178,60 @@ class StorageContainer
         $this->updatedAt = $updatedAt;
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, StorageContainerLocation>&Selectable
+     */
+    public function getLocations(): Collection
+    {
+        return $this->locations;
+    }
+
+    public function addLocation(StorageContainerLocation $location): self
+    {
+        if (!$this->locations->contains($location)) {
+            $this->locations->add($location);
+            $location->setStorageContainer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLocation(StorageContainerLocation $location): self
+    {
+        $this->locations->removeElement($location);
+
+        return $this;
+    }
+
+    public function actualLocation(?DateTimeImmutable $asOf = null): ?StorageContainerLocation
+    {
+        $asOf ??= new DateTimeImmutable();
+
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->lte('movedAt', $asOf))
+            ->orderBy(['movedAt' => Order::Descending])
+            ->setMaxResults(1);
+
+        $matches = $this->locations->matching($criteria);
+
+        $location = $matches->first();
+
+        if ($location === false) {
+            return null;
+        }
+
+        return $location;
+    }
+
+    /**
+     * @return Collection<int, StorageContainerLocation>
+     */
+    public function locationHistory(): Collection
+    {
+        $criteria = Criteria::create()->orderBy(['movedAt' => Order::Ascending]);
+
+        return $this->locations->matching($criteria);
     }
 }
