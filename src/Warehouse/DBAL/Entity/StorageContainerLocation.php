@@ -27,11 +27,11 @@ class StorageContainerLocation
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private StorageContainer $storageContainer;
 
-    #[ORM\ManyToOne(targetEntity: Warehouse::class, fetch: 'LAZY')]
+    #[ORM\ManyToOne(targetEntity: Warehouse::class, inversedBy: 'storageContainerLocations', fetch: 'LAZY')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Warehouse $warehouse;
 
-    #[ORM\ManyToOne(targetEntity: Route::class, fetch: 'LAZY')]
+    #[ORM\ManyToOne(targetEntity: Route::class, inversedBy: 'storageContainerLocations', fetch: 'LAZY')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Route $route;
 
@@ -126,6 +126,16 @@ class StorageContainerLocation
     public function clearRoute(): self
     {
         $this->route = null;
+
+        return $this;
+    }
+
+    /**
+     * Unlink warehouse from this location. Use with care - object may temporarily have no location.
+     */
+    public function clearWarehouse(): self
+    {
+        $this->warehouse = null;
 
         return $this;
     }

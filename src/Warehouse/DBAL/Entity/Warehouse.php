@@ -6,6 +6,8 @@ namespace App\Warehouse\DBAL\Entity;
 
 use App\Warehouse\DBAL\Repository\WarehouseRepository;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
@@ -43,6 +45,10 @@ class Warehouse
     #[ORM\Column]
     private DateTimeImmutable $updatedAt;
 
+    /** @var Collection<int, StorageContainerLocation> */
+    #[ORM\OneToMany(mappedBy: 'warehouse', targetEntity: StorageContainerLocation::class)]
+    private Collection $storageContainerLocations;
+
     public function __construct(
         Uuid $id,
         string $label,
@@ -59,6 +65,7 @@ class Warehouse
         $this->isActive = $isActive;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
+        $this->storageContainerLocations = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -127,6 +134,36 @@ class Warehouse
     public function setUpdatedAt(DateTimeImmutable $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, StorageContainerLocation>
+     */
+    public function getStorageContainerLocations(): Collection
+    {
+        return $this->storageContainerLocations;
+    }
+
+    public function addStorageContainerLocation(StorageContainerLocation $location): self
+    {
+        if (!$this->storageContainerLocations->contains($location)) {
+            $this->storageContainerLocations->add($location);
+            $location->setWarehouse($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStorageContainerLocation(StorageContainerLocation $location): self
+    {
+        if ($this->storageContainerLocations->removeElement($location)) {
+            // unlink owning side if still linked
+            if ($location->getWarehouse() === $this) {
+                $location->clearWarehouse();
+            }
+        }
 
         return $this;
     }
