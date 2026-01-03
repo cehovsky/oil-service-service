@@ -13,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Warehouse\DBAL\Entity\StorageContainerLocation;
 
 #[ORM\Table(name: 'oil_service_route')]
 #[ORM\Entity(repositoryClass: RouteRepository::class)]
@@ -46,6 +47,10 @@ class Route
     #[ORM\OneToMany(mappedBy: 'route', targetEntity: Form::class)]
     private Collection $forms;
 
+    /** @var Collection<int, StorageContainerLocation> */
+    #[ORM\OneToMany(mappedBy: 'route', targetEntity: StorageContainerLocation::class)]
+    private Collection $storageContainerLocations;
+
     public function __construct(
         Uuid $id,
         ?Car $car,
@@ -60,6 +65,7 @@ class Route
         $this->createdAt = $createdAt;
         $this->terms = new ArrayCollection();
         $this->forms = new ArrayCollection();
+        $this->storageContainerLocations = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -141,5 +147,35 @@ class Route
     public function getForms(): Collection
     {
         return $this->forms;
+    }
+
+    /**
+     * @return Collection<int, StorageContainerLocation>
+     */
+    public function getStorageContainerLocations(): Collection
+    {
+        return $this->storageContainerLocations;
+    }
+
+    public function addStorageContainerLocation(StorageContainerLocation $location): self
+    {
+        if (!$this->storageContainerLocations->contains($location)) {
+            $this->storageContainerLocations->add($location);
+            $location->setRoute($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStorageContainerLocation(StorageContainerLocation $location): self
+    {
+        if ($this->storageContainerLocations->removeElement($location)) {
+            // unlink owning side if still linked
+            if ($location->getRoute() === $this) {
+                $location->clearRoute();
+            }
+        }
+
+        return $this;
     }
 }

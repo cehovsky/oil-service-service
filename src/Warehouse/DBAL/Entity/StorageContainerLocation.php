@@ -123,6 +123,13 @@ class StorageContainerLocation
         return $this;
     }
 
+    public function clearRoute(): self
+    {
+        $this->route = null;
+
+        return $this;
+    }
+
     public function getLocation(): Warehouse|Route
     {
         return $this->warehouse ?? $this->route;
