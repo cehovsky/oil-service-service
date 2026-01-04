@@ -23,6 +23,7 @@ use App\Modules\Warehouse\DTO\WasteMaterialUpdateRequestDTO;
 use App\Modules\Warehouse\DTO\WasteMaterialUpdateResponseDTO;
 use App\Modules\Warehouse\Factory\DTOFactory;
 use App\Modules\Warehouse\Grid\Enum\WasteMaterialGridSortEnum;
+use App\Modules\Warehouse\Validation\Constraint\UniqueWasteMaterialCode;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\WasteMaterialRepository;
 use App\Warehouse\WasteMaterialService;
@@ -214,7 +215,10 @@ class WasteMaterialController extends AbstractController
                 WasteMaterialUpdateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($wasteMaterialUpdateRequestDTO);
+            $this->dtoValueResolver->validateDTO(
+                $wasteMaterialUpdateRequestDTO,
+                new UniqueWasteMaterialCode(ignoreWasteMaterialId: $wasteMaterial->getId()->__toString()),
+            );
 
             $wasteMaterial = $this->wasteMaterialService->updateWasteMaterial(
                 $wasteMaterial,

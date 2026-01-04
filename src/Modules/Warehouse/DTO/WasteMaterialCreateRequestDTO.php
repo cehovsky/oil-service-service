@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Warehouse\DTO;
 
+use App\Modules\Warehouse\Validation\Constraint\UniqueWasteMaterialCode;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[UniqueWasteMaterialCode]
 class WasteMaterialCreateRequestDTO
 {
     #[OA\Property(example: 'WM-01')]

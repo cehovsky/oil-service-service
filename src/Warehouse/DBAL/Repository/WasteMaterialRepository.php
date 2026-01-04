@@ -29,4 +29,9 @@ class WasteMaterialRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder(self::ALIAS);
     }
+
+    public function findByCode(string $code): ?WasteMaterial
+    {
+        return $this->findOneBy(['code' => $code]);
+    }
 }
