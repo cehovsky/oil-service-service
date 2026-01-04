@@ -6,6 +6,7 @@ namespace App\Modules\OilService\DTO;
 
 use App\Modules\OilService\Validation\Constraint\ExistingCar;
 use App\Modules\OilService\Validation\Constraint\ExistingTermIds;
+use App\Modules\OilService\Validation\Constraint\ExistingStorageContainerIds;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -34,6 +35,16 @@ class RouteCreateRequestDTO
     ])]
     #[ExistingTermIds]
     private ?array $termIds = null;
+
+    /**
+     * @var string[]|null
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string', example: 'c2a63a4d-46b4-4d3b-98e3-d7343776e0b1'), nullable: true)]
+    #[Assert\All([
+        new Assert\Uuid(),
+    ])]
+    #[ExistingStorageContainerIds]
+    private ?array $storageContainerIds = null;
 
     public function getCarId(): ?string
     {
@@ -85,6 +96,24 @@ class RouteCreateRequestDTO
     public function setTermIds(?array $termIds): self
     {
         $this->termIds = $termIds;
+
+        return $this;
+    }
+
+    /**
+     * @return string[]|null
+     */
+    public function getStorageContainerIds(): ?array
+    {
+        return $this->storageContainerIds;
+    }
+
+    /**
+     * @param string[]|null $storageContainerIds
+     */
+    public function setStorageContainerIds(?array $storageContainerIds): self
+    {
+        $this->storageContainerIds = $storageContainerIds;
 
         return $this;
     }

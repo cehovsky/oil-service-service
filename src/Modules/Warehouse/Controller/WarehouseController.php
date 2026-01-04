@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\OilService\Controller;
+namespace App\Modules\Warehouse\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\Domain\ApiGrid\ApiGridManager;
@@ -14,19 +14,18 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
-use App\Modules\OilService\DTO\RouteCreateRequestDTO;
-use App\Modules\OilService\DTO\RouteCreateResponseDTO;
-use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
-use App\Modules\OilService\DTO\RouteInfoResponseDTO;
-use App\Modules\OilService\DTO\RouteListResponseDTO;
-use App\Modules\OilService\DTO\RouteUpdateRequestDTO;
-use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
-use App\Modules\OilService\Factory\DTOFactory;
-use App\Modules\OilService\Grid\Enum\RouteGridSortEnum;
-use App\OilService\DBAL\Entity\Route as RouteEntity;
-use App\OilService\DBAL\Repository\RouteRepository;
-use App\OilService\RouteService;
-use DateTimeImmutable;
+use App\Modules\Warehouse\DTO\WarehouseCreateRequestDTO;
+use App\Modules\Warehouse\DTO\WarehouseCreateResponseDTO;
+use App\Modules\Warehouse\DTO\WarehouseDeleteResponseDTO;
+use App\Modules\Warehouse\DTO\WarehouseInfoResponseDTO;
+use App\Modules\Warehouse\DTO\WarehouseListResponseDTO;
+use App\Modules\Warehouse\DTO\WarehouseUpdateRequestDTO;
+use App\Modules\Warehouse\DTO\WarehouseUpdateResponseDTO;
+use App\Modules\Warehouse\Factory\DTOFactory;
+use App\Modules\Warehouse\Grid\Enum\WarehouseGridSortEnum;
+use App\Warehouse\DBAL\Repository\StorageContainerLocationRepository;
+use App\Warehouse\DBAL\Repository\WarehouseRepository;
+use App\Warehouse\WarehouseService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -40,21 +39,22 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
-class RouteController extends AbstractController
+class WarehouseController extends AbstractController
 {
-    private const string FILTER_DATE_KEY = 'date';
+    private const string FILTER_LABEL_KEY = 'label';
+    private const string FILTER_SHORT_LABEL_KEY = 'shortLabel';
     private const string FILTER_IS_ACTIVE_KEY = 'isActive';
-    private const string FILTER_CAR_ID_KEY = 'carId';
 
     public function __construct(
         private readonly DTOValueResolver $dtoValueResolver,
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
-        private readonly RouteRepository $routeRepository,
+        private readonly WarehouseRepository $warehouseRepository,
+        private readonly StorageContainerLocationRepository $storageContainerLocationRepository,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly RouteService $routeService,
+        private readonly WarehouseService $warehouseService,
     ) {
     }
 
@@ -67,19 +67,19 @@ class RouteController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: RouteCreateRequestDTO::class
+                    type: WarehouseCreateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Created',
                 content: new Model(
-                    type: RouteCreateResponseDTO::class
+                    type: WarehouseCreateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -98,18 +98,14 @@ class RouteController extends AbstractController
                 description: 'Forbidden'
             ),
             new OA\Response(
-                response: 404,
-                description: 'Not Found'
-            ),
-            new OA\Response(
                 response: 500,
                 description: 'Server Error'
             ),
         ]
     )]
     #[Route(
-        '/oil-service/routes',
-        name: 'oil_service_route_create',
+        '/warehouse/warehouses',
+        name: 'warehouse_create',
         methods: ['POST']
     )]
     public function create(Request $request): JsonResponse
@@ -117,24 +113,23 @@ class RouteController extends AbstractController
         $this->requireAdminUser();
 
         try {
-            $routeCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $warehouseCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                RouteCreateRequestDTO::class
+                WarehouseCreateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($routeCreateRequestDTO);
+            $this->dtoValueResolver->validateDTO($warehouseCreateRequestDTO);
 
-            $route = $this->routeService->createRoute(
-                $routeCreateRequestDTO->getCarId(),
-                $routeCreateRequestDTO->getIsActive(),
-                new DateTimeImmutable($routeCreateRequestDTO->getDate()),
-                $routeCreateRequestDTO->getTermIds(),
-                $routeCreateRequestDTO->getStorageContainerIds(),
+            $warehouse = $this->warehouseService->createWarehouse(
+                $warehouseCreateRequestDTO->getLabel(),
+                $warehouseCreateRequestDTO->getShortLabel(),
+                $warehouseCreateRequestDTO->getIsActive(),
+                $warehouseCreateRequestDTO->getAddress(),
             );
 
-            $routeCreateResponseDTO = $this->dtoFactory->createRouteCreateResponseDTO($route);
+            $warehouseCreateResponseDTO = $this->dtoFactory->createWarehouseCreateResponseDTO($warehouse);
 
-            return $this->json($routeCreateResponseDTO);
+            return $this->json($warehouseCreateResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
@@ -155,19 +150,19 @@ class RouteController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: RouteUpdateRequestDTO::class
+                    type: WarehouseUpdateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Updated',
                 content: new Model(
-                    type: RouteUpdateResponseDTO::class
+                    type: WarehouseUpdateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -196,40 +191,39 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_update',
+        '/warehouse/warehouses/{warehouseId}',
+        name: 'warehouse_update',
         methods: ['PUT']
     )]
-    public function update(Request $request, string $routeId): JsonResponse
+    public function update(Request $request, string $warehouseId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $warehouse = $this->warehouseRepository->find($warehouseId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($warehouse === null) {
+            throw new NotFoundHttpException('Warehouse not found');
         }
 
         try {
-            $routeUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $warehouseUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                RouteUpdateRequestDTO::class
+                WarehouseUpdateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($routeUpdateRequestDTO);
+            $this->dtoValueResolver->validateDTO($warehouseUpdateRequestDTO);
 
-            $route = $this->routeService->updateRoute(
-                $route,
-                $routeUpdateRequestDTO->getCarId(),
-                $routeUpdateRequestDTO->getIsActive(),
-                new DateTimeImmutable($routeUpdateRequestDTO->getDate()),
-                $routeUpdateRequestDTO->getTermIds(),
-                $routeUpdateRequestDTO->getStorageContainerIds(),
+            $warehouse = $this->warehouseService->updateWarehouse(
+                $warehouse,
+                $warehouseUpdateRequestDTO->getLabel(),
+                $warehouseUpdateRequestDTO->getShortLabel(),
+                $warehouseUpdateRequestDTO->getIsActive(),
+                $warehouseUpdateRequestDTO->getAddress(),
             );
 
-            $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);
+            $warehouseUpdateResponseDTO = $this->dtoFactory->createWarehouseUpdateResponseDTO($warehouse);
 
-            return $this->json($routeUpdateResponseDTO);
+            return $this->json($warehouseUpdateResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
@@ -248,14 +242,14 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: RouteInfoResponseDTO::class
+                    type: WarehouseInfoResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -277,23 +271,28 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_info',
+        '/warehouse/warehouses/{warehouseId}',
+        name: 'warehouse_info',
         methods: ['GET']
     )]
-    public function info(string $routeId): JsonResponse
+    public function info(string $warehouseId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $warehouse = $this->warehouseRepository->find($warehouseId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($warehouse === null) {
+            throw new NotFoundHttpException('Warehouse not found');
         }
 
-        $routeInfoResponseDTO = $this->dtoFactory->createRouteInfoResponseDTO($route);
+        $currentLocations = $this->storageContainerLocationRepository->findLatestForWarehouse($warehouse);
 
-        return $this->json($routeInfoResponseDTO);
+        $warehouseInfoResponseDTO = $this->dtoFactory->createWarehouseInfoResponseDTO(
+            $warehouse,
+            $currentLocations,
+        );
+
+        return $this->json($warehouseInfoResponseDTO);
     }
 
     #[OA\Get(
@@ -303,38 +302,38 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         parameters: [
             new OA\Parameter(
-                name: self::FILTER_DATE_KEY,
-                description: 'strict filtering, date in format YYYY-MM-DD',
+                name: self::FILTER_LABEL_KEY,
+                description: 'Filter by label (non-strict)',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
-                example: '2025-01-15'
+                example: 'Central'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_SHORT_LABEL_KEY,
+                description: 'Filter by short label (non-strict)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string'
+                ),
+                example: 'CW'
             ),
             new OA\Parameter(
                 name: self::FILTER_IS_ACTIVE_KEY,
-                description: 'strict filtering',
+                description: 'Filter by activity flag',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'boolean'
                 ),
                 example: true
-            ),
-            new OA\Parameter(
-                name: self::FILTER_CAR_ID_KEY,
-                description: 'strict filtering, UUID of the car',
-                in: 'query',
-                required: false,
-                schema: new OA\Schema(
-                    type: 'string'
-                ),
-                example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::PAGE_KEY,
@@ -359,23 +358,23 @@ class RouteController extends AbstractController
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::SORT_KEY,
-                description: 'Sorting by values, default value date',
+                description: 'Sorting by values, default value label',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
-                example: 'date'
+                example: 'label'
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::ORDER_KEY,
-                description: 'Select ordering, default value DESC, values: ASC, DESC',
+                description: 'Select ordering, default value ASC, values: ASC, DESC',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
-                example: 'DESC'
+                example: 'ASC'
             ),
         ],
         responses: [
@@ -383,7 +382,7 @@ class RouteController extends AbstractController
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: RouteListResponseDTO::class
+                    type: WarehouseListResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -401,8 +400,8 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes',
-        name: 'oil_service_route_list',
+        '/warehouse/warehouses',
+        name: 'warehouse_list',
         methods: ['GET']
     )]
     public function list(Request $request): JsonResponse
@@ -411,17 +410,33 @@ class RouteController extends AbstractController
 
         $queryModifier = function (QueryBuilder $qb) use ($request): void {
             try {
-                $date = $request->query->get(self::FILTER_DATE_KEY);
+                $label = $request->query->get(self::FILTER_LABEL_KEY);
 
-                assert(is_string($date));
+                assert(is_string($label));
 
                 $qb->andWhere(
-                    $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.date',
-                        ':date'
+                    $qb->expr()->like(
+                        WarehouseRepository::ALIAS . '.label',
+                        ':label'
                     )
                 );
-                $qb->setParameter('date', new DateTimeImmutable($date));
+                $qb->setParameter('label', '%' . $label . '%');
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $shortLabel = $request->query->get(self::FILTER_SHORT_LABEL_KEY);
+
+                assert(is_string($shortLabel));
+
+                $qb->andWhere(
+                    $qb->expr()->like(
+                        WarehouseRepository::ALIAS . '.shortLabel',
+                        ':shortLabel'
+                    )
+                );
+                $qb->setParameter('shortLabel', '%' . $shortLabel . '%');
             } catch (Throwable) {
                 // pass
             }
@@ -439,7 +454,7 @@ class RouteController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.isActive',
+                        WarehouseRepository::ALIAS . '.isActive',
                         ':isActive'
                     )
                 );
@@ -447,106 +462,41 @@ class RouteController extends AbstractController
             } catch (Throwable) {
                 // pass
             }
-
-            try {
-                $carId = $request->query->get(self::FILTER_CAR_ID_KEY);
-
-                assert(is_string($carId));
-
-                $qb->andWhere(
-                    $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.car',
-                        ':carId'
-                    )
-                );
-                $qb->setParameter('carId', $carId);
-            } catch (Throwable) {
-                // pass
-            }
         };
 
         $maxResults = $this->apiGridPropertyHelper->createMaxResults($request);
         $firstResult = $this->apiGridPropertyHelper->createfirstResult($request, $maxResults);
-        $orderEnum = $this->apiGridPropertyHelper->createOrderEnum($request, OrderEnum::DESC);
-        $routeGridSortEnum = $this->apiGridPropertyHelper->createSortEnum(
+        $orderEnum = $this->apiGridPropertyHelper->createOrderEnum($request, OrderEnum::ASC);
+        $sortEnum = $this->apiGridPropertyHelper->createSortEnum(
             $request,
-            RouteGridSortEnum::class,
-            RouteGridSortEnum::DATE
+            WarehouseGridSortEnum::class,
+            WarehouseGridSortEnum::LABEL
         );
-        $routesQueryBuilder = $this->routeRepository->getQueryBuilderWithAlias();
-        $routesPaginator = $this->apiGridManager->createPaginator(
-            $routesQueryBuilder,
+
+        $warehousesQueryBuilder = $this->warehouseRepository->getQueryBuilderWithAlias();
+        $warehousesPaginator = $this->apiGridManager->createPaginator(
+            $warehousesQueryBuilder,
             $queryModifier
         );
-        /** @var RouteEntity[] $routes */
-        $routes = $this->apiGridManager->fetchData(
-            $routesQueryBuilder,
-            $routeGridSortEnum,
+
+        $warehouses = $this->apiGridManager->fetchData(
+            $warehousesQueryBuilder,
+            $sortEnum,
             $orderEnum,
             $firstResult,
             $maxResults,
-            $queryModifier
+            $queryModifier,
         );
-        $routeListResponseDTO = $this->dtoFactory->createRouteListResponseDTO(
-            $routes,
+
+        $warehouseListResponseDTO = $this->dtoFactory->createWarehouseListResponseDTO(
+            $warehouses,
             $this->apiGridPropertyHelper->createPageCount(
-                $routesPaginator->count(),
+                $warehousesPaginator->count(),
                 $maxResults
             )
         );
 
-        return $this->json($routeListResponseDTO);
-    }
-
-    #[OA\Get(
-        security: [
-            [
-                'Bearer' => []
-            ],
-        ],
-        tags: [
-            'OilService',
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Next 10 active routes from today',
-                content: new Model(
-                    type: RouteListResponseDTO::class
-                )
-            ),
-            new OA\Response(
-                response: 401,
-                description: 'Unauthorized'
-            ),
-            new OA\Response(
-                response: 403,
-                description: 'Forbidden'
-            ),
-            new OA\Response(
-                response: 500,
-                description: 'Server Error'
-            ),
-        ]
-    )]
-    #[Route(
-        '/oil-service/dashboard/routes/upcoming',
-        name: 'oil_service_dashboard_route_upcoming',
-        methods: ['GET']
-    )]
-    public function listUpcoming(): JsonResponse
-    {
-        $this->requireAdminUser();
-
-        /** @var RouteEntity[] $routes */
-        $routes = $this->routeRepository->findUpcomingActiveRoutes(
-            new DateTimeImmutable('today'),
-            10,
-        );
-
-        $routeListResponseDTO = $this->dtoFactory->createRouteListResponseDTO($routes, 1);
-
-        return $this->json($routeListResponseDTO);
+        return $this->json($warehouseListResponseDTO);
     }
 
     #[OA\Delete(
@@ -556,14 +506,14 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Deleted',
                 content: new Model(
-                    type: RouteDeleteResponseDTO::class
+                    type: WarehouseDeleteResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -585,25 +535,25 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_delete',
+        '/warehouse/warehouses/{warehouseId}',
+        name: 'warehouse_delete',
         methods: ['DELETE']
     )]
-    public function delete(string $routeId): JsonResponse
+    public function delete(string $warehouseId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $warehouse = $this->warehouseRepository->find($warehouseId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($warehouse === null) {
+            throw new NotFoundHttpException('Warehouse not found');
         }
 
-        $this->routeService->deleteRoute($route);
+        $this->warehouseService->deleteWarehouse($warehouse);
 
-        $routeDeleteResponseDTO = $this->dtoFactory->createRouteDeleteResponseDTO();
+        $warehouseDeleteResponseDTO = $this->dtoFactory->createWarehouseDeleteResponseDTO();
 
-        return $this->json($routeDeleteResponseDTO);
+        return $this->json($warehouseDeleteResponseDTO);
     }
 
     private function requireAdminUser(): AuthUser

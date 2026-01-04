@@ -10,6 +10,7 @@ use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Repository\CarRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\Factory\EntityFactory;
+use App\Warehouse\StorageContainerLocationService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -21,6 +22,7 @@ class RouteService
         private readonly TermRepository $termRepository,
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
+        private readonly StorageContainerLocationService $storageContainerLocationService,
     ) {
     }
 
@@ -29,11 +31,13 @@ class RouteService
         bool $isActive,
         DateTimeImmutable $date,
         ?array $termIds,
+        ?array $storageContainerIds,
     ): RouteEntity {
         $car = $this->findCar($carId);
         $route = $this->entityFactory->createRoute($car, $isActive, $date);
 
         $this->syncRouteTerms($route, $termIds);
+        $this->syncRouteStorageContainers($route, $storageContainerIds, $date);
 
         $this->entityManager->persist($route);
         $this->entityManager->flush();
@@ -47,6 +51,7 @@ class RouteService
         bool $isActive,
         DateTimeImmutable $date,
         ?array $termIds,
+        ?array $storageContainerIds,
     ): RouteEntity {
         $car = $this->findCar($carId);
 
@@ -55,6 +60,7 @@ class RouteService
         $route->setDate($date);
 
         $this->syncRouteTerms($route, $termIds);
+        $this->syncRouteStorageContainers($route, $storageContainerIds, $date);
 
         $this->entityManager->flush();
 
@@ -112,5 +118,31 @@ class RouteService
         }
 
         return $term;
+    }
+
+    /**
+     * @param string[]|null $storageContainerIds
+     */
+    private function syncRouteStorageContainers(RouteEntity $route, ?array $storageContainerIds, DateTimeImmutable $routeDate): void
+    {
+        if ($storageContainerIds === null) {
+            return;
+        }
+
+        $movedAt = $routeDate->setTime(0, 0);
+
+        foreach ($route->getStorageContainerLocations()->toArray() as $location) {
+            $route->removeStorageContainerLocation($location);
+            $this->entityManager->remove($location);
+        }
+
+        foreach ($storageContainerIds as $storageContainerId) {
+            $this->storageContainerLocationService->createStorageContainerLocation(
+                $storageContainerId,
+                null,
+                $route->getId()->__toString(),
+                $movedAt,
+            );
+        }
     }
 }

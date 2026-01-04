@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\OilService\Controller;
+namespace App\Modules\Warehouse\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\Domain\ApiGrid\ApiGridManager;
@@ -14,18 +14,20 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
-use App\Modules\OilService\DTO\RouteCreateRequestDTO;
-use App\Modules\OilService\DTO\RouteCreateResponseDTO;
-use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
-use App\Modules\OilService\DTO\RouteInfoResponseDTO;
-use App\Modules\OilService\DTO\RouteListResponseDTO;
-use App\Modules\OilService\DTO\RouteUpdateRequestDTO;
-use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
-use App\Modules\OilService\Factory\DTOFactory;
-use App\Modules\OilService\Grid\Enum\RouteGridSortEnum;
-use App\OilService\DBAL\Entity\Route as RouteEntity;
+use App\Modules\Warehouse\DTO\StorageContainerLocationCreateRequestDTO;
+use App\Modules\Warehouse\DTO\StorageContainerLocationCreateResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerLocationDeleteResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerLocationInfoResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerLocationListResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerLocationUpdateRequestDTO;
+use App\Modules\Warehouse\DTO\StorageContainerLocationUpdateResponseDTO;
+use App\Modules\Warehouse\Factory\DTOFactory;
+use App\Modules\Warehouse\Grid\Enum\StorageContainerLocationGridSortEnum;
 use App\OilService\DBAL\Repository\RouteRepository;
-use App\OilService\RouteService;
+use App\Warehouse\DBAL\Repository\StorageContainerLocationRepository;
+use App\Warehouse\DBAL\Repository\StorageContainerRepository;
+use App\Warehouse\DBAL\Repository\WarehouseRepository;
+use App\Warehouse\StorageContainerLocationService;
 use DateTimeImmutable;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -40,21 +42,24 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
-class RouteController extends AbstractController
+class StorageContainerLocationController extends AbstractController
 {
-    private const string FILTER_DATE_KEY = 'date';
-    private const string FILTER_IS_ACTIVE_KEY = 'isActive';
-    private const string FILTER_CAR_ID_KEY = 'carId';
+    private const string FILTER_STORAGE_CONTAINER_ID = 'storageContainerId';
+    private const string FILTER_WAREHOUSE_ID = 'warehouseId';
+    private const string FILTER_ROUTE_ID = 'routeId';
 
     public function __construct(
         private readonly DTOValueResolver $dtoValueResolver,
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
+        private readonly StorageContainerLocationRepository $storageContainerLocationRepository,
+        private readonly StorageContainerRepository $storageContainerRepository,
+        private readonly WarehouseRepository $warehouseRepository,
         private readonly RouteRepository $routeRepository,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly RouteService $routeService,
+        private readonly StorageContainerLocationService $storageContainerLocationService,
     ) {
     }
 
@@ -67,19 +72,19 @@ class RouteController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: RouteCreateRequestDTO::class
+                    type: StorageContainerLocationCreateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Created',
                 content: new Model(
-                    type: RouteCreateResponseDTO::class
+                    type: StorageContainerLocationCreateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -98,18 +103,14 @@ class RouteController extends AbstractController
                 description: 'Forbidden'
             ),
             new OA\Response(
-                response: 404,
-                description: 'Not Found'
-            ),
-            new OA\Response(
                 response: 500,
                 description: 'Server Error'
             ),
         ]
     )]
     #[Route(
-        '/oil-service/routes',
-        name: 'oil_service_route_create',
+        '/warehouse/storage-container-locations',
+        name: 'storage_container_location_create',
         methods: ['POST']
     )]
     public function create(Request $request): JsonResponse
@@ -117,24 +118,25 @@ class RouteController extends AbstractController
         $this->requireAdminUser();
 
         try {
-            $routeCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $storageContainerLocationCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                RouteCreateRequestDTO::class
+                StorageContainerLocationCreateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($routeCreateRequestDTO);
+            $this->dtoValueResolver->validateDTO($storageContainerLocationCreateRequestDTO);
 
-            $route = $this->routeService->createRoute(
-                $routeCreateRequestDTO->getCarId(),
-                $routeCreateRequestDTO->getIsActive(),
-                new DateTimeImmutable($routeCreateRequestDTO->getDate()),
-                $routeCreateRequestDTO->getTermIds(),
-                $routeCreateRequestDTO->getStorageContainerIds(),
+            $storageContainerLocation = $this->storageContainerLocationService->createStorageContainerLocation(
+                $storageContainerLocationCreateRequestDTO->getStorageContainerId(),
+                $storageContainerLocationCreateRequestDTO->getWarehouseId(),
+                $storageContainerLocationCreateRequestDTO->getRouteId(),
+                new DateTimeImmutable($storageContainerLocationCreateRequestDTO->getMovedAt()),
             );
 
-            $routeCreateResponseDTO = $this->dtoFactory->createRouteCreateResponseDTO($route);
+            $storageContainerLocationCreateResponseDTO = $this->dtoFactory->createStorageContainerLocationCreateResponseDTO(
+                $storageContainerLocation
+            );
 
-            return $this->json($routeCreateResponseDTO);
+            return $this->json($storageContainerLocationCreateResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
@@ -155,19 +157,19 @@ class RouteController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: RouteUpdateRequestDTO::class
+                    type: StorageContainerLocationUpdateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Updated',
                 content: new Model(
-                    type: RouteUpdateResponseDTO::class
+                    type: StorageContainerLocationUpdateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -196,44 +198,43 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_update',
+        '/warehouse/storage-container-locations/{storageContainerLocationId}',
+        name: 'storage_container_location_update',
         methods: ['PUT']
     )]
-    public function update(Request $request, string $routeId): JsonResponse
+    public function update(Request $request, string $storageContainerLocationId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $storageContainerLocation = $this->storageContainerLocationRepository->find($storageContainerLocationId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($storageContainerLocation === null) {
+            throw new NotFoundHttpException('Storage container location not found');
         }
 
         try {
-            $routeUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $storageContainerLocationUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                RouteUpdateRequestDTO::class
+                StorageContainerLocationUpdateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($routeUpdateRequestDTO);
+            $this->dtoValueResolver->validateDTO($storageContainerLocationUpdateRequestDTO);
 
-            $route = $this->routeService->updateRoute(
-                $route,
-                $routeUpdateRequestDTO->getCarId(),
-                $routeUpdateRequestDTO->getIsActive(),
-                new DateTimeImmutable($routeUpdateRequestDTO->getDate()),
-                $routeUpdateRequestDTO->getTermIds(),
-                $routeUpdateRequestDTO->getStorageContainerIds(),
+            $storageContainerLocation = $this->storageContainerLocationService->updateStorageContainerLocation(
+                $storageContainerLocation,
+                $storageContainerLocationUpdateRequestDTO->getStorageContainerId(),
+                $storageContainerLocationUpdateRequestDTO->getWarehouseId(),
+                $storageContainerLocationUpdateRequestDTO->getRouteId(),
+                new DateTimeImmutable($storageContainerLocationUpdateRequestDTO->getMovedAt()),
             );
 
-            $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);
+            $storageContainerLocationUpdateResponseDTO = $this->dtoFactory->createStorageContainerLocationUpdateResponseDTO(
+                $storageContainerLocation
+            );
 
-            return $this->json($routeUpdateResponseDTO);
+            return $this->json($storageContainerLocationUpdateResponseDTO);
         } catch (ValidationException $e) {
-            return $this->responseFactory->createResponseErrorCollection(
-                $e->getErrorCollection()
-            );
+            return $this->responseFactory->createResponseErrorCollection($e->getErrorCollection());
         } catch (InvalidDataException) {
             throw new BadRequestHttpException();
         } catch (Throwable $e) {
@@ -248,14 +249,14 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: RouteInfoResponseDTO::class
+                    type: StorageContainerLocationInfoResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -277,23 +278,25 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_info',
+        '/warehouse/storage-container-locations/{storageContainerLocationId}',
+        name: 'storage_container_location_info',
         methods: ['GET']
     )]
-    public function info(string $routeId): JsonResponse
+    public function info(string $storageContainerLocationId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $storageContainerLocation = $this->storageContainerLocationRepository->find($storageContainerLocationId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($storageContainerLocation === null) {
+            throw new NotFoundHttpException('Storage container location not found');
         }
 
-        $routeInfoResponseDTO = $this->dtoFactory->createRouteInfoResponseDTO($route);
+        $storageContainerLocationInfoResponseDTO = $this->dtoFactory->createStorageContainerLocationInfoResponseDTO(
+            $storageContainerLocation
+        );
 
-        return $this->json($routeInfoResponseDTO);
+        return $this->json($storageContainerLocationInfoResponseDTO);
     }
 
     #[OA\Get(
@@ -303,38 +306,29 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         parameters: [
             new OA\Parameter(
-                name: self::FILTER_DATE_KEY,
-                description: 'strict filtering, date in format YYYY-MM-DD',
+                name: self::FILTER_STORAGE_CONTAINER_ID,
+                description: 'Filter by storage container ID',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(
-                    type: 'string'
-                ),
-                example: '2025-01-15'
+                schema: new OA\Schema(type: 'string'),
             ),
             new OA\Parameter(
-                name: self::FILTER_IS_ACTIVE_KEY,
-                description: 'strict filtering',
+                name: self::FILTER_WAREHOUSE_ID,
+                description: 'Filter by warehouse ID',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(
-                    type: 'boolean'
-                ),
-                example: true
+                schema: new OA\Schema(type: 'string'),
             ),
             new OA\Parameter(
-                name: self::FILTER_CAR_ID_KEY,
-                description: 'strict filtering, UUID of the car',
+                name: self::FILTER_ROUTE_ID,
+                description: 'Filter by route ID',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(
-                    type: 'string'
-                ),
-                example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+                schema: new OA\Schema(type: 'string'),
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::PAGE_KEY,
@@ -359,13 +353,13 @@ class RouteController extends AbstractController
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::SORT_KEY,
-                description: 'Sorting by values, default value date',
+                description: 'Sorting by values, default value movedAt',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
-                example: 'date'
+                example: 'movedAt'
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::ORDER_KEY,
@@ -383,7 +377,7 @@ class RouteController extends AbstractController
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: RouteListResponseDTO::class
+                    type: StorageContainerLocationListResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -401,8 +395,8 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes',
-        name: 'oil_service_route_list',
+        '/warehouse/storage-container-locations',
+        name: 'storage_container_location_list',
         methods: ['GET']
     )]
     public function list(Request $request): JsonResponse
@@ -410,56 +404,48 @@ class RouteController extends AbstractController
         $this->requireAdminUser();
 
         $queryModifier = function (QueryBuilder $qb) use ($request): void {
-            try {
-                $date = $request->query->get(self::FILTER_DATE_KEY);
+            $qb->leftJoin(StorageContainerLocationRepository::ALIAS . '.storageContainer', 'sc');
+            $qb->addSelect('sc');
+            $qb->leftJoin(StorageContainerLocationRepository::ALIAS . '.warehouse', 'w');
+            $qb->addSelect('w');
+            $qb->leftJoin(StorageContainerLocationRepository::ALIAS . '.route', 'r');
+            $qb->addSelect('r');
 
-                assert(is_string($date));
+            try {
+                $storageContainerId = $request->query->get(self::FILTER_STORAGE_CONTAINER_ID);
+
+                assert(is_string($storageContainerId));
 
                 $qb->andWhere(
-                    $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.date',
-                        ':date'
-                    )
+                    $qb->expr()->eq(StorageContainerLocationRepository::ALIAS . '.storageContainer', ':storageContainerId')
                 );
-                $qb->setParameter('date', new DateTimeImmutable($date));
+                $qb->setParameter('storageContainerId', $storageContainerId);
             } catch (Throwable) {
                 // pass
             }
 
             try {
-                $isActive = $request->query->get(self::FILTER_IS_ACTIVE_KEY);
+                $warehouseId = $request->query->get(self::FILTER_WAREHOUSE_ID);
 
-                if ($isActive === 'true' || $isActive === '1') {
-                    $isActiveBool = true;
-                } elseif ($isActive === 'false' || $isActive === '0') {
-                    $isActiveBool = false;
-                } else {
-                    throw new InvalidDataException();
-                }
+                assert(is_string($warehouseId));
 
                 $qb->andWhere(
-                    $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.isActive',
-                        ':isActive'
-                    )
+                    $qb->expr()->eq(StorageContainerLocationRepository::ALIAS . '.warehouse', ':warehouseId')
                 );
-                $qb->setParameter('isActive', $isActiveBool);
+                $qb->setParameter('warehouseId', $warehouseId);
             } catch (Throwable) {
                 // pass
             }
 
             try {
-                $carId = $request->query->get(self::FILTER_CAR_ID_KEY);
+                $routeId = $request->query->get(self::FILTER_ROUTE_ID);
 
-                assert(is_string($carId));
+                assert(is_string($routeId));
 
                 $qb->andWhere(
-                    $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.car',
-                        ':carId'
-                    )
+                    $qb->expr()->eq(StorageContainerLocationRepository::ALIAS . '.route', ':routeId')
                 );
-                $qb->setParameter('carId', $carId);
+                $qb->setParameter('routeId', $routeId);
             } catch (Throwable) {
                 // pass
             }
@@ -468,85 +454,36 @@ class RouteController extends AbstractController
         $maxResults = $this->apiGridPropertyHelper->createMaxResults($request);
         $firstResult = $this->apiGridPropertyHelper->createfirstResult($request, $maxResults);
         $orderEnum = $this->apiGridPropertyHelper->createOrderEnum($request, OrderEnum::DESC);
-        $routeGridSortEnum = $this->apiGridPropertyHelper->createSortEnum(
+        $sortEnum = $this->apiGridPropertyHelper->createSortEnum(
             $request,
-            RouteGridSortEnum::class,
-            RouteGridSortEnum::DATE
+            StorageContainerLocationGridSortEnum::class,
+            StorageContainerLocationGridSortEnum::MOVED_AT
         );
-        $routesQueryBuilder = $this->routeRepository->getQueryBuilderWithAlias();
-        $routesPaginator = $this->apiGridManager->createPaginator(
-            $routesQueryBuilder,
+
+        $storageContainerLocationsQueryBuilder = $this->storageContainerLocationRepository->getQueryBuilderWithAlias();
+        $storageContainerLocationsPaginator = $this->apiGridManager->createPaginator(
+            $storageContainerLocationsQueryBuilder,
             $queryModifier
         );
-        /** @var RouteEntity[] $routes */
-        $routes = $this->apiGridManager->fetchData(
-            $routesQueryBuilder,
-            $routeGridSortEnum,
+
+        $storageContainerLocations = $this->apiGridManager->fetchData(
+            $storageContainerLocationsQueryBuilder,
+            $sortEnum,
             $orderEnum,
             $firstResult,
             $maxResults,
-            $queryModifier
+            $queryModifier,
         );
-        $routeListResponseDTO = $this->dtoFactory->createRouteListResponseDTO(
-            $routes,
+
+        $storageContainerLocationListResponseDTO = $this->dtoFactory->createStorageContainerLocationListResponseDTO(
+            $storageContainerLocations,
             $this->apiGridPropertyHelper->createPageCount(
-                $routesPaginator->count(),
+                $storageContainerLocationsPaginator->count(),
                 $maxResults
             )
         );
 
-        return $this->json($routeListResponseDTO);
-    }
-
-    #[OA\Get(
-        security: [
-            [
-                'Bearer' => []
-            ],
-        ],
-        tags: [
-            'OilService',
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Next 10 active routes from today',
-                content: new Model(
-                    type: RouteListResponseDTO::class
-                )
-            ),
-            new OA\Response(
-                response: 401,
-                description: 'Unauthorized'
-            ),
-            new OA\Response(
-                response: 403,
-                description: 'Forbidden'
-            ),
-            new OA\Response(
-                response: 500,
-                description: 'Server Error'
-            ),
-        ]
-    )]
-    #[Route(
-        '/oil-service/dashboard/routes/upcoming',
-        name: 'oil_service_dashboard_route_upcoming',
-        methods: ['GET']
-    )]
-    public function listUpcoming(): JsonResponse
-    {
-        $this->requireAdminUser();
-
-        /** @var RouteEntity[] $routes */
-        $routes = $this->routeRepository->findUpcomingActiveRoutes(
-            new DateTimeImmutable('today'),
-            10,
-        );
-
-        $routeListResponseDTO = $this->dtoFactory->createRouteListResponseDTO($routes, 1);
-
-        return $this->json($routeListResponseDTO);
+        return $this->json($storageContainerLocationListResponseDTO);
     }
 
     #[OA\Delete(
@@ -556,14 +493,14 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Deleted',
                 content: new Model(
-                    type: RouteDeleteResponseDTO::class
+                    type: StorageContainerLocationDeleteResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -585,25 +522,29 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_delete',
+        '/warehouse/storage-container-locations/{storageContainerLocationId}',
+        name: 'storage_container_location_delete',
         methods: ['DELETE']
     )]
-    public function delete(string $routeId): JsonResponse
+    public function delete(string $storageContainerLocationId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $storageContainerLocation = $this->storageContainerLocationRepository->find($storageContainerLocationId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($storageContainerLocation === null) {
+            throw new NotFoundHttpException('Storage container location not found');
         }
 
-        $this->routeService->deleteRoute($route);
+        try {
+            $this->storageContainerLocationService->deleteStorageContainerLocation($storageContainerLocation);
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
 
-        $routeDeleteResponseDTO = $this->dtoFactory->createRouteDeleteResponseDTO();
+        $storageContainerLocationDeleteResponseDTO = $this->dtoFactory->createStorageContainerLocationDeleteResponseDTO();
 
-        return $this->json($routeDeleteResponseDTO);
+        return $this->json($storageContainerLocationDeleteResponseDTO);
     }
 
     private function requireAdminUser(): AuthUser

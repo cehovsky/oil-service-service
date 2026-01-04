@@ -6,6 +6,7 @@ namespace App\Modules\OilService\DTO;
 
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
+use App\Modules\Warehouse\DTO\StorageContainerSummaryDTO;
 
 class RouteDTO
 {
@@ -31,7 +32,14 @@ class RouteDTO
     private array $terms;
 
     /**
+     * @var StorageContainerSummaryDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: StorageContainerSummaryDTO::class)))]
+    private array $storageContainers;
+
+    /**
      * @param RouteTermDTO[] $terms
+     * @param StorageContainerSummaryDTO[] $storageContainers
      */
     public function __construct(
         string $id,
@@ -40,6 +48,7 @@ class RouteDTO
         string $date,
         string $createdAt,
         array $terms,
+        array $storageContainers,
     ) {
         $this->id = $id;
         $this->car = $car;
@@ -47,6 +56,7 @@ class RouteDTO
         $this->date = $date;
         $this->createdAt = $createdAt;
         $this->terms = $terms;
+        $this->storageContainers = $storageContainers;
     }
 
     public function getId(): string
@@ -80,5 +90,13 @@ class RouteDTO
     public function getTerms(): array
     {
         return $this->terms;
+    }
+
+    /**
+     * @return StorageContainerSummaryDTO[]
+     */
+    public function getStorageContainers(): array
+    {
+        return $this->storageContainers;
     }
 }

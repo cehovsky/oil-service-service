@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\OilService\Controller;
+namespace App\Modules\Warehouse\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\Domain\ApiGrid\ApiGridManager;
@@ -14,19 +14,18 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
-use App\Modules\OilService\DTO\RouteCreateRequestDTO;
-use App\Modules\OilService\DTO\RouteCreateResponseDTO;
-use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
-use App\Modules\OilService\DTO\RouteInfoResponseDTO;
-use App\Modules\OilService\DTO\RouteListResponseDTO;
-use App\Modules\OilService\DTO\RouteUpdateRequestDTO;
-use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
-use App\Modules\OilService\Factory\DTOFactory;
-use App\Modules\OilService\Grid\Enum\RouteGridSortEnum;
-use App\OilService\DBAL\Entity\Route as RouteEntity;
-use App\OilService\DBAL\Repository\RouteRepository;
-use App\OilService\RouteService;
-use DateTimeImmutable;
+use App\Modules\Warehouse\DTO\WasteMaterialCreateRequestDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialCreateResponseDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialDeleteResponseDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialInfoResponseDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialListResponseDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialUpdateRequestDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialUpdateResponseDTO;
+use App\Modules\Warehouse\Factory\DTOFactory;
+use App\Modules\Warehouse\Grid\Enum\WasteMaterialGridSortEnum;
+use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
+use App\Warehouse\DBAL\Repository\WasteMaterialRepository;
+use App\Warehouse\WasteMaterialService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -40,21 +39,23 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
-class RouteController extends AbstractController
+class WasteMaterialController extends AbstractController
 {
-    private const string FILTER_DATE_KEY = 'date';
+    private const string FILTER_CODE_KEY = 'code';
+    private const string FILTER_LABEL_KEY = 'label';
+    private const string FILTER_SHORT_LABEL_KEY = 'shortLabel';
     private const string FILTER_IS_ACTIVE_KEY = 'isActive';
-    private const string FILTER_CAR_ID_KEY = 'carId';
+    private const string FILTER_VOLUME_UNIT_KEY = 'volumeUnit';
 
     public function __construct(
         private readonly DTOValueResolver $dtoValueResolver,
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
-        private readonly RouteRepository $routeRepository,
+        private readonly WasteMaterialRepository $wasteMaterialRepository,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly RouteService $routeService,
+        private readonly WasteMaterialService $wasteMaterialService,
     ) {
     }
 
@@ -67,19 +68,19 @@ class RouteController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: RouteCreateRequestDTO::class
+                    type: WasteMaterialCreateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Created',
                 content: new Model(
-                    type: RouteCreateResponseDTO::class
+                    type: WasteMaterialCreateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -98,18 +99,14 @@ class RouteController extends AbstractController
                 description: 'Forbidden'
             ),
             new OA\Response(
-                response: 404,
-                description: 'Not Found'
-            ),
-            new OA\Response(
                 response: 500,
                 description: 'Server Error'
             ),
         ]
     )]
     #[Route(
-        '/oil-service/routes',
-        name: 'oil_service_route_create',
+        '/warehouse/waste-materials',
+        name: 'waste_material_create',
         methods: ['POST']
     )]
     public function create(Request $request): JsonResponse
@@ -117,24 +114,24 @@ class RouteController extends AbstractController
         $this->requireAdminUser();
 
         try {
-            $routeCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $wasteMaterialCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                RouteCreateRequestDTO::class
+                WasteMaterialCreateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($routeCreateRequestDTO);
+            $this->dtoValueResolver->validateDTO($wasteMaterialCreateRequestDTO);
 
-            $route = $this->routeService->createRoute(
-                $routeCreateRequestDTO->getCarId(),
-                $routeCreateRequestDTO->getIsActive(),
-                new DateTimeImmutable($routeCreateRequestDTO->getDate()),
-                $routeCreateRequestDTO->getTermIds(),
-                $routeCreateRequestDTO->getStorageContainerIds(),
+            $wasteMaterial = $this->wasteMaterialService->createWasteMaterial(
+                $wasteMaterialCreateRequestDTO->getCode(),
+                $wasteMaterialCreateRequestDTO->getLabel(),
+                $wasteMaterialCreateRequestDTO->getShortLabel(),
+                $wasteMaterialCreateRequestDTO->getIsActive(),
+                VolumeUnitEnum::from($wasteMaterialCreateRequestDTO->getVolumeUnit()),
             );
 
-            $routeCreateResponseDTO = $this->dtoFactory->createRouteCreateResponseDTO($route);
+            $wasteMaterialCreateResponseDTO = $this->dtoFactory->createWasteMaterialCreateResponseDTO($wasteMaterial);
 
-            return $this->json($routeCreateResponseDTO);
+            return $this->json($wasteMaterialCreateResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
@@ -155,19 +152,19 @@ class RouteController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: RouteUpdateRequestDTO::class
+                    type: WasteMaterialUpdateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Updated',
                 content: new Model(
-                    type: RouteUpdateResponseDTO::class
+                    type: WasteMaterialUpdateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -196,40 +193,40 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_update',
+        '/warehouse/waste-materials/{wasteMaterialId}',
+        name: 'waste_material_update',
         methods: ['PUT']
     )]
-    public function update(Request $request, string $routeId): JsonResponse
+    public function update(Request $request, string $wasteMaterialId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $wasteMaterial = $this->wasteMaterialRepository->find($wasteMaterialId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($wasteMaterial === null) {
+            throw new NotFoundHttpException('Waste material not found');
         }
 
         try {
-            $routeUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $wasteMaterialUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                RouteUpdateRequestDTO::class
+                WasteMaterialUpdateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($routeUpdateRequestDTO);
+            $this->dtoValueResolver->validateDTO($wasteMaterialUpdateRequestDTO);
 
-            $route = $this->routeService->updateRoute(
-                $route,
-                $routeUpdateRequestDTO->getCarId(),
-                $routeUpdateRequestDTO->getIsActive(),
-                new DateTimeImmutable($routeUpdateRequestDTO->getDate()),
-                $routeUpdateRequestDTO->getTermIds(),
-                $routeUpdateRequestDTO->getStorageContainerIds(),
+            $wasteMaterial = $this->wasteMaterialService->updateWasteMaterial(
+                $wasteMaterial,
+                $wasteMaterialUpdateRequestDTO->getCode(),
+                $wasteMaterialUpdateRequestDTO->getLabel(),
+                $wasteMaterialUpdateRequestDTO->getShortLabel(),
+                $wasteMaterialUpdateRequestDTO->getIsActive(),
+                VolumeUnitEnum::from($wasteMaterialUpdateRequestDTO->getVolumeUnit()),
             );
 
-            $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);
+            $wasteMaterialUpdateResponseDTO = $this->dtoFactory->createWasteMaterialUpdateResponseDTO($wasteMaterial);
 
-            return $this->json($routeUpdateResponseDTO);
+            return $this->json($wasteMaterialUpdateResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
@@ -248,14 +245,14 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: RouteInfoResponseDTO::class
+                    type: WasteMaterialInfoResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -277,23 +274,23 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_info',
+        '/warehouse/waste-materials/{wasteMaterialId}',
+        name: 'waste_material_info',
         methods: ['GET']
     )]
-    public function info(string $routeId): JsonResponse
+    public function info(string $wasteMaterialId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $wasteMaterial = $this->wasteMaterialRepository->find($wasteMaterialId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($wasteMaterial === null) {
+            throw new NotFoundHttpException('Waste material not found');
         }
 
-        $routeInfoResponseDTO = $this->dtoFactory->createRouteInfoResponseDTO($route);
+        $wasteMaterialInfoResponseDTO = $this->dtoFactory->createWasteMaterialInfoResponseDTO($wasteMaterial);
 
-        return $this->json($routeInfoResponseDTO);
+        return $this->json($wasteMaterialInfoResponseDTO);
     }
 
     #[OA\Get(
@@ -303,22 +300,42 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         parameters: [
             new OA\Parameter(
-                name: self::FILTER_DATE_KEY,
-                description: 'strict filtering, date in format YYYY-MM-DD',
+                name: self::FILTER_CODE_KEY,
+                description: 'Filter by code (strict)',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
-                example: '2025-01-15'
+                example: 'WM-01'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_LABEL_KEY,
+                description: 'Filter by label (non-strict)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string'
+                ),
+                example: 'Oil'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_SHORT_LABEL_KEY,
+                description: 'Filter by short label (non-strict)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string'
+                ),
+                example: 'Oil'
             ),
             new OA\Parameter(
                 name: self::FILTER_IS_ACTIVE_KEY,
-                description: 'strict filtering',
+                description: 'Filter by activity flag',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
@@ -327,14 +344,15 @@ class RouteController extends AbstractController
                 example: true
             ),
             new OA\Parameter(
-                name: self::FILTER_CAR_ID_KEY,
-                description: 'strict filtering, UUID of the car',
+                name: self::FILTER_VOLUME_UNIT_KEY,
+                description: 'Filter by volume unit',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
-                    type: 'string'
+                    type: 'string',
+                    enum: VolumeUnitEnum::VALUES
                 ),
-                example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+                example: 'l'
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::PAGE_KEY,
@@ -359,23 +377,23 @@ class RouteController extends AbstractController
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::SORT_KEY,
-                description: 'Sorting by values, default value date',
+                description: 'Sorting by values, default value code',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
-                example: 'date'
+                example: 'code'
             ),
             new OA\Parameter(
                 name: ApiGridPropertyHelper::ORDER_KEY,
-                description: 'Select ordering, default value DESC, values: ASC, DESC',
+                description: 'Select ordering, default value ASC, values: ASC, DESC',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
-                example: 'DESC'
+                example: 'ASC'
             ),
         ],
         responses: [
@@ -383,7 +401,7 @@ class RouteController extends AbstractController
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: RouteListResponseDTO::class
+                    type: WasteMaterialListResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -401,8 +419,8 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes',
-        name: 'oil_service_route_list',
+        '/warehouse/waste-materials',
+        name: 'waste_material_list',
         methods: ['GET']
     )]
     public function list(Request $request): JsonResponse
@@ -411,17 +429,49 @@ class RouteController extends AbstractController
 
         $queryModifier = function (QueryBuilder $qb) use ($request): void {
             try {
-                $date = $request->query->get(self::FILTER_DATE_KEY);
+                $code = $request->query->get(self::FILTER_CODE_KEY);
 
-                assert(is_string($date));
+                assert(is_string($code));
 
                 $qb->andWhere(
                     $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.date',
-                        ':date'
+                        WasteMaterialRepository::ALIAS . '.code',
+                        ':code'
                     )
                 );
-                $qb->setParameter('date', new DateTimeImmutable($date));
+                $qb->setParameter('code', $code);
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $label = $request->query->get(self::FILTER_LABEL_KEY);
+
+                assert(is_string($label));
+
+                $qb->andWhere(
+                    $qb->expr()->like(
+                        WasteMaterialRepository::ALIAS . '.label',
+                        ':label'
+                    )
+                );
+                $qb->setParameter('label', '%' . $label . '%');
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $shortLabel = $request->query->get(self::FILTER_SHORT_LABEL_KEY);
+
+                assert(is_string($shortLabel));
+
+                $qb->andWhere(
+                    $qb->expr()->like(
+                        WasteMaterialRepository::ALIAS . '.shortLabel',
+                        ':shortLabel'
+                    )
+                );
+                $qb->setParameter('shortLabel', '%' . $shortLabel . '%');
             } catch (Throwable) {
                 // pass
             }
@@ -439,7 +489,7 @@ class RouteController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.isActive',
+                        WasteMaterialRepository::ALIAS . '.isActive',
                         ':isActive'
                     )
                 );
@@ -449,17 +499,21 @@ class RouteController extends AbstractController
             }
 
             try {
-                $carId = $request->query->get(self::FILTER_CAR_ID_KEY);
+                $volumeUnit = $request->query->get(self::FILTER_VOLUME_UNIT_KEY);
 
-                assert(is_string($carId));
+                assert(is_string($volumeUnit));
 
-                $qb->andWhere(
-                    $qb->expr()->eq(
-                        RouteRepository::ALIAS . '.car',
-                        ':carId'
-                    )
-                );
-                $qb->setParameter('carId', $carId);
+                $volumeUnitEnum = VolumeUnitEnum::tryFrom($volumeUnit);
+
+                if ($volumeUnitEnum !== null) {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            WasteMaterialRepository::ALIAS . '.volumeUnit',
+                            ':volumeUnit'
+                        )
+                    );
+                    $qb->setParameter('volumeUnit', $volumeUnitEnum->value);
+                }
             } catch (Throwable) {
                 // pass
             }
@@ -467,86 +521,37 @@ class RouteController extends AbstractController
 
         $maxResults = $this->apiGridPropertyHelper->createMaxResults($request);
         $firstResult = $this->apiGridPropertyHelper->createfirstResult($request, $maxResults);
-        $orderEnum = $this->apiGridPropertyHelper->createOrderEnum($request, OrderEnum::DESC);
-        $routeGridSortEnum = $this->apiGridPropertyHelper->createSortEnum(
+        $orderEnum = $this->apiGridPropertyHelper->createOrderEnum($request, OrderEnum::ASC);
+        $sortEnum = $this->apiGridPropertyHelper->createSortEnum(
             $request,
-            RouteGridSortEnum::class,
-            RouteGridSortEnum::DATE
+            WasteMaterialGridSortEnum::class,
+            WasteMaterialGridSortEnum::CODE
         );
-        $routesQueryBuilder = $this->routeRepository->getQueryBuilderWithAlias();
-        $routesPaginator = $this->apiGridManager->createPaginator(
-            $routesQueryBuilder,
+
+        $wasteMaterialsQueryBuilder = $this->wasteMaterialRepository->getQueryBuilderWithAlias();
+        $wasteMaterialsPaginator = $this->apiGridManager->createPaginator(
+            $wasteMaterialsQueryBuilder,
             $queryModifier
         );
-        /** @var RouteEntity[] $routes */
-        $routes = $this->apiGridManager->fetchData(
-            $routesQueryBuilder,
-            $routeGridSortEnum,
+
+        $wasteMaterials = $this->apiGridManager->fetchData(
+            $wasteMaterialsQueryBuilder,
+            $sortEnum,
             $orderEnum,
             $firstResult,
             $maxResults,
-            $queryModifier
+            $queryModifier,
         );
-        $routeListResponseDTO = $this->dtoFactory->createRouteListResponseDTO(
-            $routes,
+
+        $wasteMaterialListResponseDTO = $this->dtoFactory->createWasteMaterialListResponseDTO(
+            $wasteMaterials,
             $this->apiGridPropertyHelper->createPageCount(
-                $routesPaginator->count(),
+                $wasteMaterialsPaginator->count(),
                 $maxResults
             )
         );
 
-        return $this->json($routeListResponseDTO);
-    }
-
-    #[OA\Get(
-        security: [
-            [
-                'Bearer' => []
-            ],
-        ],
-        tags: [
-            'OilService',
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Next 10 active routes from today',
-                content: new Model(
-                    type: RouteListResponseDTO::class
-                )
-            ),
-            new OA\Response(
-                response: 401,
-                description: 'Unauthorized'
-            ),
-            new OA\Response(
-                response: 403,
-                description: 'Forbidden'
-            ),
-            new OA\Response(
-                response: 500,
-                description: 'Server Error'
-            ),
-        ]
-    )]
-    #[Route(
-        '/oil-service/dashboard/routes/upcoming',
-        name: 'oil_service_dashboard_route_upcoming',
-        methods: ['GET']
-    )]
-    public function listUpcoming(): JsonResponse
-    {
-        $this->requireAdminUser();
-
-        /** @var RouteEntity[] $routes */
-        $routes = $this->routeRepository->findUpcomingActiveRoutes(
-            new DateTimeImmutable('today'),
-            10,
-        );
-
-        $routeListResponseDTO = $this->dtoFactory->createRouteListResponseDTO($routes, 1);
-
-        return $this->json($routeListResponseDTO);
+        return $this->json($wasteMaterialListResponseDTO);
     }
 
     #[OA\Delete(
@@ -556,14 +561,14 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Warehouse',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Deleted',
                 content: new Model(
-                    type: RouteDeleteResponseDTO::class
+                    type: WasteMaterialDeleteResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -585,25 +590,29 @@ class RouteController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/routes/{routeId}',
-        name: 'oil_service_route_delete',
+        '/warehouse/waste-materials/{wasteMaterialId}',
+        name: 'waste_material_delete',
         methods: ['DELETE']
     )]
-    public function delete(string $routeId): JsonResponse
+    public function delete(string $wasteMaterialId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $route = $this->routeRepository->find($routeId);
+        $wasteMaterial = $this->wasteMaterialRepository->find($wasteMaterialId);
 
-        if ($route === null) {
-            throw new NotFoundHttpException('Route not found');
+        if ($wasteMaterial === null) {
+            throw new NotFoundHttpException('Waste material not found');
         }
 
-        $this->routeService->deleteRoute($route);
+        try {
+            $this->wasteMaterialService->deleteWasteMaterial($wasteMaterial);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection($e->getErrorCollection());
+        }
 
-        $routeDeleteResponseDTO = $this->dtoFactory->createRouteDeleteResponseDTO();
+        $wasteMaterialDeleteResponseDTO = $this->dtoFactory->createWasteMaterialDeleteResponseDTO();
 
-        return $this->json($routeDeleteResponseDTO);
+        return $this->json($wasteMaterialDeleteResponseDTO);
     }
 
     private function requireAdminUser(): AuthUser

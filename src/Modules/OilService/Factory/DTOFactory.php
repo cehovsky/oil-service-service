@@ -38,6 +38,7 @@ use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
 use App\Modules\OilService\DTO\RouteInfoResponseDTO;
 use App\Modules\OilService\DTO\RouteListResponseDTO;
 use App\Modules\OilService\DTO\RouteTermDTO;
+use App\Modules\Warehouse\DTO\StorageContainerSummaryDTO;
 use App\Modules\OilService\DTO\CarDTO;
 use App\Modules\OilService\DTO\CarCreateResponseDTO;
 use App\Modules\OilService\DTO\CarUpdateResponseDTO;
@@ -49,6 +50,7 @@ use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
+use App\Warehouse\DBAL\Entity\StorageContainer;
 
 class DTOFactory
 {
@@ -379,9 +381,18 @@ class DTOFactory
     {
         $car = $route->getCar();
         $routeTerms = [];
+        $storageContainers = [];
 
         foreach ($route->getTerms() as $term) {
             $routeTerms[] = $this->createRouteTermDTO($term);
+        }
+
+        foreach ($route->getStorageContainerLocations() as $location) {
+            $storageContainer = $location->getStorageContainer();
+
+            $storageContainers[$storageContainer->getId()->__toString()] = $this->createStorageContainerSummaryDTO(
+                $storageContainer
+            );
         }
 
         return new RouteDTO(
@@ -391,6 +402,7 @@ class DTOFactory
             $route->getDate()->format('Y-m-d'),
             $route->getCreatedAt()->format(\DateTimeInterface::ATOM),
             $routeTerms,
+            array_values($storageContainers),
         );
     }
 
@@ -403,6 +415,16 @@ class DTOFactory
             $term->getIsActive(),
             $term->getMaxCount(),
             $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+        );
+    }
+
+    private function createStorageContainerSummaryDTO(StorageContainer $storageContainer): StorageContainerSummaryDTO
+    {
+        return new StorageContainerSummaryDTO(
+            $storageContainer->getId()->__toString(),
+            $storageContainer->getCode(),
+            $storageContainer->getType()->value,
+            $storageContainer->getVolumeUnit()->value,
         );
     }
 
