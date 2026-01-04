@@ -29,4 +29,9 @@ class StorageContainerRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder(self::ALIAS);
     }
+
+    public function findByCode(string $code): ?StorageContainer
+    {
+        return $this->findOneBy(['code' => $code]);
+    }
 }

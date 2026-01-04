@@ -23,6 +23,7 @@ use App\Modules\Warehouse\DTO\StorageContainerUpdateRequestDTO;
 use App\Modules\Warehouse\DTO\StorageContainerUpdateResponseDTO;
 use App\Modules\Warehouse\Factory\DTOFactory;
 use App\Modules\Warehouse\Grid\Enum\StorageContainerGridSortEnum;
+use App\Modules\Warehouse\Validation\Constraint\UniqueStorageContainerCode;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\StorageContainerLocationRepository;
@@ -225,7 +226,10 @@ class StorageContainerController extends AbstractController
                 StorageContainerUpdateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($storageContainerUpdateRequestDTO);
+            $this->dtoValueResolver->validateDTO(
+                $storageContainerUpdateRequestDTO,
+                new UniqueStorageContainerCode(ignoreStorageContainerId: $storageContainer->getId()->__toString()),
+            );
 
             $storageContainer = $this->storageContainerService->updateStorageContainer(
                 $storageContainer,

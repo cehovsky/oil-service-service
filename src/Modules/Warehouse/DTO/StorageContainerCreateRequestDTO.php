@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Warehouse\DTO;
 
+use App\Modules\Warehouse\Validation\Constraint\UniqueStorageContainerCode;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[UniqueStorageContainerCode]
 class StorageContainerCreateRequestDTO
 {
     #[OA\Property(example: 'SC-001')]
