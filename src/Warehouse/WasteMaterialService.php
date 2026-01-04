@@ -27,6 +27,7 @@ class WasteMaterialService
         string $shortLabel,
         bool $isActive,
         VolumeUnitEnum $volumeUnit,
+        ?string $catalogDescription = null,
     ): WasteMaterial {
         $wasteMaterial = $this->entityFactory->createWasteMaterial(
             $code,
@@ -34,6 +35,7 @@ class WasteMaterialService
             $shortLabel,
             $isActive,
             $volumeUnit,
+            $catalogDescription,
         );
 
         $this->entityManager->persist($wasteMaterial);
@@ -49,12 +51,14 @@ class WasteMaterialService
         string $shortLabel,
         bool $isActive,
         VolumeUnitEnum $volumeUnit,
+        ?string $catalogDescription = null,
     ): WasteMaterial {
         $wasteMaterial->setCode($code);
         $wasteMaterial->setLabel($label);
         $wasteMaterial->setShortLabel($shortLabel);
         $wasteMaterial->setIsActive($isActive);
         $wasteMaterial->setVolumeUnit($volumeUnit);
+        $wasteMaterial->setCatalogDescription($catalogDescription);
         $wasteMaterial->setUpdatedAt(new DateTimeImmutable());
 
         $this->entityManager->flush();

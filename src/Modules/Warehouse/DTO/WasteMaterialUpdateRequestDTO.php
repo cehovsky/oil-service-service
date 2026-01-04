@@ -34,6 +34,10 @@ class WasteMaterialUpdateRequestDTO
     #[Assert\Choice(callback: [VolumeUnitEnum::class, 'values'])]
     private string $volumeUnit;
 
+    #[OA\Property(example: 'Description from catalog')]
+    #[Assert\Length(max: 255)]
+    private ?string $catalogDescription = null;
+
     public function getCode(): string
     {
         return $this->code;
@@ -90,6 +94,18 @@ class WasteMaterialUpdateRequestDTO
     public function setVolumeUnit(string $volumeUnit): self
     {
         $this->volumeUnit = $volumeUnit;
+
+        return $this;
+    }
+
+    public function getCatalogDescription(): ?string
+    {
+        return $this->catalogDescription;
+    }
+
+    public function setCatalogDescription(?string $catalogDescription): self
+    {
+        $this->catalogDescription = $catalogDescription;
 
         return $this;
     }

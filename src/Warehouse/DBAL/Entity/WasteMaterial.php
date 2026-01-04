@@ -47,6 +47,10 @@ class WasteMaterial
     #[ORM\Column(type: Types::STRING, enumType: VolumeUnitEnum::class, length: 8)]
     private VolumeUnitEnum $volumeUnit;
 
+    #[Assert\Length(max: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $catalogDescription;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -64,6 +68,7 @@ class WasteMaterial
         string $shortLabel,
         bool $isActive,
         VolumeUnitEnum $volumeUnit,
+        ?string $catalogDescription,
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt,
     ) {
@@ -73,6 +78,7 @@ class WasteMaterial
         $this->shortLabel = $shortLabel;
         $this->isActive = $isActive;
         $this->volumeUnit = $volumeUnit;
+        $this->catalogDescription = $catalogDescription;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
         $this->preferredStorageContainers = new ArrayCollection();
@@ -139,6 +145,18 @@ class WasteMaterial
     public function setVolumeUnit(VolumeUnitEnum $volumeUnit): self
     {
         $this->volumeUnit = $volumeUnit;
+
+        return $this;
+    }
+
+    public function getCatalogDescription(): ?string
+    {
+        return $this->catalogDescription;
+    }
+
+    public function setCatalogDescription(?string $catalogDescription): self
+    {
+        $this->catalogDescription = $catalogDescription;
 
         return $this;
     }

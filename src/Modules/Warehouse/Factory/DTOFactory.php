@@ -139,6 +139,7 @@ class DTOFactory
             $wasteMaterial->getShortLabel(),
             $wasteMaterial->getIsActive(),
             $wasteMaterial->getVolumeUnit()->value,
+            $wasteMaterial->getCatalogDescription(),
             $wasteMaterial->getCreatedAt()->format(\DateTimeInterface::ATOM),
             $wasteMaterial->getUpdatedAt()->format(\DateTimeInterface::ATOM),
         );

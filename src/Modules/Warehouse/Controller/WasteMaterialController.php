@@ -127,6 +127,7 @@ class WasteMaterialController extends AbstractController
                 $wasteMaterialCreateRequestDTO->getShortLabel(),
                 $wasteMaterialCreateRequestDTO->getIsActive(),
                 VolumeUnitEnum::from($wasteMaterialCreateRequestDTO->getVolumeUnit()),
+                $wasteMaterialCreateRequestDTO->getCatalogDescription(),
             );
 
             $wasteMaterialCreateResponseDTO = $this->dtoFactory->createWasteMaterialCreateResponseDTO($wasteMaterial);
@@ -222,6 +223,7 @@ class WasteMaterialController extends AbstractController
                 $wasteMaterialUpdateRequestDTO->getShortLabel(),
                 $wasteMaterialUpdateRequestDTO->getIsActive(),
                 VolumeUnitEnum::from($wasteMaterialUpdateRequestDTO->getVolumeUnit()),
+                $wasteMaterialUpdateRequestDTO->getCatalogDescription(),
             );
 
             $wasteMaterialUpdateResponseDTO = $this->dtoFactory->createWasteMaterialUpdateResponseDTO($wasteMaterial);

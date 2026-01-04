@@ -26,6 +26,9 @@ class WasteMaterialDTO
     #[OA\Property(example: 'l')]
     private string $volumeUnit;
 
+    #[OA\Property(example: 'Description from catalog')]
+    private ?string $catalogDescription;
+
     #[OA\Property(example: '2026-01-02T10:00:00+00:00')]
     private string $createdAt;
 
@@ -39,6 +42,7 @@ class WasteMaterialDTO
         string $shortLabel,
         bool $isActive,
         string $volumeUnit,
+        ?string $catalogDescription,
         string $createdAt,
         string $updatedAt,
     ) {
@@ -48,6 +52,7 @@ class WasteMaterialDTO
         $this->shortLabel = $shortLabel;
         $this->isActive = $isActive;
         $this->volumeUnit = $volumeUnit;
+        $this->catalogDescription = $catalogDescription;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
     }
@@ -80,6 +85,11 @@ class WasteMaterialDTO
     public function getVolumeUnit(): string
     {
         return $this->volumeUnit;
+    }
+
+    public function getCatalogDescription(): ?string
+    {
+        return $this->catalogDescription;
     }
 
     public function getCreatedAt(): string

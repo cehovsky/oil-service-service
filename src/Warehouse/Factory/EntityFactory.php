@@ -27,6 +27,7 @@ class EntityFactory
         string $shortLabel,
         bool $isActive,
         VolumeUnitEnum $volumeUnit,
+        ?string $catalogDescription = null,
     ): WasteMaterial {
         $now = new DateTimeImmutable();
 
@@ -37,6 +38,7 @@ class EntityFactory
             $shortLabel,
             $isActive,
             $volumeUnit,
+            $catalogDescription,
             $now,
             $now,
         );
