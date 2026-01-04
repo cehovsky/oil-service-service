@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\Factory;
 
+use App\Auth\DBAL\Entity\User as AuthUser;
 use App\Domain\DTOValueResolver;
 use App\Domain\Exception\InvalidArgumentException;
 use App\Modules\OilService\DTO\FormCreateResponseDTO;
@@ -45,6 +46,7 @@ use App\Modules\OilService\DTO\CarUpdateResponseDTO;
 use App\Modules\OilService\DTO\CarDeleteResponseDTO;
 use App\Modules\OilService\DTO\CarInfoResponseDTO;
 use App\Modules\OilService\DTO\CarListResponseDTO;
+use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\Route;
@@ -342,7 +344,10 @@ class DTOFactory
         );
     }
 
-    public function createTermWithFormCountDTO(Term $term, int $formCount): TermWithFormCountDTO
+    /**
+     * @param UserDTO[] $users
+     */
+    public function createTermWithFormCountDTO(Term $term, int $formCount, array $users): TermWithFormCountDTO
     {
         return new TermWithFormCountDTO(
             $term->getId()->__toString(),
@@ -352,6 +357,7 @@ class DTOFactory
             $term->getMaxCount(),
             $formCount,
             $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $users,
         );
     }
 
@@ -366,8 +372,9 @@ class DTOFactory
         foreach ($terms as $term) {
             $key = $term->getDate()->format('Y-m-d') . '|' . $term->getTimeSlot()->value;
             $formCount = $formCounts[$key] ?? 0;
+            $users = $this->createRouteUserDTOsFromTerm($term);
 
-            $termDTOs[] = $this->createTermWithFormCountDTO($term, $formCount);
+            $termDTOs[] = $this->createTermWithFormCountDTO($term, $formCount, $users);
         }
 
         return new TermWithFormCountListResponseDTO(
@@ -397,7 +404,7 @@ class DTOFactory
         }
 
         foreach ($route->getRouteUsers() as $routeUser) {
-            $routeUsers[] = $routeUser->getUser()->getId()->__toString();
+            $routeUsers[] = $this->createAuthUserDTO($routeUser->getUser());
         }
 
         return new RouteDTO(
@@ -410,6 +417,38 @@ class DTOFactory
             array_values($storageContainers),
             $routeUsers,
         );
+    }
+
+    private function createAuthUserDTO(AuthUser $user): UserDTO
+    {
+        return new UserDTO(
+            $user->getId()->__toString(),
+            $user->getEmail(),
+            $user->getFullName(),
+            $user->getIsActive(),
+            $user->getIsAdmin(),
+        );
+    }
+
+    /**
+     * @return UserDTO[]
+     */
+    private function createRouteUserDTOsFromTerm(Term $term): array
+    {
+        $userDTOs = [];
+
+        foreach ($term->getRoutes() as $route) {
+            foreach ($route->getRouteUsers() as $routeUser) {
+                $user = $routeUser->getUser();
+                $userId = $user->getId()->__toString();
+
+                if (!isset($userDTOs[$userId])) {
+                    $userDTOs[$userId] = $this->createAuthUserDTO($user);
+                }
+            }
+        }
+
+        return array_values($userDTOs);
     }
 
     private function createRouteTermDTO(Term $term): RouteTermDTO

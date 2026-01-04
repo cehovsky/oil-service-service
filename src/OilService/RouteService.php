@@ -137,17 +137,27 @@ class RouteService
             return;
         }
 
+        $existingRouteUsersByUserId = [];
+
         foreach ($route->getRouteUsers()->toArray() as $routeUser) {
-            $route->removeRouteUser($routeUser);
-            $this->entityManager->remove($routeUser);
+            $existingRouteUsersByUserId[$routeUser->getUser()->getId()->toRfc4122()] = $routeUser;
         }
 
-        $uniqueUserIds = array_unique($userIds);
+        foreach (array_unique($userIds) as $userId) {
+            if (isset($existingRouteUsersByUserId[$userId])) {
+                unset($existingRouteUsersByUserId[$userId]);
 
-        foreach ($uniqueUserIds as $userId) {
+                continue; // keep existing link
+            }
+
             $user = $this->findAuthUser($userId);
             $routeUser = $this->entityFactory->createRouteUser($route, $user);
             $route->addRouteUser($routeUser);
+        }
+
+        foreach ($existingRouteUsersByUserId as $routeUser) {
+            $route->removeRouteUser($routeUser);
+            $this->entityManager->remove($routeUser);
         }
     }
 

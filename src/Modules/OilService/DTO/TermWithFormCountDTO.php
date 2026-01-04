@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
 class TermWithFormCountDTO
@@ -30,6 +32,12 @@ class TermWithFormCountDTO
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
 
+    /**
+     * @var UserDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: UserDTO::class)))]
+    private array $users;
+
     public function __construct(
         string $id,
         string $date,
@@ -38,6 +46,7 @@ class TermWithFormCountDTO
         int $maxCount,
         int $formCount,
         string $createdAt,
+        array $users,
     ) {
         $this->id = $id;
         $this->date = $date;
@@ -46,6 +55,7 @@ class TermWithFormCountDTO
         $this->maxCount = $maxCount;
         $this->formCount = $formCount;
         $this->createdAt = $createdAt;
+        $this->users = $users;
     }
 
     public function getId(): string
@@ -81,5 +91,13 @@ class TermWithFormCountDTO
     public function getCreatedAt(): string
     {
         return $this->createdAt;
+    }
+
+    /**
+     * @return UserDTO[]
+     */
+    public function getUsers(): array
+    {
+        return $this->users;
     }
 }
