@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\OilService\Factory;
 
+use App\Auth\DBAL\Entity\User as AuthUser;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\Route;
+use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 use App\OilService\DBAL\Enum\CarStatusEnum;
@@ -107,6 +109,16 @@ class EntityFactory
             $car,
             $isActive,
             $date,
+            new DateTimeImmutable(),
+        );
+    }
+
+    public function createRouteUser(Route $route, AuthUser $user): RouteUser
+    {
+        return new RouteUser(
+            $this->uuidFactory->timeBased()->create(),
+            $route,
+            $user,
             new DateTimeImmutable(),
         );
     }

@@ -14,6 +14,7 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Warehouse\DBAL\Entity\StorageContainerLocation;
+use App\OilService\DBAL\Entity\RouteUser;
 
 #[ORM\Table(name: 'oil_service_route')]
 #[ORM\Entity(repositoryClass: RouteRepository::class)]
@@ -51,6 +52,10 @@ class Route
     #[ORM\OneToMany(mappedBy: 'route', targetEntity: StorageContainerLocation::class)]
     private Collection $storageContainerLocations;
 
+    /** @var Collection<int, RouteUser> */
+    #[ORM\OneToMany(mappedBy: 'route', targetEntity: RouteUser::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $routeUsers;
+
     public function __construct(
         Uuid $id,
         ?Car $car,
@@ -66,6 +71,7 @@ class Route
         $this->terms = new ArrayCollection();
         $this->forms = new ArrayCollection();
         $this->storageContainerLocations = new ArrayCollection();
+        $this->routeUsers = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -175,6 +181,31 @@ class Route
                 $location->clearRoute();
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, RouteUser>
+     */
+    public function getRouteUsers(): Collection
+    {
+        return $this->routeUsers;
+    }
+
+    public function addRouteUser(RouteUser $routeUser): self
+    {
+        if (!$this->routeUsers->contains($routeUser)) {
+            $this->routeUsers->add($routeUser);
+            $routeUser->setRoute($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRouteUser(RouteUser $routeUser): self
+    {
+        $this->routeUsers->removeElement($routeUser);
 
         return $this;
     }

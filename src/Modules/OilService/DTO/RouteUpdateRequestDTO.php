@@ -7,6 +7,7 @@ namespace App\Modules\OilService\DTO;
 use App\Modules\OilService\Validation\Constraint\ExistingCar;
 use App\Modules\OilService\Validation\Constraint\ExistingTermIds;
 use App\Modules\OilService\Validation\Constraint\ExistingStorageContainerIds;
+use App\Modules\OilService\Validation\Constraint\ExistingAuthUserIds;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -45,6 +46,16 @@ class RouteUpdateRequestDTO
     ])]
     #[ExistingStorageContainerIds]
     private ?array $storageContainerIds = null;
+
+    /**
+     * @var string[]|null
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string', example: 'd0e2f84c-3ef8-4c4d-a7c6-6e1c1e1f4b5c'), nullable: true)]
+    #[Assert\All([
+        new Assert\Uuid(),
+    ])]
+    #[ExistingAuthUserIds]
+    private ?array $userIds = null;
 
     public function getCarId(): ?string
     {
@@ -114,6 +125,24 @@ class RouteUpdateRequestDTO
     public function setStorageContainerIds(?array $storageContainerIds): self
     {
         $this->storageContainerIds = $storageContainerIds;
+
+        return $this;
+    }
+
+    /**
+     * @return string[]|null
+     */
+    public function getUserIds(): ?array
+    {
+        return $this->userIds;
+    }
+
+    /**
+     * @param string[]|null $userIds
+     */
+    public function setUserIds(?array $userIds): self
+    {
+        $this->userIds = $userIds;
 
         return $this;
     }

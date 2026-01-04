@@ -130,6 +130,7 @@ class RouteController extends AbstractController
                 new DateTimeImmutable($routeCreateRequestDTO->getDate()),
                 $routeCreateRequestDTO->getTermIds(),
                 $routeCreateRequestDTO->getStorageContainerIds(),
+                $routeCreateRequestDTO->getUserIds(),
             );
 
             $routeCreateResponseDTO = $this->dtoFactory->createRouteCreateResponseDTO($route);
@@ -225,6 +226,7 @@ class RouteController extends AbstractController
                 new DateTimeImmutable($routeUpdateRequestDTO->getDate()),
                 $routeUpdateRequestDTO->getTermIds(),
                 $routeUpdateRequestDTO->getStorageContainerIds(),
+                $routeUpdateRequestDTO->getUserIds(),
             );
 
             $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);

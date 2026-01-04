@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\OilService;
 
+use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Auth\DBAL\Repository\UserRepository as AuthUserRepository;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Route as RouteEntity;
 use App\OilService\DBAL\Entity\Term;
@@ -18,6 +20,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class RouteService
 {
     public function __construct(
+        private readonly AuthUserRepository $authUserRepository,
         private readonly CarRepository $carRepository,
         private readonly TermRepository $termRepository,
         private readonly EntityFactory $entityFactory,
@@ -32,12 +35,14 @@ class RouteService
         DateTimeImmutable $date,
         ?array $termIds,
         ?array $storageContainerIds,
+        ?array $userIds,
     ): RouteEntity {
         $car = $this->findCar($carId);
         $route = $this->entityFactory->createRoute($car, $isActive, $date);
 
         $this->syncRouteTerms($route, $termIds);
         $this->syncRouteStorageContainers($route, $storageContainerIds, $date);
+        $this->syncRouteUsers($route, $userIds);
 
         $this->entityManager->persist($route);
         $this->entityManager->flush();
@@ -52,6 +57,7 @@ class RouteService
         DateTimeImmutable $date,
         ?array $termIds,
         ?array $storageContainerIds,
+        ?array $userIds,
     ): RouteEntity {
         $car = $this->findCar($carId);
 
@@ -61,6 +67,7 @@ class RouteService
 
         $this->syncRouteTerms($route, $termIds);
         $this->syncRouteStorageContainers($route, $storageContainerIds, $date);
+        $this->syncRouteUsers($route, $userIds);
 
         $this->entityManager->flush();
 
@@ -70,6 +77,7 @@ class RouteService
     public function deleteRoute(RouteEntity $route): void
     {
         $this->syncRouteTerms($route, []);
+        $this->syncRouteUsers($route, []);
 
         $this->entityManager->remove($route);
         $this->entityManager->flush();
@@ -118,6 +126,40 @@ class RouteService
         }
 
         return $term;
+    }
+
+    /**
+     * @param string[]|null $userIds
+     */
+    private function syncRouteUsers(RouteEntity $route, ?array $userIds): void
+    {
+        if ($userIds === null) {
+            return;
+        }
+
+        foreach ($route->getRouteUsers()->toArray() as $routeUser) {
+            $route->removeRouteUser($routeUser);
+            $this->entityManager->remove($routeUser);
+        }
+
+        $uniqueUserIds = array_unique($userIds);
+
+        foreach ($uniqueUserIds as $userId) {
+            $user = $this->findAuthUser($userId);
+            $routeUser = $this->entityFactory->createRouteUser($route, $user);
+            $route->addRouteUser($routeUser);
+        }
+    }
+
+    private function findAuthUser(string $userId): AuthUser
+    {
+        $user = $this->authUserRepository->find($userId);
+
+        if ($user === null) {
+            throw new NotFoundHttpException('User not found: ' . $userId);
+        }
+
+        return $user;
     }
 
     /**

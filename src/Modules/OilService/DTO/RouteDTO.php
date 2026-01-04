@@ -38,8 +38,15 @@ class RouteDTO
     private array $storageContainers;
 
     /**
+     * @var string[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string', example: 'd0e2f84c-3ef8-4c4d-a7c6-6e1c1e1f4b5c'))]
+    private array $userIds;
+
+    /**
      * @param RouteTermDTO[] $terms
      * @param StorageContainerSummaryDTO[] $storageContainers
+     * @param string[] $userIds
      */
     public function __construct(
         string $id,
@@ -49,6 +56,7 @@ class RouteDTO
         string $createdAt,
         array $terms,
         array $storageContainers,
+        array $userIds,
     ) {
         $this->id = $id;
         $this->car = $car;
@@ -57,6 +65,7 @@ class RouteDTO
         $this->createdAt = $createdAt;
         $this->terms = $terms;
         $this->storageContainers = $storageContainers;
+        $this->userIds = $userIds;
     }
 
     public function getId(): string
@@ -98,5 +107,13 @@ class RouteDTO
     public function getStorageContainers(): array
     {
         return $this->storageContainers;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getUserIds(): array
+    {
+        return $this->userIds;
     }
 }

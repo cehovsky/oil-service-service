@@ -382,6 +382,7 @@ class DTOFactory
         $car = $route->getCar();
         $routeTerms = [];
         $storageContainers = [];
+        $routeUsers = [];
 
         foreach ($route->getTerms() as $term) {
             $routeTerms[] = $this->createRouteTermDTO($term);
@@ -395,6 +396,10 @@ class DTOFactory
             );
         }
 
+        foreach ($route->getRouteUsers() as $routeUser) {
+            $routeUsers[] = $routeUser->getUser()->getId()->__toString();
+        }
+
         return new RouteDTO(
             $route->getId()->__toString(),
             $car ? $this->createCarDTO($car) : null,
@@ -403,6 +408,7 @@ class DTOFactory
             $route->getCreatedAt()->format(\DateTimeInterface::ATOM),
             $routeTerms,
             array_values($storageContainers),
+            $routeUsers,
         );
     }
 

@@ -25,6 +25,7 @@ use App\Modules\Users\DTO\UsersUpdateRequestDTO;
 use App\Modules\Users\DTO\UsersUpdateResponseDTO;
 use App\Modules\Users\Factory\DTOFactory;
 use App\Modules\Users\Grid\Enum\UsersGridSortEnum;
+use App\OilService\DBAL\Entity\RouteUser;
 use App\Modules\Users\Validation\Constraint\UniqueUserEmail;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
@@ -549,6 +550,10 @@ class UsersController extends AbstractController
                 )
             ),
             new OA\Response(
+                response: 400,
+                description: 'User assigned to a route'
+            ),
+            new OA\Response(
                 response: 401,
                 description: 'Unauthorized'
             ),
@@ -579,6 +584,18 @@ class UsersController extends AbstractController
 
         if ($user === null) {
             throw new NotFoundHttpException();
+        }
+
+        $assignedRouteUsersCount = (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(routeUser.id)')
+            ->from(RouteUser::class, 'routeUser')
+            ->andWhere('routeUser.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        if ($assignedRouteUsersCount > 0) {
+            throw new BadRequestHttpException('User assigned to a route cannot be deleted.');
         }
 
         $this->entityManager->remove($user);
