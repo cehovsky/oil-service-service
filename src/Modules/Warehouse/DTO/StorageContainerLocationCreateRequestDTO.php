@@ -14,13 +14,10 @@ class StorageContainerLocationCreateRequestDTO
     #[Assert\Uuid]
     private string $storageContainerId;
 
-    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7')]
+    #[Assert\NotBlank]
     #[Assert\Uuid]
-    private ?string $warehouseId = null;
-
-    #[OA\Property(example: 'c8f430b6-6ddf-4ec1-8d16-1b65b7ebc432', nullable: true)]
-    #[Assert\Uuid]
-    private ?string $routeId = null;
+    private string $warehouseId;
 
     #[OA\Property(example: '2026-01-04T00:00:00+00:00')]
     #[Assert\NotBlank]
@@ -39,26 +36,14 @@ class StorageContainerLocationCreateRequestDTO
         return $this;
     }
 
-    public function getWarehouseId(): ?string
+    public function getWarehouseId(): string
     {
         return $this->warehouseId;
     }
 
-    public function setWarehouseId(?string $warehouseId): self
+    public function setWarehouseId(string $warehouseId): self
     {
         $this->warehouseId = $warehouseId;
-
-        return $this;
-    }
-
-    public function getRouteId(): ?string
-    {
-        return $this->routeId;
-    }
-
-    public function setRouteId(?string $routeId): self
-    {
-        $this->routeId = $routeId;
 
         return $this;
     }

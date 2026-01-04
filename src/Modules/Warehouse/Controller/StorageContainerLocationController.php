@@ -128,7 +128,7 @@ class StorageContainerLocationController extends AbstractController
             $storageContainerLocation = $this->storageContainerLocationService->createStorageContainerLocation(
                 $storageContainerLocationCreateRequestDTO->getStorageContainerId(),
                 $storageContainerLocationCreateRequestDTO->getWarehouseId(),
-                $storageContainerLocationCreateRequestDTO->getRouteId(),
+                null,
                 new DateTimeImmutable($storageContainerLocationCreateRequestDTO->getMovedAt()),
             );
 

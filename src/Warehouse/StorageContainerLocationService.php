@@ -36,8 +36,6 @@ class StorageContainerLocationService
         ?string $routeId,
         DateTimeImmutable $movedAt,
     ): StorageContainerLocation {
-        $this->assertSingleLocationTarget($warehouseId, $routeId);
-
         $storageContainer = $this->getStorageContainer($storageContainerId);
         $warehouse = $warehouseId !== null ? $this->getWarehouse($warehouseId) : null;
         $route = $routeId !== null ? $this->getRoute($routeId) : null;
