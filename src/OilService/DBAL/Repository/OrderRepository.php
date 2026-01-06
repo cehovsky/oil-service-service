@@ -86,8 +86,8 @@ class OrderRepository extends ServiceEntityRepository
             $timeSlot = $row['realizationTimeSlot'];
             $count = (int) $row['orderCount'];
 
-            if ($date instanceof \DateTimeInterface && is_string($timeSlot)) {
-                $key = $date->format('Y-m-d') . '|' . $timeSlot;
+            if ($date instanceof \DateTimeInterface && $timeSlot instanceof RealizationTimeSlotEnum) {
+                $key = $date->format('Y-m-d') . '|' . $timeSlot->value;
                 $counts[$key] = $count;
             }
         }
