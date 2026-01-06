@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Warehouse\DTO;
 
+use App\Domain\Validation\Constraint\Iso8601DateTime;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -21,7 +22,7 @@ class StorageContainerLocationCreateRequestDTO
 
     #[OA\Property(example: '2026-01-04T00:00:00+00:00')]
     #[Assert\NotBlank]
-    #[Assert\DateTime]
+    #[Iso8601DateTime]
     private string $movedAt;
 
     public function getStorageContainerId(): string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Domain\Validation\Constraint\Iso8601DateTime;
 use App\Modules\OilService\Validation\Constraint\UniqueTermDateTimeSlot;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use OpenApi\Attributes as OA;
@@ -14,7 +15,7 @@ class TermCreateRequestDTO
 {
     #[OA\Property(example: '2025-01-15', description: 'Date in format YYYY-MM-DD')]
     #[Assert\NotBlank]
-    #[Assert\Date]
+    #[Iso8601DateTime(allowDateOnly: true)]
     private string $date;
 
     #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning')]

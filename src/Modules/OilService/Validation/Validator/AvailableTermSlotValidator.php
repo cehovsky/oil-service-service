@@ -9,12 +9,15 @@ use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\FormRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use DateTimeImmutable;
+use Exception;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 class AvailableTermSlotValidator extends ConstraintValidator
 {
+    private const string ISO8601_WITH_OPTIONAL_TIME_PATTERN = '/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?$/';
+
     public function __construct(
         private readonly TermRepository $termRepository,
         private readonly FormRepository $formRepository,
@@ -73,9 +76,17 @@ class AvailableTermSlotValidator extends ConstraintValidator
             return null;
         }
 
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $dateString);
+        if (!preg_match(self::ISO8601_WITH_OPTIONAL_TIME_PATTERN, $dateString)) {
+            return null;
+        }
 
-        return $date === false ? null : $date;
+        try {
+            $dateTime = new DateTimeImmutable($dateString);
+        } catch (Exception) {
+            return null;
+        }
+
+        return DateTimeImmutable::createFromFormat('!Y-m-d', $dateTime->format('Y-m-d')) ?: null;
     }
 
     private function createTimeSlot(mixed $timeSlot): ?RealizationTimeSlotEnum

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Domain\Validation\Constraint\Iso8601DateTime;
 use App\Modules\OilService\Validation\Constraint\AvailableTermSlot;
 use App\Modules\OilService\Validation\Constraint\FutureRealizationDate;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
@@ -61,7 +62,7 @@ class FormCreateRequestDTO
 
     #[OA\Property(example: '2025-01-15', description: 'Realization date in format YYYY-MM-DD')]
     #[Assert\NotBlank]
-    #[Assert\Date]
+    #[Iso8601DateTime(allowDateOnly: true)]
     #[FutureRealizationDate]
     private string $realizationDate;
 
