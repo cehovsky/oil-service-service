@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Warehouse\Factory;
 
+use App\Auth\DBAL\Entity\User;
+use App\OilService\DBAL\Entity\Form;
 use App\OilService\DBAL\Entity\Route;
+use App\Warehouse\DBAL\Entity\Recycling;
 use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\DBAL\Entity\StorageContainerLocation;
+use App\Warehouse\DBAL\Entity\StorageContainerMaterial;
+use App\Warehouse\DBAL\Entity\StorageContainerMaterialHistory;
 use App\Warehouse\DBAL\Entity\WasteMaterial;
 use App\Warehouse\DBAL\Entity\Warehouse;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
@@ -100,6 +105,80 @@ class EntityFactory
             $movedAt,
             $warehouse,
             $route,
+            $now,
+            $now,
+        );
+    }
+
+    public function createStorageContainerMaterial(
+        StorageContainer $storageContainer,
+        WasteMaterial $wasteMaterial,
+        float $volume,
+        bool $isRecycled,
+        User $createdBy,
+        User $updatedBy,
+        ?Warehouse $warehouse,
+        ?Route $route,
+        ?Recycling $recycling = null,
+        ?Form $form = null,
+    ): StorageContainerMaterial {
+        $now = new DateTimeImmutable();
+
+        $material = new StorageContainerMaterial(
+            $this->uuidFactory->timeBased()->create(),
+            $storageContainer,
+            $wasteMaterial,
+            $volume,
+            $isRecycled,
+            $createdBy,
+            $updatedBy,
+            $now,
+            $now,
+            $warehouse,
+            $route,
+            $recycling,
+            $form,
+        );
+
+        $history = $this->createStorageContainerMaterialHistory(
+            $material,
+            $storageContainer,
+            $createdBy,
+            $now,
+        );
+
+        $material->addHistory($history);
+
+        return $material;
+    }
+
+    public function createStorageContainerMaterialHistory(
+        StorageContainerMaterial $storageContainerMaterial,
+        StorageContainer $storageContainer,
+        User $createdBy,
+        ?DateTimeImmutable $createdAt = null,
+    ): StorageContainerMaterialHistory {
+        $createdAt ??= new DateTimeImmutable();
+
+        return new StorageContainerMaterialHistory(
+            $this->uuidFactory->timeBased()->create(),
+            $storageContainerMaterial,
+            $storageContainer,
+            $createdBy,
+            $createdAt,
+        );
+    }
+
+    public function createRecycling(
+        DateTimeImmutable $recycledAt,
+        User $recycledBy,
+    ): Recycling {
+        $now = new DateTimeImmutable();
+
+        return new Recycling(
+            $this->uuidFactory->timeBased()->create(),
+            $recycledAt,
+            $recycledBy,
             $now,
             $now,
         );
