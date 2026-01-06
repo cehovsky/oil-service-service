@@ -30,7 +30,7 @@ security:
             security: false
         oilServicePublic:
             lazy: true
-            pattern: ^/oil-service/form$
+            pattern: ^/oil-service/orders/submit$
             security: false
         main:
             lazy: true
@@ -51,7 +51,7 @@ security:
         - { path: ^/api, roles: PUBLIC_ACCESS }
         - { path: ^/auth, roles: PUBLIC_ACCESS }
         - { path: ^/health$, roles: PUBLIC_ACCESS }
-        - { path: ^/oil-service/form$, roles: PUBLIC_ACCESS }
+        - { path: ^/oil-service/orders/submit$, roles: PUBLIC_ACCESS }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 

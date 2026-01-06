@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\OilService;
 
-use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\User;
-use App\OilService\DBAL\Enum\FormStatusEnum;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\Domain\Exception\InvalidDataException;
 use App\OilService\DBAL\Repository\RouteRepository;
@@ -17,7 +17,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class FormService
+class OrderService
 {
     public function __construct(
         private readonly UserRepository $userRepository,
@@ -27,7 +27,7 @@ class FormService
     ) {
     }
 
-    public function createFormWithUser(
+    public function createOrderWithUser(
         string $fullName,
         string $phone,
         string $email,
@@ -40,20 +40,18 @@ class FormService
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
-        FormStatusEnum $status,
+        OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         ?Route $route = null,
-    ): Form {
+    ): Order {
         if ($route !== null) {
-            // When route is provided, use its date
-            // TimeSlot stays from user choice
             $realizationDate = $route->getDate();
         }
 
         $user = $this->findOrCreateUser($email, $phone, $fullName);
 
-        $form = $this->entityFactory->createForm(
+        $order = $this->entityFactory->createOrder(
             $fullName,
             $phone,
             $email,
@@ -73,14 +71,14 @@ class FormService
             $route,
         );
 
-        $this->entityManager->persist($form);
+        $this->entityManager->persist($order);
         $this->entityManager->flush();
 
-        return $form;
+        return $order;
     }
 
-    public function updateForm(
-        Form $form,
+    public function updateOrder(
+        Order $order,
         string $fullName,
         string $phone,
         string $email,
@@ -88,7 +86,7 @@ class FormService
         string $licensePlate,
         string $address,
         ?string $note,
-        FormStatusEnum $status,
+        OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         bool $isCompany,
@@ -99,49 +97,49 @@ class FormService
         string $userEmail,
         bool $routeProvided,
         ?string $routeId,
-    ): Form {
-        $route = $form->getRoute();
+    ): Order {
+        $route = $order->getRoute();
 
         if ($routeProvided) {
             $route = $this->findRoute($routeId);
         }
 
-        $form->setFullName($fullName);
-        $form->setPhone($phone);
-        $form->setEmail($email);
-        $form->setCarModel($carModel);
-        $form->setLicensePlate($licensePlate);
-        $form->setAddress($address);
-        $form->setNote($note);
-        $form->setIsCompany($isCompany);
-        $form->setCompanyName($companyName);
-        $form->setCompanyIdentificationNumber($companyIdentificationNumber);
-        $form->setCompanyTaxId($companyTaxId);
-        $form->setCompanyAddress($companyAddress);
-        $form->setStatus($status);
-        $form->setRoute($route);
+        $order->setFullName($fullName);
+        $order->setPhone($phone);
+        $order->setEmail($email);
+        $order->setCarModel($carModel);
+        $order->setLicensePlate($licensePlate);
+        $order->setAddress($address);
+        $order->setNote($note);
+        $order->setIsCompany($isCompany);
+        $order->setCompanyName($companyName);
+        $order->setCompanyIdentificationNumber($companyIdentificationNumber);
+        $order->setCompanyTaxId($companyTaxId);
+        $order->setCompanyAddress($companyAddress);
+        $order->setStatus($status);
+        $order->setRoute($route);
 
         if ($route !== null) {
-            $form->setRealizationDate($route->getDate());
-            $form->setRealizationTimeSlot($realizationTimeSlot);
+            $order->setRealizationDate($route->getDate());
+            $order->setRealizationTimeSlot($realizationTimeSlot);
         } else {
-            $form->setRealizationTimeSlot($realizationTimeSlot);
-            $form->setRealizationDate($realizationDate);
+            $order->setRealizationTimeSlot($realizationTimeSlot);
+            $order->setRealizationDate($realizationDate);
         }
 
-        if ($form->getUser()->getEmail() !== $userEmail) {
+        if ($order->getUser()->getEmail() !== $userEmail) {
             $user = $this->findOrCreateUser($userEmail, $phone, $fullName);
-            $form->setUser($user);
+            $order->setUser($user);
         }
 
         $this->entityManager->flush();
 
-        return $form;
+        return $order;
     }
 
-    public function deleteForm(Form $form): void
+    public function deleteOrder(Order $order): void
     {
-        $this->entityManager->remove($form);
+        $this->entityManager->remove($order);
         $this->entityManager->flush();
     }
 

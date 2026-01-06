@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\OilService\Grid\Enum;
 
 use App\Domain\ApiGrid\OrderEnumInterface;
-use App\OilService\DBAL\Repository\FormRepository;
+use App\OilService\DBAL\Repository\OrderRepository;
 
-enum FormGridSortEnum: string implements OrderEnumInterface
+enum OrderGridSortEnum: string implements OrderEnumInterface
 {
     case IDENT = 'ident';
 
@@ -29,6 +29,6 @@ enum FormGridSortEnum: string implements OrderEnumInterface
 
     public function toSql(): string
     {
-        return FormRepository::ALIAS . '.' . $this->value;
+        return OrderRepository::ALIAS . '.' . $this->value;
     }
 }

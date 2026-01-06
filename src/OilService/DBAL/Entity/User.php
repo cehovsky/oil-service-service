@@ -40,9 +40,9 @@ class User
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
-    /** @var Collection<int, Form> */
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Form::class, cascade: ['persist'])]
-    private Collection $forms;
+    /** @var Collection<int, Order> */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Order::class, cascade: ['persist'])]
+    private Collection $orders;
 
     public function __construct(
         Uuid $id,
@@ -56,7 +56,7 @@ class User
         $this->phone = $phone;
         $this->fullName = $fullName;
         $this->createdAt = $createdAt;
-        $this->forms = new ArrayCollection();
+        $this->orders = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -106,18 +106,18 @@ class User
     }
 
     /**
-     * @return Collection<int, Form>
+     * @return Collection<int, Order>
      */
-    public function getForms(): Collection
+    public function getOrders(): Collection
     {
-        return $this->forms;
+        return $this->orders;
     }
 
-    public function addForm(Form $form): self
+    public function addOrder(Order $order): self
     {
-        if (!$this->forms->contains($form)) {
-            $this->forms->add($form);
-            $form->setUser($this);
+        if (!$this->orders->contains($order)) {
+            $this->orders->add($order);
+            $order->setUser($this);
         }
 
         return $this;

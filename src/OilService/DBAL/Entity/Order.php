@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\OilService\DBAL\Entity;
 
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
-use App\OilService\DBAL\Enum\FormStatusEnum;
-use App\OilService\DBAL\Repository\FormRepository;
-use App\OilService\DBAL\Entity\Route;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
+use App\OilService\DBAL\Repository\OrderRepository;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -15,9 +14,9 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Table(name: 'oil_service_form')]
-#[ORM\Entity(repositoryClass: FormRepository::class)]
-class Form
+#[ORM\Table(name: 'oil_service_order')]
+#[ORM\Entity(repositoryClass: OrderRepository::class)]
+class Order
 {
     private const string IDENT_PREFIX = 'O';
 
@@ -84,8 +83,8 @@ class Form
     private ?string $companyAddress = null;
 
     #[Assert\NotNull]
-    #[ORM\Column(type: Types::STRING, enumType: FormStatusEnum::class)]
-    private FormStatusEnum $status;
+    #[ORM\Column(type: Types::STRING, enumType: OrderStatusEnum::class)]
+    private OrderStatusEnum $status;
 
     #[Assert\NotNull]
     #[ORM\Column(type: Types::STRING, enumType: RealizationTimeSlotEnum::class)]
@@ -95,11 +94,11 @@ class Form
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private DateTimeImmutable $realizationDate;
 
-    #[ORM\ManyToOne(targetEntity: Route::class, inversedBy: 'forms')]
+    #[ORM\ManyToOne(targetEntity: Route::class, inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Route $route = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'forms')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
@@ -121,7 +120,7 @@ class Form
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
-        FormStatusEnum $status,
+        OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         User $user,
@@ -314,12 +313,12 @@ class Form
         return $this;
     }
 
-    public function getStatus(): FormStatusEnum
+    public function getStatus(): OrderStatusEnum
     {
         return $this->status;
     }
 
-    public function setStatus(FormStatusEnum $status): self
+    public function setStatus(OrderStatusEnum $status): self
     {
         $this->status = $status;
 

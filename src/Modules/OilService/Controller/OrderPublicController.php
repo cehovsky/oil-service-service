@@ -10,13 +10,13 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
-use App\Modules\OilService\DTO\FormCreateRequestDTO;
-use App\Modules\OilService\DTO\FormCreateResponseDTO;
+use App\Modules\OilService\DTO\OrderCreateRequestDTO;
+use App\Modules\OilService\DTO\OrderCreateResponseDTO;
 use App\Modules\OilService\DTO\AvailableTermListResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
-use App\OilService\DBAL\Enum\FormStatusEnum;
-use App\OilService\FormService;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
+use App\OilService\OrderService;
 use App\OilService\DBAL\Repository\TermRepository;
 use DateTimeImmutable;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -28,13 +28,13 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
-class FormPublicController extends AbstractController
+class OrderPublicController extends AbstractController
 {
     public function __construct(
         private readonly DTOValueResolver $dtoValueResolver,
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
-        private readonly FormService $formService,
+        private readonly OrderService $orderService,
         private readonly TermRepository $termRepository,
     ) {
     }
@@ -82,19 +82,19 @@ class FormPublicController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: FormCreateRequestDTO::class
+                    type: OrderCreateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'Forms',
+            'Orders',
         ],
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Form created successfully',
+                description: 'Order created successfully',
                 content: new Model(
-                    type: FormCreateResponseDTO::class
+                    type: OrderCreateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -111,42 +111,42 @@ class FormPublicController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/forms/submit',
-        name: 'oil_service_form_submit',
+        '/oil-service/orders/submit',
+        name: 'oil_service_order_submit',
         methods: ['POST']
     )]
     public function create(Request $request): JsonResponse
     {
         try {
-            $formCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $orderCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                FormCreateRequestDTO::class
+                OrderCreateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($formCreateRequestDTO);
+            $this->dtoValueResolver->validateDTO($orderCreateRequestDTO);
 
-            $this->formService->createFormWithUser(
-                $formCreateRequestDTO->getFullName(),
-                $formCreateRequestDTO->getPhone(),
-                $formCreateRequestDTO->getEmail(),
-                $formCreateRequestDTO->getCarModel(),
-                $formCreateRequestDTO->getLicensePlate(),
-                $formCreateRequestDTO->getAddress(),
-                $formCreateRequestDTO->getNote(),
-                $formCreateRequestDTO->getIsCompany(),
-                $formCreateRequestDTO->getCompanyName(),
-                $formCreateRequestDTO->getCompanyIdentificationNumber(),
-                $formCreateRequestDTO->getCompanyTaxId(),
-                $formCreateRequestDTO->getCompanyAddress(),
-                FormStatusEnum::from($formCreateRequestDTO->getStatus()),
-                RealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
-                $this->createRealizationDate($formCreateRequestDTO->getRealizationDate()),
+            $this->orderService->createOrderWithUser(
+                $orderCreateRequestDTO->getFullName(),
+                $orderCreateRequestDTO->getPhone(),
+                $orderCreateRequestDTO->getEmail(),
+                $orderCreateRequestDTO->getCarModel(),
+                $orderCreateRequestDTO->getLicensePlate(),
+                $orderCreateRequestDTO->getAddress(),
+                $orderCreateRequestDTO->getNote(),
+                $orderCreateRequestDTO->getIsCompany(),
+                $orderCreateRequestDTO->getCompanyName(),
+                $orderCreateRequestDTO->getCompanyIdentificationNumber(),
+                $orderCreateRequestDTO->getCompanyTaxId(),
+                $orderCreateRequestDTO->getCompanyAddress(),
+                OrderStatusEnum::from($orderCreateRequestDTO->getStatus()),
+                RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
+                $this->createRealizationDate($orderCreateRequestDTO->getRealizationDate()),
                 null,
             );
 
-            $formCreateResponseDTO = $this->dtoFactory->createFormCreateResponseDTO();
+            $orderCreateResponseDTO = $this->dtoFactory->createOrderCreateResponseDTO();
 
-            return $this->json($formCreateResponseDTO);
+            return $this->json($orderCreateResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()

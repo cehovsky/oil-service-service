@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\OilService\DTO;
 
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
-use App\OilService\DBAL\Enum\FormStatusEnum;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
 use OpenApi\Attributes as OA;
 
-class FormDTO
+class OrderDTO
 {
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7')]
     private string $id;
@@ -52,7 +52,7 @@ class FormDTO
     #[OA\Property(example: 'Firemní 123, Praha 5, 150 00', nullable: true)]
     private ?string $companyAddress;
 
-    #[OA\Property(enum: FormStatusEnum::VALUES, example: 'new')]
+    #[OA\Property(enum: OrderStatusEnum::VALUES, example: 'new')]
     private string $status;
 
     #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning')]

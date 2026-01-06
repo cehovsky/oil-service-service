@@ -6,10 +6,10 @@ namespace App\Modules\OilService\DTO;
 
 use App\Domain\ArrayCollection;
 
-class FormDTOCollection extends ArrayCollection
+class OrderDTOCollection extends ArrayCollection
 {
     public function getItemClass(): string
     {
-        return FormDTO::class;
+        return OrderDTO::class;
     }
 }

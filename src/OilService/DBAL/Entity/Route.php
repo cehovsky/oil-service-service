@@ -15,6 +15,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Warehouse\DBAL\Entity\StorageContainerLocation;
 use App\OilService\DBAL\Entity\RouteUser;
+use App\OilService\DBAL\Entity\Order;
 
 #[ORM\Table(name: 'oil_service_route')]
 #[ORM\Entity(repositoryClass: RouteRepository::class)]
@@ -44,9 +45,9 @@ class Route
     #[ORM\JoinTable(name: 'oil_service_route_term')]
     private Collection $terms;
 
-    /** @var Collection<int, Form> */
-    #[ORM\OneToMany(mappedBy: 'route', targetEntity: Form::class)]
-    private Collection $forms;
+    /** @var Collection<int, Order> */
+    #[ORM\OneToMany(mappedBy: 'route', targetEntity: Order::class)]
+    private Collection $orders;
 
     /** @var Collection<int, StorageContainerLocation> */
     #[ORM\OneToMany(mappedBy: 'route', targetEntity: StorageContainerLocation::class)]
@@ -69,7 +70,7 @@ class Route
         $this->date = $date;
         $this->createdAt = $createdAt;
         $this->terms = new ArrayCollection();
-        $this->forms = new ArrayCollection();
+        $this->orders = new ArrayCollection();
         $this->storageContainerLocations = new ArrayCollection();
         $this->routeUsers = new ArrayCollection();
     }
@@ -148,11 +149,11 @@ class Route
     }
 
     /**
-     * @return Collection<int, Form>
+     * @return Collection<int, Order>
      */
-    public function getForms(): Collection
+    public function getOrders(): Collection
     {
-        return $this->forms;
+        return $this->orders;
     }
 
     /**

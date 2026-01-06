@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Warehouse\DBAL\Entity;
 
 use App\Auth\DBAL\Entity\User;
-use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\StorageContainerMaterialRepository;
@@ -51,9 +51,9 @@ class StorageContainerMaterial
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Recycling $recycling;
 
-    #[ORM\ManyToOne(targetEntity: Form::class, fetch: 'LAZY')]
+    #[ORM\ManyToOne(targetEntity: Order::class, fetch: 'LAZY')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
-    private ?Form $form;
+    private ?Order $order;
 
     #[Assert\PositiveOrZero]
     #[ORM\Column(type: Types::FLOAT)]
@@ -97,7 +97,7 @@ class StorageContainerMaterial
         ?Warehouse $warehouse = null,
         ?Route $route = null,
         ?Recycling $recycling = null,
-        ?Form $form = null,
+        ?Order $order = null,
     ) {
         $this->assertSingleOrigin($warehouse, $route);
 
@@ -113,7 +113,7 @@ class StorageContainerMaterial
         $this->warehouse = $warehouse;
         $this->route = $route;
         $this->recycling = $recycling;
-        $this->form = $form;
+        $this->order = $order;
         $this->history = new ArrayCollection();
     }
 
@@ -204,14 +204,14 @@ class StorageContainerMaterial
         return $this;
     }
 
-    public function getForm(): ?Form
+    public function getOrder(): ?Order
     {
-        return $this->form;
+        return $this->order;
     }
 
-    public function setForm(?Form $form): self
+    public function setOrder(?Order $order): self
     {
-        $this->form = $form;
+        $this->order = $order;
 
         return $this;
     }

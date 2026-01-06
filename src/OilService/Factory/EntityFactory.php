@@ -6,15 +6,15 @@ namespace App\OilService\Factory;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\OilService\DBAL\Entity\Car;
-use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 use App\OilService\DBAL\Enum\CarStatusEnum;
-use App\OilService\DBAL\Enum\FormStatusEnum;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
-use App\OilService\DBAL\Repository\FormRepository;
+use App\OilService\DBAL\Repository\OrderRepository;
 use DateTimeImmutable;
 use Symfony\Component\Uid\Factory\UuidFactory;
 
@@ -22,7 +22,7 @@ class EntityFactory
 {
     public function __construct(
         private readonly UuidFactory $uuidFactory,
-        private readonly FormRepository $formRepository,
+        private readonly OrderRepository $orderRepository,
     ) {
     }
 
@@ -40,7 +40,7 @@ class EntityFactory
         );
     }
 
-    public function createForm(
+    public function createOrder(
         string $fullName,
         string $phone,
         string $email,
@@ -53,15 +53,15 @@ class EntityFactory
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
-        FormStatusEnum $status,
+        OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         User $user,
         ?Route $route = null,
-    ): Form {
-        return new Form(
+    ): Order {
+        return new Order(
             $this->uuidFactory->timeBased()->create(),
-            $this->formRepository->getNextIdent(),
+            $this->orderRepository->getNextIdent(),
             $fullName,
             $phone,
             $email,

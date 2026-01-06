@@ -7,7 +7,7 @@ namespace App\Modules\OilService\DTO;
 use App\Domain\DTOValueResolver;
 use OpenApi\Attributes as OA;
 
-class FormDeleteResponseDTO
+class OrderDeleteResponseDTO
 {
     #[OA\Property(example: DTOValueResolver::RESULT_SUCCESS)]
     private string $result;

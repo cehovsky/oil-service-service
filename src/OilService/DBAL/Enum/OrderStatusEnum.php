@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Enum;
 
-enum FormStatusEnum: string
+enum OrderStatusEnum: string
 {
     public const array VALUES = [
         'new',

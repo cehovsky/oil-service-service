@@ -21,13 +21,13 @@ use App\Modules\OilService\DTO\TermInfoResponseDTO;
 use App\Modules\OilService\DTO\TermListResponseDTO;
 use App\Modules\OilService\DTO\TermUpdateRequestDTO;
 use App\Modules\OilService\DTO\TermUpdateResponseDTO;
-use App\Modules\OilService\DTO\TermWithFormCountListResponseDTO;
+use App\Modules\OilService\DTO\TermWithOrderCountListResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\TermGridSortEnum;
 use App\Modules\OilService\Validation\Constraint\UniqueTermDateTimeSlot;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
-use App\OilService\DBAL\Repository\FormRepository;
+use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\TermService;
 use DateTimeImmutable;
@@ -55,7 +55,7 @@ class TermController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly TermRepository $termRepository,
-        private readonly FormRepository $formRepository,
+        private readonly OrderRepository $orderRepository,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
@@ -525,9 +525,9 @@ class TermController extends AbstractController
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'List of terms for a month with form counts',
+                description: 'List of terms for a month with order counts',
                 content: new Model(
-                    type: TermWithFormCountListResponseDTO::class
+                    type: TermWithOrderCountListResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -564,9 +564,9 @@ class TermController extends AbstractController
         $end = $start->modify('last day of this month');
 
         $terms = $this->termRepository->findByDateRange($start, $end);
-        $formCounts = $this->formRepository->getActiveFormCountsByDateRange($start, $end);
+        $orderCounts = $this->orderRepository->getActiveOrderCountsByDateRange($start, $end);
 
-        $responseDTO = $this->dtoFactory->createTermWithFormCountListResponseDTO($terms, $formCounts);
+        $responseDTO = $this->dtoFactory->createTermWithOrderCountListResponseDTO($terms, $orderCounts);
 
         return $this->json($responseDTO);
     }

@@ -7,13 +7,13 @@ namespace App\Modules\OilService\Factory;
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\Domain\DTOValueResolver;
 use App\Domain\Exception\InvalidArgumentException;
-use App\Modules\OilService\DTO\FormCreateResponseDTO;
-use App\Modules\OilService\DTO\FormDeleteResponseDTO;
-use App\Modules\OilService\DTO\FormDTO;
-use App\Modules\OilService\DTO\FormDTOCollection;
-use App\Modules\OilService\DTO\FormInfoResponseDTO;
-use App\Modules\OilService\DTO\FormListResponseDTO;
-use App\Modules\OilService\DTO\FormUpdateResponseDTO;
+use App\Modules\OilService\DTO\OrderCreateResponseDTO;
+use App\Modules\OilService\DTO\OrderDeleteResponseDTO;
+use App\Modules\OilService\DTO\OrderDTO;
+use App\Modules\OilService\DTO\OrderDTOCollection;
+use App\Modules\OilService\DTO\OrderInfoResponseDTO;
+use App\Modules\OilService\DTO\OrderListResponseDTO;
+use App\Modules\OilService\DTO\OrderUpdateResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserCreateResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserDeleteResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserDTO;
@@ -30,8 +30,8 @@ use App\Modules\OilService\DTO\TermUpdateResponseDTO;
 use App\Modules\OilService\DTO\TermDeleteResponseDTO;
 use App\Modules\OilService\DTO\TermInfoResponseDTO;
 use App\Modules\OilService\DTO\TermListResponseDTO;
-use App\Modules\OilService\DTO\TermWithFormCountDTO;
-use App\Modules\OilService\DTO\TermWithFormCountListResponseDTO;
+use App\Modules\OilService\DTO\TermWithOrderCountDTO;
+use App\Modules\OilService\DTO\TermWithOrderCountListResponseDTO;
 use App\Modules\OilService\DTO\RouteDTO;
 use App\Modules\OilService\DTO\RouteCreateResponseDTO;
 use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
@@ -48,7 +48,7 @@ use App\Modules\OilService\DTO\CarInfoResponseDTO;
 use App\Modules\OilService\DTO\CarListResponseDTO;
 use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Entity\Car;
-use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
@@ -56,9 +56,9 @@ use App\Warehouse\DBAL\Entity\StorageContainer;
 
 class DTOFactory
 {
-    public function createFormCreateResponseDTO(): FormCreateResponseDTO
+    public function createOrderCreateResponseDTO(): OrderCreateResponseDTO
     {
-        return new FormCreateResponseDTO(
+        return new OrderCreateResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
             true,
@@ -84,93 +84,93 @@ class DTOFactory
             $user->getPhone(),
             $user->getFullName(),
             $user->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $user->getForms()->count(),
+            $user->getOrders()->count(),
         );
     }
 
-    public function createFormDTO(Form $form): FormDTO
+    public function createOrderDTO(Order $order): OrderDTO
     {
-        $route = $form->getRoute();
+        $route = $order->getRoute();
 
-        return new FormDTO(
-            $form->getId()->__toString(),
-            $form->getFormattedIdent(),
-            $form->getFullName(),
-            $form->getPhone(),
-            $form->getEmail(),
-            $form->getCarModel(),
-            $form->getLicensePlate(),
-            $form->getAddress(),
-            $form->getNote(),
-            $form->getIsCompany(),
-            $form->getCompanyName(),
-            $form->getCompanyIdentificationNumber(),
-            $form->getCompanyTaxId(),
-            $form->getCompanyAddress(),
-            $form->getStatus()->value,
-            $form->getRealizationTimeSlot()->value,
-            $form->getRealizationDate()->format('Y-m-d'),
-            $form->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $this->createOilServiceUserDTO($form->getUser()),
+        return new OrderDTO(
+            $order->getId()->__toString(),
+            $order->getFormattedIdent(),
+            $order->getFullName(),
+            $order->getPhone(),
+            $order->getEmail(),
+            $order->getCarModel(),
+            $order->getLicensePlate(),
+            $order->getAddress(),
+            $order->getNote(),
+            $order->getIsCompany(),
+            $order->getCompanyName(),
+            $order->getCompanyIdentificationNumber(),
+            $order->getCompanyTaxId(),
+            $order->getCompanyAddress(),
+            $order->getStatus()->value,
+            $order->getRealizationTimeSlot()->value,
+            $order->getRealizationDate()->format('Y-m-d'),
+            $order->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $this->createOilServiceUserDTO($order->getUser()),
             $route ? $this->createRouteDTO($route) : null
         );
     }
 
     /**
-     * @param Form[] $forms
+     * @param Order[] $orders
      *
      * @throws InvalidArgumentException
      */
-    public function createFormDTOCollection(array $forms): FormDTOCollection
+    public function createOrderDTOCollection(array $orders): OrderDTOCollection
     {
-        $collection = new FormDTOCollection();
+        $collection = new OrderDTOCollection();
 
-        foreach ($forms as $form) {
-            $collection->add($this->createFormDTO($form));
+        foreach ($orders as $order) {
+            $collection->add($this->createOrderDTO($order));
         }
 
         return $collection;
     }
 
     /**
-     * @param Form[] $forms
+     * @param Order[] $orders
      *
      * @throws InvalidArgumentException
      */
-    public function createFormListResponseDTO(array $forms, int $pageCount): FormListResponseDTO
+    public function createOrderListResponseDTO(array $orders, int $pageCount): OrderListResponseDTO
     {
-        /** @var FormDTO[] $formDTOs */
-        $formDTOs = $this->createFormDTOCollection($forms)->toArray();
+        /** @var OrderDTO[] $orderDTOs */
+        $orderDTOs = $this->createOrderDTOCollection($orders)->toArray();
 
-        return new FormListResponseDTO(
+        return new OrderListResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $formDTOs,
+            $orderDTOs,
             $pageCount,
         );
     }
 
-    public function createFormInfoResponseDTO(Form $form): FormInfoResponseDTO
+    public function createOrderInfoResponseDTO(Order $order): OrderInfoResponseDTO
     {
-        return new FormInfoResponseDTO(
+        return new OrderInfoResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $this->createFormDTO($form),
+            $this->createOrderDTO($order),
         );
     }
 
-    public function createFormUpdateResponseDTO(Form $form): FormUpdateResponseDTO
+    public function createOrderUpdateResponseDTO(Order $order): OrderUpdateResponseDTO
     {
-        return new FormUpdateResponseDTO(
+        return new OrderUpdateResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $this->createFormDTO($form),
+            $this->createOrderDTO($order),
         );
     }
 
-    public function createFormDeleteResponseDTO(): FormDeleteResponseDTO
+    public function createOrderDeleteResponseDTO(): OrderDeleteResponseDTO
     {
-        return new FormDeleteResponseDTO(
+        return new OrderDeleteResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
         );
@@ -347,15 +347,15 @@ class DTOFactory
     /**
      * @param UserDTO[] $users
      */
-    public function createTermWithFormCountDTO(Term $term, int $formCount, array $users): TermWithFormCountDTO
+    public function createTermWithOrderCountDTO(Term $term, int $orderCount, array $users): TermWithOrderCountDTO
     {
-        return new TermWithFormCountDTO(
+        return new TermWithOrderCountDTO(
             $term->getId()->__toString(),
             $term->getDate()->format('Y-m-d'),
             $term->getTimeSlot()->value,
             $term->getIsActive(),
             $term->getMaxCount(),
-            $formCount,
+            $orderCount,
             $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
             $users,
         );
@@ -363,21 +363,21 @@ class DTOFactory
 
     /**
      * @param Term[] $terms
-     * @param array<string, int> $formCounts
+     * @param array<string, int> $orderCounts
      */
-    public function createTermWithFormCountListResponseDTO(array $terms, array $formCounts): TermWithFormCountListResponseDTO
+    public function createTermWithOrderCountListResponseDTO(array $terms, array $orderCounts): TermWithOrderCountListResponseDTO
     {
         $termDTOs = [];
 
         foreach ($terms as $term) {
             $key = $term->getDate()->format('Y-m-d') . '|' . $term->getTimeSlot()->value;
-            $formCount = $formCounts[$key] ?? 0;
+            $orderCount = $orderCounts[$key] ?? 0;
             $users = $this->createRouteUserDTOsFromTerm($term);
 
-            $termDTOs[] = $this->createTermWithFormCountDTO($term, $formCount, $users);
+            $termDTOs[] = $this->createTermWithOrderCountDTO($term, $orderCount, $users);
         }
 
-        return new TermWithFormCountListResponseDTO(
+        return new TermWithOrderCountListResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
             $termDTOs,

@@ -5,25 +5,27 @@ declare(strict_types=1);
 namespace App\Modules\OilService\DTO;
 
 use App\Domain\DTOValueResolver;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class FormCreateResponseDTO
+class OrderUpdateResponseDTO
 {
     #[OA\Property(example: DTOValueResolver::RESULT_SUCCESS)]
     private string $result;
 
     private int $timestamp;
 
-    private bool $success;
+    #[OA\Property(ref: new Model(type: OrderDTO::class))]
+    private OrderDTO $order;
 
     public function __construct(
         string $result,
         int $timestamp,
-        bool $success,
+        OrderDTO $order
     ) {
         $this->result = $result;
         $this->timestamp = $timestamp;
-        $this->success = $success;
+        $this->order = $order;
     }
 
     public function getResult(): string
@@ -36,8 +38,8 @@ class FormCreateResponseDTO
         return $this->timestamp;
     }
 
-    public function getSuccess(): bool
+    public function getOrder(): OrderDTO
     {
-        return $this->success;
+        return $this->order;
     }
 }

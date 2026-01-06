@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Warehouse\Factory;
 
 use App\Auth\DBAL\Entity\User;
-use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route;
 use App\Warehouse\DBAL\Entity\Recycling;
 use App\Warehouse\DBAL\Entity\StorageContainer;
@@ -120,7 +120,7 @@ class EntityFactory
         ?Warehouse $warehouse,
         ?Route $route,
         ?Recycling $recycling = null,
-        ?Form $form = null,
+        ?Order $order = null,
     ): StorageContainerMaterial {
         $now = new DateTimeImmutable();
 
@@ -137,7 +137,7 @@ class EntityFactory
             $warehouse,
             $route,
             $recycling,
-            $form,
+            $order,
         );
 
         $history = $this->createStorageContainerMaterialHistory(

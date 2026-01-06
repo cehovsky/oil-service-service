@@ -7,7 +7,7 @@ namespace App\Modules\OilService\DTO;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class TermWithFormCountListResponseDTO
+class TermWithOrderCountListResponseDTO
 {
     #[OA\Property(example: 'success')]
     private string $result;
@@ -15,12 +15,12 @@ class TermWithFormCountListResponseDTO
     #[OA\Property(example: 1735559999)]
     private int $timestamp;
 
-    /** @var TermWithFormCountDTO[] */
-    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: TermWithFormCountDTO::class)))]
+    /** @var TermWithOrderCountDTO[] */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: TermWithOrderCountDTO::class)))]
     private array $terms;
 
     /**
-     * @param TermWithFormCountDTO[] $terms
+     * @param TermWithOrderCountDTO[] $terms
      */
     public function __construct(string $result, int $timestamp, array $terms)
     {
@@ -40,7 +40,7 @@ class TermWithFormCountListResponseDTO
     }
 
     /**
-     * @return TermWithFormCountDTO[]
+     * @return TermWithOrderCountDTO[]
      */
     public function getTerms(): array
     {

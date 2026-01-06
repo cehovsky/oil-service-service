@@ -8,24 +8,32 @@ use App\Domain\DTOValueResolver;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class FormInfoResponseDTO
+class OrderListResponseDTO
 {
     #[OA\Property(example: DTOValueResolver::RESULT_SUCCESS)]
     private string $result;
 
     private int $timestamp;
 
-    #[OA\Property(ref: new Model(type: FormDTO::class))]
-    private FormDTO $form;
+    private int $pageCount;
 
+    /** @var OrderDTO[] */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: OrderDTO::class)))]
+    private array $orders;
+
+    /**
+     * @param OrderDTO[] $orders
+     */
     public function __construct(
         string $result,
         int $timestamp,
-        FormDTO $form
+        array $orders,
+        int $pageCount
     ) {
         $this->result = $result;
         $this->timestamp = $timestamp;
-        $this->form = $form;
+        $this->orders = $orders;
+        $this->pageCount = $pageCount;
     }
 
     public function getResult(): string
@@ -38,8 +46,16 @@ class FormInfoResponseDTO
         return $this->timestamp;
     }
 
-    public function getForm(): FormDTO
+    /**
+     * @return OrderDTO[]
+     */
+    public function getOrders(): array
     {
-        return $this->form;
+        return $this->orders;
+    }
+
+    public function getPageCount(): int
+    {
+        return $this->pageCount;
     }
 }

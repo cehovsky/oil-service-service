@@ -6,7 +6,7 @@ namespace App\Modules\OilService\Validation\Validator;
 
 use App\Modules\OilService\Validation\Constraint\AvailableTermSlot;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
-use App\OilService\DBAL\Repository\FormRepository;
+use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use DateTimeImmutable;
 use Exception;
@@ -20,7 +20,7 @@ class AvailableTermSlotValidator extends ConstraintValidator
 
     public function __construct(
         private readonly TermRepository $termRepository,
-        private readonly FormRepository $formRepository,
+        private readonly OrderRepository $orderRepository,
     ) {
     }
 
@@ -60,7 +60,7 @@ class AvailableTermSlotValidator extends ConstraintValidator
             return;
         }
 
-        $currentCount = $this->formRepository->countActiveByDateAndTimeSlot($date, $timeSlot);
+        $currentCount = $this->orderRepository->countActiveByDateAndTimeSlot($date, $timeSlot);
 
         if ($currentCount >= $term->getMaxCount()) {
             $this->context

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Repository;
 
-use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Term;
-use App\OilService\DBAL\Enum\FormStatusEnum;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -43,11 +43,11 @@ class TermRepository extends ServiceEntityRepository
 
         $subQb = $this->getEntityManager()->createQueryBuilder();
 
-        $subQb->select('COUNT(f.id)')
-            ->from(Form::class, 'f')
-            ->andWhere($subQb->expr()->eq('f.realizationDate', self::ALIAS . '.date'))
-            ->andWhere($subQb->expr()->eq('f.realizationTimeSlot', self::ALIAS . '.timeSlot'))
-            ->andWhere($subQb->expr()->neq('f.status', ':canceledStatus'));
+        $subQb->select('COUNT(o.id)')
+            ->from(Order::class, 'o')
+            ->andWhere($subQb->expr()->eq('o.realizationDate', self::ALIAS . '.date'))
+            ->andWhere($subQb->expr()->eq('o.realizationTimeSlot', self::ALIAS . '.timeSlot'))
+            ->andWhere($subQb->expr()->neq('o.status', ':canceledStatus'));
 
         $qb->andWhere($qb->expr()->eq(self::ALIAS . '.isActive', ':isActive'))
             ->andWhere($qb->expr()->gte(self::ALIAS . '.date', ':dateFrom'))
@@ -61,7 +61,7 @@ class TermRepository extends ServiceEntityRepository
             ->addOrderBy(self::ALIAS . '.timeSlot', 'ASC')
             ->setParameter('isActive', true)
             ->setParameter('dateFrom', $dateFrom->setTime(0, 0))
-            ->setParameter('canceledStatus', FormStatusEnum::CANCELED->value);
+            ->setParameter('canceledStatus', OrderStatusEnum::CANCELED->value);
 
         return $qb->getQuery()->getResult();
     }

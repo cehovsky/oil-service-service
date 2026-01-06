@@ -9,7 +9,7 @@ use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class TermWithFormCountDTO
+class TermWithOrderCountDTO
 {
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7')]
     private string $id;
@@ -27,7 +27,7 @@ class TermWithFormCountDTO
     private int $maxCount;
 
     #[OA\Property(example: 3)]
-    private int $formCount;
+    private int $orderCount;
 
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
@@ -44,7 +44,7 @@ class TermWithFormCountDTO
         string $timeSlot,
         bool $isActive,
         int $maxCount,
-        int $formCount,
+        int $orderCount,
         string $createdAt,
         array $users,
     ) {
@@ -53,7 +53,7 @@ class TermWithFormCountDTO
         $this->timeSlot = $timeSlot;
         $this->isActive = $isActive;
         $this->maxCount = $maxCount;
-        $this->formCount = $formCount;
+        $this->orderCount = $orderCount;
         $this->createdAt = $createdAt;
         $this->users = $users;
     }
@@ -83,9 +83,9 @@ class TermWithFormCountDTO
         return $this->maxCount;
     }
 
-    public function getFormCount(): int
+    public function getOrderCount(): int
     {
-        return $this->formCount;
+        return $this->orderCount;
     }
 
     public function getCreatedAt(): string

@@ -8,7 +8,7 @@ use App\Modules\OilService\Validation\Constraint\ExistingRoute;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class FormCreateWithTermRequestDTO extends FormCreateRequestDTO
+class OrderCreateWithTermRequestDTO extends OrderCreateRequestDTO
 {
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
     #[Assert\Uuid]

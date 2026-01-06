@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Repository;
 
-use App\OilService\DBAL\Entity\Form;
-use App\OilService\DBAL\Enum\FormStatusEnum;
+use App\OilService\DBAL\Entity\Order;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -13,19 +13,19 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Form|null find($id, $lockMode = null, $lockVersion = null)
- * @method Form|null findOneBy(array $criteria, array $orderBy = null)
- * @method Form[] findAll()
- * @method Form[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- * @template-extends ServiceEntityRepository<Form>
+ * @method Order|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Order|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Order[] findAll()
+ * @method Order[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @template-extends ServiceEntityRepository<Order>
  */
-class FormRepository extends ServiceEntityRepository
+class OrderRepository extends ServiceEntityRepository
 {
-    public const ALIAS = 'osf';
+    public const ALIAS = 'oso';
 
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Form::class);
+        parent::__construct($registry, Order::class);
     }
 
     public function getQueryBuilderWithAlias(): QueryBuilder
@@ -45,7 +45,7 @@ class FormRepository extends ServiceEntityRepository
             ->andWhere($qb->expr()->neq(self::ALIAS . '.status', ':canceledStatus'))
             ->setParameter('realizationDate', $date)
             ->setParameter('realizationTimeSlot', $timeSlot)
-            ->setParameter('canceledStatus', FormStatusEnum::CANCELED->value);
+            ->setParameter('canceledStatus', OrderStatusEnum::CANCELED->value);
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
@@ -53,7 +53,7 @@ class FormRepository extends ServiceEntityRepository
     /**
      * @return array<string, int> keyed by "Y-m-d|timeSlot"
      */
-    public function getActiveFormCountsByDateRange(
+    public function getActiveOrderCountsByDateRange(
         DateTimeImmutable $from,
         DateTimeImmutable $to,
     ): array {
@@ -61,7 +61,7 @@ class FormRepository extends ServiceEntityRepository
 
         $qb->select(self::ALIAS . '.realizationDate AS realizationDate')
             ->addSelect(self::ALIAS . '.realizationTimeSlot AS realizationTimeSlot')
-            ->addSelect('COUNT(' . self::ALIAS . '.id) AS formCount')
+            ->addSelect('COUNT(' . self::ALIAS . '.id) AS orderCount')
             ->andWhere($qb->expr()->gte(self::ALIAS . '.realizationDate', ':dateFrom'))
             ->andWhere($qb->expr()->lte(self::ALIAS . '.realizationDate', ':dateTo'))
             ->andWhere($qb->expr()->neq(self::ALIAS . '.status', ':canceledStatus'))
@@ -71,20 +71,20 @@ class FormRepository extends ServiceEntityRepository
             ->addOrderBy(self::ALIAS . '.realizationTimeSlot', 'ASC')
             ->setParameter('dateFrom', $from)
             ->setParameter('dateTo', $to)
-            ->setParameter('canceledStatus', FormStatusEnum::CANCELED->value);
+            ->setParameter('canceledStatus', OrderStatusEnum::CANCELED->value);
 
         $results = $qb->getQuery()->getArrayResult();
 
         $counts = [];
 
         foreach ($results as $row) {
-            if (!isset($row['realizationDate'], $row['realizationTimeSlot'], $row['formCount'])) {
+            if (!isset($row['realizationDate'], $row['realizationTimeSlot'], $row['orderCount'])) {
                 continue;
             }
 
             $date = $row['realizationDate'];
             $timeSlot = $row['realizationTimeSlot'];
-            $count = (int) $row['formCount'];
+            $count = (int) $row['orderCount'];
 
             if ($date instanceof \DateTimeInterface && is_string($timeSlot)) {
                 $key = $date->format('Y-m-d') . '|' . $timeSlot;
@@ -100,8 +100,8 @@ class FormRepository extends ServiceEntityRepository
      */
     public function getNextIdent(): int
     {
-        $qb = $this->createQueryBuilder('f');
-        $qb->select('MAX(f.ident)');
+        $qb = $this->createQueryBuilder('o');
+        $qb->select('MAX(o.ident)');
 
         $maxIdent = $qb->getQuery()->getSingleScalarResult();
 
@@ -109,9 +109,9 @@ class FormRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find forms by ident number or formatted ident (OYYXXXXX format).
+     * Find orders by ident number or formatted ident (OYYXXXXX format).
      *
-     * @return Form[]
+     * @return Order[]
      */
     public function findByIdentFilter(string $identFilter): array
     {

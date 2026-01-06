@@ -24,7 +24,7 @@ class OilServiceUserListDTO
     private string $createdAt;
 
     #[OA\Property(example: 5)]
-    private int $formsCount;
+    private int $ordersCount;
 
     public function __construct(
         string $id,
@@ -32,14 +32,14 @@ class OilServiceUserListDTO
         string $phone,
         string $fullName,
         string $createdAt,
-        int $formsCount,
+        int $ordersCount,
     ) {
         $this->id = $id;
         $this->email = $email;
         $this->phone = $phone;
         $this->fullName = $fullName;
         $this->createdAt = $createdAt;
-        $this->formsCount = $formsCount;
+        $this->ordersCount = $ordersCount;
     }
 
     public function getId(): string
@@ -67,8 +67,8 @@ class OilServiceUserListDTO
         return $this->createdAt;
     }
 
-    public function getFormsCount(): int
+    public function getOrdersCount(): int
     {
-        return $this->formsCount;
+        return $this->ordersCount;
     }
 }

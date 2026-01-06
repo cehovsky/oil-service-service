@@ -14,21 +14,21 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
-use App\Modules\OilService\DTO\FormCreateWithTermRequestDTO;
-use App\Modules\OilService\DTO\FormDeleteResponseDTO;
-use App\Modules\OilService\DTO\FormInfoResponseDTO;
-use App\Modules\OilService\DTO\FormListResponseDTO;
-use App\Modules\OilService\DTO\FormUpdateRequestDTO;
-use App\Modules\OilService\DTO\FormUpdateResponseDTO;
+use App\Modules\OilService\DTO\OrderCreateWithTermRequestDTO;
+use App\Modules\OilService\DTO\OrderDeleteResponseDTO;
+use App\Modules\OilService\DTO\OrderInfoResponseDTO;
+use App\Modules\OilService\DTO\OrderListResponseDTO;
+use App\Modules\OilService\DTO\OrderUpdateRequestDTO;
+use App\Modules\OilService\DTO\OrderUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
-use App\Modules\OilService\Grid\Enum\FormGridSortEnum;
+use App\Modules\OilService\Grid\Enum\OrderGridSortEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
-use App\OilService\DBAL\Enum\FormStatusEnum;
-use App\OilService\DBAL\Entity\Form;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route as RouteEntity;
-use App\OilService\DBAL\Repository\FormRepository;
+use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\RouteRepository;
-use App\OilService\FormService;
+use App\OilService\OrderService;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\QueryBuilder;
 use DateTimeImmutable;
@@ -44,7 +44,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
-class FormController extends AbstractController
+class OrderController extends AbstractController
 {
     private const string FILTER_IDENT_KEY = 'ident';
     private const string FILTER_FULL_NAME_KEY = 'fullName';
@@ -62,12 +62,12 @@ class FormController extends AbstractController
         private readonly DTOValueResolver $dtoValueResolver,
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
-        private readonly FormRepository $formRepository,
+        private readonly OrderRepository $orderRepository,
         private readonly RouteRepository $routeRepository,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
-        private readonly FormService $formService,
+        private readonly OrderService $orderService,
     ) {
     }
 
@@ -80,19 +80,19 @@ class FormController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: FormCreateWithTermRequestDTO::class
+                    type: OrderCreateWithTermRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'Forms',
+            'Orders',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Created',
                 content: new Model(
-                    type: FormInfoResponseDTO::class
+                    type: OrderInfoResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -117,8 +117,8 @@ class FormController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/forms',
-        name: 'oil_service_form_create',
+        '/oil-service/orders',
+        name: 'oil_service_order_create',
         methods: ['POST']
     )]
     public function create(Request $request): JsonResponse
@@ -126,37 +126,37 @@ class FormController extends AbstractController
         $this->requireAdminUser();
 
         try {
-            $formCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $orderCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                FormCreateWithTermRequestDTO::class
+                OrderCreateWithTermRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($formCreateRequestDTO);
+            $this->dtoValueResolver->validateDTO($orderCreateRequestDTO);
 
-            $route = $this->findRoute($formCreateRequestDTO->getRouteId());
+            $route = $this->findRoute($orderCreateRequestDTO->getRouteId());
 
-            $form = $this->formService->createFormWithUser(
-                $formCreateRequestDTO->getFullName(),
-                $formCreateRequestDTO->getPhone(),
-                $formCreateRequestDTO->getEmail(),
-                $formCreateRequestDTO->getCarModel(),
-                $formCreateRequestDTO->getLicensePlate(),
-                $formCreateRequestDTO->getAddress(),
-                $formCreateRequestDTO->getNote(),
-                $formCreateRequestDTO->getIsCompany(),
-                $formCreateRequestDTO->getCompanyName(),
-                $formCreateRequestDTO->getCompanyIdentificationNumber(),
-                $formCreateRequestDTO->getCompanyTaxId(),
-                $formCreateRequestDTO->getCompanyAddress(),
-                FormStatusEnum::from($formCreateRequestDTO->getStatus()),
-                RealizationTimeSlotEnum::from($formCreateRequestDTO->getRealizationTimeSlot()),
-                $this->createRealizationDate($formCreateRequestDTO->getRealizationDate()),
+            $order = $this->orderService->createOrderWithUser(
+                $orderCreateRequestDTO->getFullName(),
+                $orderCreateRequestDTO->getPhone(),
+                $orderCreateRequestDTO->getEmail(),
+                $orderCreateRequestDTO->getCarModel(),
+                $orderCreateRequestDTO->getLicensePlate(),
+                $orderCreateRequestDTO->getAddress(),
+                $orderCreateRequestDTO->getNote(),
+                $orderCreateRequestDTO->getIsCompany(),
+                $orderCreateRequestDTO->getCompanyName(),
+                $orderCreateRequestDTO->getCompanyIdentificationNumber(),
+                $orderCreateRequestDTO->getCompanyTaxId(),
+                $orderCreateRequestDTO->getCompanyAddress(),
+                OrderStatusEnum::from($orderCreateRequestDTO->getStatus()),
+                RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
+                $this->createRealizationDate($orderCreateRequestDTO->getRealizationDate()),
                 $route,
             );
 
-            $formInfoResponseDTO = $this->dtoFactory->createFormInfoResponseDTO($form);
+            $orderInfoResponseDTO = $this->dtoFactory->createOrderInfoResponseDTO($order);
 
-            return $this->json($formInfoResponseDTO);
+            return $this->json($orderInfoResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
@@ -177,19 +177,19 @@ class FormController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: FormUpdateRequestDTO::class
+                    type: OrderUpdateRequestDTO::class
                 ),
             )
         ),
         tags: [
-            'Forms',
+            'Orders',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Updated',
                 content: new Model(
-                    type: FormUpdateResponseDTO::class
+                    type: OrderUpdateResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -218,55 +218,55 @@ class FormController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/forms/{formId}',
-        name: 'oil_service_form_update',
+        '/oil-service/orders/{orderId}',
+        name: 'oil_service_order_update',
         methods: ['PUT']
     )]
-    public function update(Request $request, string $formId): JsonResponse
+    public function update(Request $request, string $orderId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $form = $this->formRepository->find($formId);
+        $order = $this->orderRepository->find($orderId);
 
-        if ($form === null) {
+        if ($order === null) {
             throw new NotFoundHttpException();
         }
 
         try {
-            $formUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
+            $orderUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                FormUpdateRequestDTO::class
+                OrderUpdateRequestDTO::class
             );
 
-            $this->dtoValueResolver->validateDTO($formUpdateRequestDTO);
+            $this->dtoValueResolver->validateDTO($orderUpdateRequestDTO);
 
             $routeProvided = $this->isFieldProvided($request, 'routeId');
 
-            $form = $this->formService->updateForm(
-                $form,
-                $formUpdateRequestDTO->getFullName(),
-                $formUpdateRequestDTO->getPhone(),
-                $formUpdateRequestDTO->getEmail(),
-                $formUpdateRequestDTO->getCarModel(),
-                $formUpdateRequestDTO->getLicensePlate(),
-                $formUpdateRequestDTO->getAddress(),
-                $formUpdateRequestDTO->getNote(),
-                FormStatusEnum::from($formUpdateRequestDTO->getStatus()),
-                RealizationTimeSlotEnum::from($formUpdateRequestDTO->getRealizationTimeSlot()),
-                $this->formService->createRealizationDate($formUpdateRequestDTO->getRealizationDate()),
-                $formUpdateRequestDTO->getIsCompany(),
-                $formUpdateRequestDTO->getCompanyName(),
-                $formUpdateRequestDTO->getCompanyIdentificationNumber(),
-                $formUpdateRequestDTO->getCompanyTaxId(),
-                $formUpdateRequestDTO->getCompanyAddress(),
-                $formUpdateRequestDTO->getUserEmail(),
+            $order = $this->orderService->updateOrder(
+                $order,
+                $orderUpdateRequestDTO->getFullName(),
+                $orderUpdateRequestDTO->getPhone(),
+                $orderUpdateRequestDTO->getEmail(),
+                $orderUpdateRequestDTO->getCarModel(),
+                $orderUpdateRequestDTO->getLicensePlate(),
+                $orderUpdateRequestDTO->getAddress(),
+                $orderUpdateRequestDTO->getNote(),
+                OrderStatusEnum::from($orderUpdateRequestDTO->getStatus()),
+                RealizationTimeSlotEnum::from($orderUpdateRequestDTO->getRealizationTimeSlot()),
+                $this->createRealizationDate($orderUpdateRequestDTO->getRealizationDate()),
+                $orderUpdateRequestDTO->getIsCompany(),
+                $orderUpdateRequestDTO->getCompanyName(),
+                $orderUpdateRequestDTO->getCompanyIdentificationNumber(),
+                $orderUpdateRequestDTO->getCompanyTaxId(),
+                $orderUpdateRequestDTO->getCompanyAddress(),
+                $orderUpdateRequestDTO->getUserEmail(),
                 $routeProvided,
-                $formUpdateRequestDTO->getRouteId(),
+                $orderUpdateRequestDTO->getRouteId(),
             );
 
-            $formUpdateResponseDTO = $this->dtoFactory->createFormUpdateResponseDTO($form);
+            $orderUpdateResponseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($order);
 
-            return $this->json($formUpdateResponseDTO);
+            return $this->json($orderUpdateResponseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
@@ -285,14 +285,14 @@ class FormController extends AbstractController
             ],
         ],
         tags: [
-            'Forms',
+            'Orders',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: FormInfoResponseDTO::class
+                    type: OrderInfoResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -314,23 +314,23 @@ class FormController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/forms/{formId}',
-        name: 'oil_service_form_info',
+        '/oil-service/orders/{orderId}',
+        name: 'oil_service_order_info',
         methods: ['GET']
     )]
-    public function info(string $formId): JsonResponse
+    public function info(string $orderId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $form = $this->formRepository->find($formId);
+        $order = $this->orderRepository->find($orderId);
 
-        if ($form === null) {
+        if ($order === null) {
             throw new NotFoundHttpException();
         }
 
-        $formInfoResponseDTO = $this->dtoFactory->createFormInfoResponseDTO($form);
+        $orderInfoResponseDTO = $this->dtoFactory->createOrderInfoResponseDTO($order);
 
-        return $this->json($formInfoResponseDTO);
+        return $this->json($orderInfoResponseDTO);
     }
 
     #[OA\Get(
@@ -340,7 +340,7 @@ class FormController extends AbstractController
             ],
         ],
         tags: [
-            'Forms',
+            'Orders',
         ],
         parameters: [
             new OA\Parameter(
@@ -430,7 +430,7 @@ class FormController extends AbstractController
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
-                    enum: FormStatusEnum::VALUES
+                    enum: OrderStatusEnum::VALUES
                 ),
                 example: 'new'
             ),
@@ -502,7 +502,7 @@ class FormController extends AbstractController
                 response: 200,
                 description: 'Success',
                 content: new Model(
-                    type: FormListResponseDTO::class
+                    type: OrderListResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -512,8 +512,8 @@ class FormController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/forms',
-        name: 'oil_service_form_list',
+        '/oil-service/orders',
+        name: 'oil_service_order_list',
         methods: ['GET']
     )]
     public function list(Request $request): JsonResponse
@@ -522,7 +522,7 @@ class FormController extends AbstractController
 
         $queryModifier = function (QueryBuilder $qb) use ($request): void {
             // Join user for filtering
-            $qb->leftJoin(FormRepository::ALIAS . '.user', 'u');
+            $qb->leftJoin(OrderRepository::ALIAS . '.user', 'u');
 
             try {
                 $ident = $request->query->get(self::FILTER_IDENT_KEY);
@@ -541,7 +541,7 @@ class FormController extends AbstractController
                 if ($identNumber !== null) {
                     $qb->andWhere(
                         $qb->expr()->eq(
-                            FormRepository::ALIAS . '.ident',
+                            OrderRepository::ALIAS . '.ident',
                             ':ident'
                         )
                     );
@@ -558,7 +558,7 @@ class FormController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->like(
-                        FormRepository::ALIAS . '.fullName',
+                        OrderRepository::ALIAS . '.fullName',
                         ':fullName'
                     )
                 );
@@ -574,7 +574,7 @@ class FormController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->like(
-                        FormRepository::ALIAS . '.email',
+                        OrderRepository::ALIAS . '.email',
                         ':email'
                     )
                 );
@@ -590,7 +590,7 @@ class FormController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->like(
-                        FormRepository::ALIAS . '.phone',
+                        OrderRepository::ALIAS . '.phone',
                         ':phone'
                     )
                 );
@@ -606,7 +606,7 @@ class FormController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->like(
-                        FormRepository::ALIAS . '.carModel',
+                        OrderRepository::ALIAS . '.carModel',
                         ':carModel'
                     )
                 );
@@ -622,7 +622,7 @@ class FormController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->like(
-                        FormRepository::ALIAS . '.licensePlate',
+                        OrderRepository::ALIAS . '.licensePlate',
                         ':licensePlate'
                     )
                 );
@@ -642,7 +642,7 @@ class FormController extends AbstractController
 
                 $qb->andWhere(
                     $qb->expr()->eq(
-                        FormRepository::ALIAS . '.isCompany',
+                        OrderRepository::ALIAS . '.isCompany',
                         ':isCompany'
                     )
                 );
@@ -672,12 +672,12 @@ class FormController extends AbstractController
 
                 assert(is_string($status));
 
-                $statusEnum = FormStatusEnum::tryFrom($status);
+                $statusEnum = OrderStatusEnum::tryFrom($status);
 
                 if ($statusEnum !== null) {
                     $qb->andWhere(
                         $qb->expr()->eq(
-                            FormRepository::ALIAS . '.status',
+                            OrderRepository::ALIAS . '.status',
                             ':status'
                         )
                     );
@@ -697,7 +697,7 @@ class FormController extends AbstractController
                 if ($realizationTimeSlotEnum !== null) {
                     $qb->andWhere(
                         $qb->expr()->eq(
-                            FormRepository::ALIAS . '.realizationTimeSlot',
+                            OrderRepository::ALIAS . '.realizationTimeSlot',
                             ':realizationTimeSlot'
                         )
                     );
@@ -717,7 +717,7 @@ class FormController extends AbstractController
                 if ($realizationDate !== false) {
                     $qb->andWhere(
                         $qb->expr()->eq(
-                            FormRepository::ALIAS . '.realizationDate',
+                            OrderRepository::ALIAS . '.realizationDate',
                             ':realizationDate'
                         )
                     );
@@ -731,34 +731,34 @@ class FormController extends AbstractController
         $maxResults = $this->apiGridPropertyHelper->createMaxResults($request);
         $firstResult = $this->apiGridPropertyHelper->createfirstResult($request, $maxResults);
         $orderEnum = $this->apiGridPropertyHelper->createOrderEnum($request, OrderEnum::DESC);
-        $formGridSortEnum = $this->apiGridPropertyHelper->createSortEnum(
+        $orderGridSortEnum = $this->apiGridPropertyHelper->createSortEnum(
             $request,
-            FormGridSortEnum::class,
-            FormGridSortEnum::CREATED_AT
+            OrderGridSortEnum::class,
+            OrderGridSortEnum::CREATED_AT
         );
-        $formsQueryBuilder = $this->formRepository->getQueryBuilderWithAlias();
-        $formsPaginator = $this->apiGridManager->createPaginator(
-            $formsQueryBuilder,
+        $ordersQueryBuilder = $this->orderRepository->getQueryBuilderWithAlias();
+        $ordersPaginator = $this->apiGridManager->createPaginator(
+            $ordersQueryBuilder,
             $queryModifier
         );
-        /** @var Form[] $forms */
-        $forms = $this->apiGridManager->fetchData(
-            $formsQueryBuilder,
-            $formGridSortEnum,
+        /** @var Order[] $orders */
+        $orders = $this->apiGridManager->fetchData(
+            $ordersQueryBuilder,
+            $orderGridSortEnum,
             $orderEnum,
             $firstResult,
             $maxResults,
             $queryModifier
         );
-        $formListResponseDTO = $this->dtoFactory->createFormListResponseDTO(
-            $forms,
+        $orderListResponseDTO = $this->dtoFactory->createOrderListResponseDTO(
+            $orders,
             $this->apiGridPropertyHelper->createPageCount(
-                $formsPaginator->count(),
+                $ordersPaginator->count(),
                 $maxResults
             )
         );
 
-        return $this->json($formListResponseDTO);
+        return $this->json($orderListResponseDTO);
     }
 
     #[OA\Get(
@@ -773,9 +773,9 @@ class FormController extends AbstractController
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Last 10 forms without filters',
+                description: 'Last 10 orders without filters',
                 content: new Model(
-                    type: FormListResponseDTO::class
+                    type: OrderListResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -793,25 +793,25 @@ class FormController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/dashboard/forms/recent',
-        name: 'oil_service_dashboard_form_recent',
+        '/oil-service/dashboard/orders/recent',
+        name: 'oil_service_dashboard_order_recent',
         methods: ['GET']
     )]
     public function listRecent(): JsonResponse
     {
         $this->requireAdminUser();
 
-        $qb = $this->formRepository->createQueryBuilder(FormRepository::ALIAS);
+        $qb = $this->orderRepository->createQueryBuilder(OrderRepository::ALIAS);
 
-        $qb->orderBy(FormRepository::ALIAS . '.createdAt', 'DESC')
+        $qb->orderBy(OrderRepository::ALIAS . '.createdAt', 'DESC')
             ->setMaxResults(10);
 
-        /** @var Form[] $forms */
-        $forms = $qb->getQuery()->getResult();
+        /** @var Order[] $orders */
+        $orders = $qb->getQuery()->getResult();
 
-        $formListResponseDTO = $this->dtoFactory->createFormListResponseDTO($forms, 1);
+        $orderListResponseDTO = $this->dtoFactory->createOrderListResponseDTO($orders, 1);
 
-        return $this->json($formListResponseDTO);
+        return $this->json($orderListResponseDTO);
     }
 
     #[OA\Delete(
@@ -821,14 +821,14 @@ class FormController extends AbstractController
             ],
         ],
         tags: [
-            'Forms',
+            'Orders',
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Deleted',
                 content: new Model(
-                    type: FormDeleteResponseDTO::class
+                    type: OrderDeleteResponseDTO::class
                 )
             ),
             new OA\Response(
@@ -850,25 +850,25 @@ class FormController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/forms/{formId}',
-        name: 'oil_service_form_delete',
+        '/oil-service/orders/{orderId}',
+        name: 'oil_service_order_delete',
         methods: ['DELETE']
     )]
-    public function delete(string $formId): JsonResponse
+    public function delete(string $orderId): JsonResponse
     {
         $this->requireAdminUser();
 
-        $form = $this->formRepository->find($formId);
+        $order = $this->orderRepository->find($orderId);
 
-        if ($form === null) {
+        if ($order === null) {
             throw new NotFoundHttpException();
         }
 
-        $this->formService->deleteForm($form);
+        $this->orderService->deleteOrder($order);
 
-        $formDeleteResponseDTO = $this->dtoFactory->createFormDeleteResponseDTO();
+        $orderDeleteResponseDTO = $this->dtoFactory->createOrderDeleteResponseDTO();
 
-        return $this->json($formDeleteResponseDTO);
+        return $this->json($orderDeleteResponseDTO);
     }
 
     private function requireAdminUser(): AuthUser

@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Modules\OilService\DTO;
 
 use App\Domain\Validation\Constraint\Iso8601DateTime;
-use App\Modules\OilService\Validation\Constraint\ExistingRoute;
-use App\OilService\DBAL\Enum\FormStatusEnum;
+use App\Modules\OilService\Validation\Constraint\AvailableTermSlot;
+use App\Modules\OilService\Validation\Constraint\FutureRealizationDate;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class FormUpdateRequestDTO
+#[AvailableTermSlot]
+class OrderCreateRequestDTO
 {
     #[OA\Property(example: 'Jan Novák')]
     #[Assert\NotBlank]
@@ -48,9 +50,9 @@ class FormUpdateRequestDTO
     #[Assert\Length(max: 1000)]
     private ?string $note = null;
 
-    #[OA\Property(enum: FormStatusEnum::VALUES, example: 'new')]
+    #[OA\Property(enum: OrderStatusEnum::VALUES, example: 'new')]
     #[Assert\NotBlank]
-    #[Assert\Choice(callback: [FormStatusEnum::class, 'values'])]
+    #[Assert\Choice(callback: [OrderStatusEnum::class, 'values'])]
     private string $status;
 
     #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning')]
@@ -61,6 +63,7 @@ class FormUpdateRequestDTO
     #[OA\Property(example: '2025-01-15', description: 'Realization date in format YYYY-MM-DD')]
     #[Assert\NotBlank]
     #[Iso8601DateTime(allowDateOnly: true)]
+    #[FutureRealizationDate]
     private string $realizationDate;
 
     #[OA\Property(example: false)]
@@ -82,17 +85,6 @@ class FormUpdateRequestDTO
     #[OA\Property(example: 'Firemní 123, Praha 5, 150 00', nullable: true)]
     #[Assert\Length(max: 500)]
     private ?string $companyAddress = null;
-
-    #[OA\Property(example: 'jan.novak@example.com', description: 'User email - if changed, a new user will be created or existing one linked')]
-    #[Assert\NotBlank]
-    #[Assert\Email]
-    #[Assert\Length(max: 180)]
-    private string $userEmail;
-
-    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
-    #[Assert\Uuid]
-    #[ExistingRoute]
-    private ?string $routeId = null;
 
     public function getFullName(): string
     {
@@ -270,30 +262,6 @@ class FormUpdateRequestDTO
     public function setCompanyAddress(?string $companyAddress): self
     {
         $this->companyAddress = $companyAddress;
-
-        return $this;
-    }
-
-    public function getUserEmail(): string
-    {
-        return $this->userEmail;
-    }
-
-    public function setUserEmail(string $userEmail): self
-    {
-        $this->userEmail = $userEmail;
-
-        return $this;
-    }
-
-    public function getRouteId(): ?string
-    {
-        return $this->routeId;
-    }
-
-    public function setRouteId(?string $routeId): self
-    {
-        $this->routeId = $routeId;
 
         return $this;
     }
