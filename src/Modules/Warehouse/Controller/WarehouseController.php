@@ -25,6 +25,7 @@ use App\Modules\Warehouse\Factory\DTOFactory;
 use App\Modules\Warehouse\Grid\Enum\WarehouseGridSortEnum;
 use App\Warehouse\DBAL\Repository\StorageContainerLocationRepository;
 use App\Warehouse\DBAL\Repository\WarehouseRepository;
+use App\Warehouse\DBAL\Entity\Warehouse;
 use App\Warehouse\WarehouseService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -479,6 +480,7 @@ class WarehouseController extends AbstractController
             $queryModifier
         );
 
+        /** @var Warehouse[] $warehouses */
         $warehouses = $this->apiGridManager->fetchData(
             $warehousesQueryBuilder,
             $sortEnum,

@@ -8,6 +8,7 @@ use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -75,6 +76,7 @@ class OrderRepository extends ServiceEntityRepository
 
         $results = $qb->getQuery()->getArrayResult();
 
+        /** @var array<array<string, mixed>> $results */
         $counts = [];
 
         foreach ($results as $row) {
@@ -84,9 +86,9 @@ class OrderRepository extends ServiceEntityRepository
 
             $date = $row['realizationDate'];
             $timeSlot = $row['realizationTimeSlot'];
-            $count = (int) $row['orderCount'];
+            $count = is_numeric($row['orderCount']) ? (int) $row['orderCount'] : 0;
 
-            if ($date instanceof \DateTimeInterface && $timeSlot instanceof RealizationTimeSlotEnum) {
+            if ($date instanceof DateTimeInterface && $timeSlot instanceof RealizationTimeSlotEnum) {
                 $key = $date->format('Y-m-d') . '|' . $timeSlot->value;
                 $counts[$key] = $count;
             }

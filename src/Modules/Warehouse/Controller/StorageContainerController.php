@@ -28,6 +28,7 @@ use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\StorageContainerLocationRepository;
 use App\Warehouse\DBAL\Repository\StorageContainerRepository;
+use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\StorageContainerService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -571,6 +572,7 @@ class StorageContainerController extends AbstractController
             $queryModifier
         );
 
+        /** @var StorageContainer[] $storageContainers */
         $storageContainers = $this->apiGridManager->fetchData(
             $storageContainersQueryBuilder,
             $sortEnum,

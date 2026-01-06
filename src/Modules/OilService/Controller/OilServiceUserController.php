@@ -25,6 +25,7 @@ use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\OilServiceUserGridSortEnum;
 use App\Modules\OilService\Validation\Constraint\UniqueOilServiceUserEmail;
 use App\OilService\DBAL\Repository\UserRepository;
+use App\OilService\DBAL\Entity\User;
 use App\OilService\OilServiceUserService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;

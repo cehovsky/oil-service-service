@@ -29,6 +29,11 @@ class RouteService
     ) {
     }
 
+    /**
+     * @param array<string>|null $termIds
+     * @param array<string>|null $storageContainerIds
+     * @param array<string>|null $userIds
+     */
     public function createRoute(
         ?string $carId,
         bool $isActive,
@@ -50,6 +55,11 @@ class RouteService
         return $route;
     }
 
+    /**
+     * @param array<string>|null $termIds
+     * @param array<string>|null $storageContainerIds
+     * @param array<string>|null $userIds
+     */
     public function updateRoute(
         RouteEntity $route,
         ?string $carId,

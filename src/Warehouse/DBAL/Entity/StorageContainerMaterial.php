@@ -79,7 +79,7 @@ class StorageContainerMaterial
     #[ORM\Column]
     private DateTimeImmutable $updatedAt;
 
-    /** @var Collection<int, StorageContainerMaterialHistory>&Selectable */
+    /** @var Collection<int, StorageContainerMaterialHistory>&Selectable<int, StorageContainerMaterialHistory> */
     #[ORM\OneToMany(mappedBy: 'storageContainerMaterial', targetEntity: StorageContainerMaterialHistory::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     #[ORM\OrderBy(['createdAt' => 'ASC'])]
     private Collection $history;
@@ -187,7 +187,7 @@ class StorageContainerMaterial
         return $this;
     }
 
-    public function getOrigin(): Warehouse|Route
+    public function getOrigin(): Warehouse|Route|null
     {
         return $this->warehouse ?? $this->route;
     }
@@ -282,7 +282,7 @@ class StorageContainerMaterial
     }
 
     /**
-     * @return Collection<int, StorageContainerMaterialHistory>&Selectable
+     * @return Collection<int, StorageContainerMaterialHistory>&Selectable<int, StorageContainerMaterialHistory>
      */
     public function getHistory(): Collection
     {

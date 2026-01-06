@@ -58,12 +58,12 @@ class StorageContainer
     #[ORM\Column]
     private DateTimeImmutable $updatedAt;
 
-    /** @var Collection<int, StorageContainerLocation>&Selectable */
+    /** @var Collection<int, StorageContainerLocation>&Selectable<int, StorageContainerLocation> */
     #[ORM\OneToMany(mappedBy: 'storageContainer', targetEntity: StorageContainerLocation::class, fetch: 'EXTRA_LAZY')]
     #[ORM\OrderBy(['movedAt' => 'ASC'])]
     private Collection $locations;
 
-    /** @var Collection<int, WasteMaterial>&Selectable */
+    /** @var Collection<int, WasteMaterial>&Selectable<int, WasteMaterial> */
     #[ORM\ManyToMany(targetEntity: WasteMaterial::class, inversedBy: 'preferredStorageContainers', fetch: 'EXTRA_LAZY')]
     #[ORM\JoinTable(
         name: 'warehouse_storage_container_preferred_waste_materials',
@@ -191,7 +191,7 @@ class StorageContainer
     }
 
     /**
-     * @return Collection<int, StorageContainerLocation>&Selectable
+     * @return Collection<int, StorageContainerLocation>&Selectable<int, StorageContainerLocation>
      */
     public function getLocations(): Collection
     {
@@ -236,7 +236,7 @@ class StorageContainer
     }
 
     /**
-     * @return Collection<int, StorageContainerLocation>
+     * @return Collection<int, StorageContainerLocation>&Selectable<int, StorageContainerLocation>
      */
     public function locationHistory(): Collection
     {
@@ -246,7 +246,7 @@ class StorageContainer
     }
 
     /**
-     * @return Collection<int, WasteMaterial>&Selectable
+     * @return Collection<int, WasteMaterial>&Selectable<int, WasteMaterial>
      */
     public function getPreferredWasteMaterials(): Collection
     {

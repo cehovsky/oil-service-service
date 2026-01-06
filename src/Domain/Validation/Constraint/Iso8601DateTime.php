@@ -13,6 +13,10 @@ class Iso8601DateTime extends Constraint
 {
     public string $message = 'This value is not a valid datetime.';
 
+    /**
+     * @param array<string>|null $groups
+     * @param array<string, mixed>|null $options
+     */
     public function __construct(
         public bool $allowDateOnly = false,
         ?string $message = null,

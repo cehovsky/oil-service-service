@@ -30,6 +30,9 @@ enum StorageContainerTypeEnum: string
 
     case HAZARD_STORAGE_CONTAINER = 'hazard_storage_container';
 
+    /**
+     * @return array<string>
+     */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

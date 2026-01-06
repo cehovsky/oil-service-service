@@ -53,6 +53,7 @@ use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 use App\Warehouse\DBAL\Entity\StorageContainer;
+use DateTimeInterface;
 
 class DTOFactory
 {
@@ -72,7 +73,7 @@ class DTOFactory
             $user->getEmail(),
             $user->getPhone(),
             $user->getFullName(),
-            $user->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $user->getCreatedAt()->format(DateTimeInterface::ATOM),
         );
     }
 
@@ -83,7 +84,7 @@ class DTOFactory
             $user->getEmail(),
             $user->getPhone(),
             $user->getFullName(),
-            $user->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $user->getCreatedAt()->format(DateTimeInterface::ATOM),
             $user->getOrders()->count(),
         );
     }
@@ -110,7 +111,7 @@ class DTOFactory
             $order->getStatus()->value,
             $order->getRealizationTimeSlot()->value,
             $order->getRealizationDate()->format('Y-m-d'),
-            $order->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $order->getCreatedAt()->format(DateTimeInterface::ATOM),
             $this->createOilServiceUserDTO($order->getUser()),
             $route ? $this->createRouteDTO($route) : null
         );
@@ -285,7 +286,7 @@ class DTOFactory
             $term->getTimeSlot()->value,
             $term->getIsActive(),
             $term->getMaxCount(),
-            $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $term->getCreatedAt()->format(DateTimeInterface::ATOM),
             $routes,
         );
     }
@@ -356,7 +357,7 @@ class DTOFactory
             $term->getIsActive(),
             $term->getMaxCount(),
             $orderCount,
-            $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $term->getCreatedAt()->format(DateTimeInterface::ATOM),
             $users,
         );
     }
@@ -412,7 +413,7 @@ class DTOFactory
             $car ? $this->createCarDTO($car) : null,
             $route->getIsActive(),
             $route->getDate()->format('Y-m-d'),
-            $route->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $route->getCreatedAt()->format(DateTimeInterface::ATOM),
             $routeTerms,
             array_values($storageContainers),
             $routeUsers,
@@ -459,7 +460,7 @@ class DTOFactory
             $term->getTimeSlot()->value,
             $term->getIsActive(),
             $term->getMaxCount(),
-            $term->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $term->getCreatedAt()->format(DateTimeInterface::ATOM),
         );
     }
 
@@ -535,7 +536,7 @@ class DTOFactory
             $car->getIdent(),
             $car->getLicensePlate(),
             $car->getStatus()->value,
-            $car->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            $car->getCreatedAt()->format(DateTimeInterface::ATOM),
         );
     }
 

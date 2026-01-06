@@ -26,6 +26,7 @@ use App\Modules\Warehouse\Grid\Enum\WasteMaterialGridSortEnum;
 use App\Modules\Warehouse\Validation\Constraint\UniqueWasteMaterialCode;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\WasteMaterialRepository;
+use App\Warehouse\DBAL\Entity\WasteMaterial;
 use App\Warehouse\WasteMaterialService;
 use Doctrine\ORM\QueryBuilder;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -540,6 +541,7 @@ class WasteMaterialController extends AbstractController
             $queryModifier
         );
 
+        /** @var WasteMaterial[] $wasteMaterials */
         $wasteMaterials = $this->apiGridManager->fetchData(
             $wasteMaterialsQueryBuilder,
             $sortEnum,

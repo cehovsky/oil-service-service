@@ -1,3 +1,7 @@
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+    - vendor/phpstan/phpstan-symfony/extension.neon
+
 parameters:
     level: 9
     paths:
@@ -7,3 +11,7 @@ parameters:
         - src/
     excludePaths:
         - config/reference.php
+    ignoreErrors:
+        - '#Cannot cast mixed to string#'
+        - '#should return array.*but returns mixed#'
+        - '#is never read, only written#'

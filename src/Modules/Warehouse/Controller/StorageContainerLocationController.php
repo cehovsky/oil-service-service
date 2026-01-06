@@ -27,6 +27,7 @@ use App\OilService\DBAL\Repository\RouteRepository;
 use App\Warehouse\DBAL\Repository\StorageContainerLocationRepository;
 use App\Warehouse\DBAL\Repository\StorageContainerRepository;
 use App\Warehouse\DBAL\Repository\WarehouseRepository;
+use App\Warehouse\DBAL\Entity\StorageContainerLocation;
 use App\Warehouse\StorageContainerLocationService;
 use DateTimeImmutable;
 use Doctrine\ORM\QueryBuilder;
@@ -466,6 +467,7 @@ class StorageContainerLocationController extends AbstractController
             $queryModifier
         );
 
+        /** @var StorageContainerLocation[] $storageContainerLocations */
         $storageContainerLocations = $this->apiGridManager->fetchData(
             $storageContainerLocationsQueryBuilder,
             $sortEnum,

@@ -41,9 +41,13 @@ class CreateUserCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        /** @var string $email */
         $email = (string) $input->getArgument('email');
+        /** @var string $password */
         $password = (string) $input->getArgument('password');
+        /** @var string $fullName */
         $fullName = (string) $input->getArgument('fullName');
+        /** @var string $isAdminArg */
         $isAdminArg = (string) $input->getArgument('isAdmin');
         $isAdmin = filter_var($isAdminArg, FILTER_VALIDATE_BOOLEAN);
 

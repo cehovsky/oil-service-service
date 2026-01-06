@@ -87,7 +87,6 @@ class StorageContainerLocationRepository extends ServiceEntityRepository
         );
         $qb->orderBy(self::ALIAS . '.movedAt', 'DESC');
 
-        /** @var StorageContainerLocation[] $locations */
         return $qb->getQuery()->getResult();
     }
 }

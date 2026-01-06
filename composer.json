@@ -105,6 +105,7 @@
         "dama/doctrine-test-bundle": "^8.0",
         "dg/bypass-finals": "^v1.6",
         "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-symfony": "^1.4",
         "phpunit/phpunit": "^10.5",
         "squizlabs/php_codesniffer": "*",
         "symfony/maker-bundle": "^v1.54"

@@ -18,6 +18,9 @@ enum RealizationTimeSlotEnum: string
 
     case AFTERNOON = 'afternoon';
 
+    /**
+     * @return array<string>
+     */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

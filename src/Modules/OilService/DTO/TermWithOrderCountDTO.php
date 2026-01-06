@@ -38,6 +38,9 @@ class TermWithOrderCountDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: UserDTO::class)))]
     private array $users;
 
+    /**
+     * @param array<UserDTO> $users
+     */
     public function __construct(
         string $id,
         string $date,

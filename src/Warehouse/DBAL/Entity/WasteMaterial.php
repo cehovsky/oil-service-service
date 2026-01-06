@@ -57,7 +57,7 @@ class WasteMaterial
     #[ORM\Column]
     private DateTimeImmutable $updatedAt;
 
-    /** @var Collection<int, StorageContainer>&Selectable */
+    /** @var Collection<int, StorageContainer>&Selectable<int, StorageContainer> */
     #[ORM\ManyToMany(targetEntity: StorageContainer::class, mappedBy: 'preferredWasteMaterials', fetch: 'EXTRA_LAZY')]
     private Collection $preferredStorageContainers;
 
@@ -179,7 +179,7 @@ class WasteMaterial
     }
 
     /**
-     * @return Collection<int, StorageContainer>&Selectable
+     * @return Collection<int, StorageContainer>&Selectable<int, StorageContainer>
      */
     public function getPreferredStorageContainers(): Collection
     {

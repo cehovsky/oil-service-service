@@ -140,7 +140,7 @@ class StorageContainerLocation
         return $this;
     }
 
-    public function getLocation(): Warehouse|Route
+    public function getLocation(): Warehouse|Route|null
     {
         return $this->warehouse ?? $this->route;
     }

@@ -43,6 +43,7 @@ use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\DBAL\Entity\StorageContainerLocation;
 use App\Warehouse\DBAL\Entity\WasteMaterial;
 use App\Warehouse\DBAL\Entity\Warehouse;
+use DateTimeInterface;
 
 class DTOFactory
 {
@@ -54,8 +55,8 @@ class DTOFactory
             $warehouse->getShortLabel(),
             $warehouse->getAddress(),
             $warehouse->getIsActive(),
-            $warehouse->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $warehouse->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+            $warehouse->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $warehouse->getUpdatedAt()->format(DateTimeInterface::ATOM),
         );
     }
 
@@ -94,6 +95,9 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param array<StorageContainerLocation> $currentLocations
+     */
     public function createWarehouseInfoResponseDTO(Warehouse $warehouse, array $currentLocations): WarehouseInfoResponseDTO
     {
         return new WarehouseInfoResponseDTO(
@@ -140,8 +144,8 @@ class DTOFactory
             $wasteMaterial->getIsActive(),
             $wasteMaterial->getVolumeUnit()->value,
             $wasteMaterial->getCatalogDescription(),
-            $wasteMaterial->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $wasteMaterial->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+            $wasteMaterial->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $wasteMaterial->getUpdatedAt()->format(DateTimeInterface::ATOM),
         );
     }
 
@@ -235,8 +239,8 @@ class DTOFactory
             $storageContainer->getType()->value,
             $storageContainer->getCapacity(),
             $storageContainer->getVolumeUnit()->value,
-            $storageContainer->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $storageContainer->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+            $storageContainer->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $storageContainer->getUpdatedAt()->format(DateTimeInterface::ATOM),
             $preferredWasteMaterials,
             $actualLocationDTO,
         );
@@ -317,9 +321,9 @@ class DTOFactory
             $this->createStorageContainerSummaryDTO($storageContainerLocation->getStorageContainer()),
             $warehouse ? $this->createWarehouseSummaryDTO($warehouse) : null,
             $route ? $this->createRouteSummaryDTO($route) : null,
-            $storageContainerLocation->getMovedAt()->format(\DateTimeInterface::ATOM),
-            $storageContainerLocation->getCreatedAt()->format(\DateTimeInterface::ATOM),
-            $storageContainerLocation->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+            $storageContainerLocation->getMovedAt()->format(DateTimeInterface::ATOM),
+            $storageContainerLocation->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $storageContainerLocation->getUpdatedAt()->format(DateTimeInterface::ATOM),
         );
     }
 
@@ -386,7 +390,7 @@ class DTOFactory
 
         return new StorageContainerActualLocationDTO(
             $location->getId()->__toString(),
-            $location->getMovedAt()->format(\DateTimeInterface::ATOM),
+            $location->getMovedAt()->format(DateTimeInterface::ATOM),
             $warehouse !== null ? 'warehouse' : 'route',
             $warehouse ? $this->createWarehouseSummaryDTO($warehouse) : null,
             $route ? $this->createRouteSummaryDTO($route) : null,
@@ -405,7 +409,7 @@ class DTOFactory
     {
         return new StorageContainerLocationBasicDTO(
             $location->getId()->__toString(),
-            $location->getMovedAt()->format(\DateTimeInterface::ATOM),
+            $location->getMovedAt()->format(DateTimeInterface::ATOM),
         );
     }
 
