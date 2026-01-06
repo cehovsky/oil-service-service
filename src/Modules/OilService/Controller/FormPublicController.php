@@ -41,7 +41,7 @@ class FormPublicController extends AbstractController
 
     #[OA\Get(
         tags: [
-            'OilService Public',
+            'Terms',
         ],
         responses: [
             new OA\Response(
@@ -87,7 +87,7 @@ class FormPublicController extends AbstractController
             )
         ),
         tags: [
-            'OilService Public',
+            'Forms',
         ],
         responses: [
             new OA\Response(

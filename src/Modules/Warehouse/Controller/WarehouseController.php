@@ -72,7 +72,7 @@ class WarehouseController extends AbstractController
             )
         ),
         tags: [
-            'Warehouse',
+            'Warehouses',
         ],
         responses: [
             new OA\Response(
@@ -155,7 +155,7 @@ class WarehouseController extends AbstractController
             )
         ),
         tags: [
-            'Warehouse',
+            'Warehouses',
         ],
         responses: [
             new OA\Response(
@@ -242,7 +242,7 @@ class WarehouseController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Warehouses',
         ],
         responses: [
             new OA\Response(
@@ -302,7 +302,7 @@ class WarehouseController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Warehouses',
         ],
         parameters: [
             new OA\Parameter(
@@ -506,7 +506,7 @@ class WarehouseController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Warehouses',
         ],
         responses: [
             new OA\Response(

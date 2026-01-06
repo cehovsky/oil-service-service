@@ -77,7 +77,7 @@ class StorageContainerLocationController extends AbstractController
             )
         ),
         tags: [
-            'Warehouse',
+            'Storage Container Locations',
         ],
         responses: [
             new OA\Response(
@@ -162,7 +162,7 @@ class StorageContainerLocationController extends AbstractController
             )
         ),
         tags: [
-            'Warehouse',
+            'Storage Container Locations',
         ],
         responses: [
             new OA\Response(
@@ -249,7 +249,7 @@ class StorageContainerLocationController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Storage Container Locations',
         ],
         responses: [
             new OA\Response(
@@ -306,7 +306,7 @@ class StorageContainerLocationController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Storage Container Locations',
         ],
         parameters: [
             new OA\Parameter(
@@ -493,7 +493,7 @@ class StorageContainerLocationController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Storage Container Locations',
         ],
         responses: [
             new OA\Response(

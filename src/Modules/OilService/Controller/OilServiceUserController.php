@@ -71,7 +71,7 @@ class OilServiceUserController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Customers',
         ],
         responses: [
             new OA\Response(
@@ -156,7 +156,7 @@ class OilServiceUserController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Customers',
         ],
         responses: [
             new OA\Response(
@@ -245,7 +245,7 @@ class OilServiceUserController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Customers',
         ],
         responses: [
             new OA\Response(
@@ -300,7 +300,7 @@ class OilServiceUserController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Customers',
         ],
         parameters: [
             new OA\Parameter(
@@ -488,7 +488,7 @@ class OilServiceUserController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Customers',
         ],
         responses: [
             new OA\Response(

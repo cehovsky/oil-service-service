@@ -73,7 +73,7 @@ class CarController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Cars',
         ],
         responses: [
             new OA\Response(
@@ -156,7 +156,7 @@ class CarController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Cars',
         ],
         responses: [
             new OA\Response(
@@ -243,7 +243,7 @@ class CarController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Cars',
         ],
         responses: [
             new OA\Response(
@@ -298,7 +298,7 @@ class CarController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Cars',
         ],
         parameters: [
             new OA\Parameter(
@@ -517,7 +517,7 @@ class CarController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Cars',
         ],
         responses: [
             new OA\Response(

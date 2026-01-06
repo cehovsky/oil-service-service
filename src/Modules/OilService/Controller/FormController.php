@@ -85,7 +85,7 @@ class FormController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Forms',
         ],
         responses: [
             new OA\Response(
@@ -182,7 +182,7 @@ class FormController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Forms',
         ],
         responses: [
             new OA\Response(
@@ -285,7 +285,7 @@ class FormController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Forms',
         ],
         responses: [
             new OA\Response(
@@ -340,7 +340,7 @@ class FormController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Forms',
         ],
         parameters: [
             new OA\Parameter(
@@ -768,7 +768,7 @@ class FormController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Dashboard',
         ],
         responses: [
             new OA\Response(
@@ -821,7 +821,7 @@ class FormController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Forms',
         ],
         responses: [
             new OA\Response(

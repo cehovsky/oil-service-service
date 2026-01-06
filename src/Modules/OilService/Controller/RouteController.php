@@ -72,7 +72,7 @@ class RouteController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Routes',
         ],
         responses: [
             new OA\Response(
@@ -161,7 +161,7 @@ class RouteController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Routes',
         ],
         responses: [
             new OA\Response(
@@ -250,7 +250,7 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Routes',
         ],
         responses: [
             new OA\Response(
@@ -305,7 +305,7 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Routes',
         ],
         parameters: [
             new OA\Parameter(
@@ -507,7 +507,7 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Dashboard',
         ],
         responses: [
             new OA\Response(
@@ -558,7 +558,7 @@ class RouteController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Routes',
         ],
         responses: [
             new OA\Response(

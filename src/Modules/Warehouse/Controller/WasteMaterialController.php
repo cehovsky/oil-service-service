@@ -74,7 +74,7 @@ class WasteMaterialController extends AbstractController
             )
         ),
         tags: [
-            'Warehouse',
+            'Waste Materials',
         ],
         responses: [
             new OA\Response(
@@ -159,7 +159,7 @@ class WasteMaterialController extends AbstractController
             )
         ),
         tags: [
-            'Warehouse',
+            'Waste Materials',
         ],
         responses: [
             new OA\Response(
@@ -251,7 +251,7 @@ class WasteMaterialController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Waste Materials',
         ],
         responses: [
             new OA\Response(
@@ -306,7 +306,7 @@ class WasteMaterialController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Waste Materials',
         ],
         parameters: [
             new OA\Parameter(
@@ -567,7 +567,7 @@ class WasteMaterialController extends AbstractController
             ],
         ],
         tags: [
-            'Warehouse',
+            'Waste Materials',
         ],
         responses: [
             new OA\Response(

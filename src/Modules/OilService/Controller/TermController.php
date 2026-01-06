@@ -77,7 +77,7 @@ class TermController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Terms',
         ],
         responses: [
             new OA\Response(
@@ -160,7 +160,7 @@ class TermController extends AbstractController
             )
         ),
         tags: [
-            'OilService',
+            'Terms',
         ],
         responses: [
             new OA\Response(
@@ -250,7 +250,7 @@ class TermController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Terms',
         ],
         responses: [
             new OA\Response(
@@ -305,7 +305,7 @@ class TermController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Terms',
         ],
         parameters: [
             new OA\Parameter(
@@ -502,7 +502,7 @@ class TermController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Dashboard',
         ],
         parameters: [
             new OA\Parameter(
@@ -578,7 +578,7 @@ class TermController extends AbstractController
             ],
         ],
         tags: [
-            'OilService',
+            'Terms',
         ],
         responses: [
             new OA\Response(
