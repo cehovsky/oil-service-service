@@ -38,9 +38,30 @@ use App\Modules\Warehouse\DTO\WasteMaterialInfoResponseDTO;
 use App\Modules\Warehouse\DTO\WasteMaterialListResponseDTO;
 use App\Modules\Warehouse\DTO\WasteMaterialSummaryDTO;
 use App\Modules\Warehouse\DTO\WasteMaterialUpdateResponseDTO;
+use App\Modules\Warehouse\DTO\RecyclingCreateResponseDTO;
+use App\Modules\Warehouse\DTO\RecyclingDeleteResponseDTO;
+use App\Modules\Warehouse\DTO\RecyclingDTO;
+use App\Modules\Warehouse\DTO\RecyclingInfoResponseDTO;
+use App\Modules\Warehouse\DTO\RecyclingListResponseDTO;
+use App\Modules\Warehouse\DTO\RecyclingRecycleResponseDTO;
+use App\Modules\Warehouse\DTO\RecyclingSummaryDTO;
+use App\Modules\Warehouse\DTO\RecyclingUpdateResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialCreateResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialDeleteResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialHistoryDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialHistoryDeleteResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialHistoryListResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialSummaryDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialInfoResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialListResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialUpdateResponseDTO;
 use App\OilService\DBAL\Entity\Route;
+use App\Warehouse\DBAL\Entity\Recycling;
 use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\DBAL\Entity\StorageContainerLocation;
+use App\Warehouse\DBAL\Entity\StorageContainerMaterial;
+use App\Warehouse\DBAL\Entity\StorageContainerMaterialHistory;
 use App\Warehouse\DBAL\Entity\WasteMaterial;
 use App\Warehouse\DBAL\Entity\Warehouse;
 use DateTimeInterface;
@@ -380,6 +401,249 @@ class DTOFactory
         return new StorageContainerLocationDeleteResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
+        );
+    }
+
+    public function createStorageContainerMaterialDTO(StorageContainerMaterial $storageContainerMaterial): StorageContainerMaterialDTO
+    {
+        $warehouse = $storageContainerMaterial->getWarehouse();
+        $route = $storageContainerMaterial->getRoute();
+        $recycling = $storageContainerMaterial->getRecycling();
+
+        $historyDTOs = [];
+
+        foreach ($storageContainerMaterial->getHistory() as $history) {
+            $historyDTOs[] = $this->createStorageContainerMaterialHistoryDTO($history);
+        }
+
+        return new StorageContainerMaterialDTO(
+            $storageContainerMaterial->getId()->__toString(),
+            $this->createStorageContainerSummaryDTO($storageContainerMaterial->getStorageContainer()),
+            $this->createWasteMaterialSummaryDTO($storageContainerMaterial->getWasteMaterial()),
+            $warehouse ? $this->createWarehouseSummaryDTO($warehouse) : null,
+            $route ? $this->createRouteSummaryDTO($route) : null,
+            $recycling ? $this->createRecyclingSummaryDTO($recycling) : null,
+            $storageContainerMaterial->getOrder()?->getId()->__toString(),
+            $storageContainerMaterial->getVolume(),
+            $storageContainerMaterial->getIsRecycled(),
+            $storageContainerMaterial->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $storageContainerMaterial->getUpdatedAt()->format(DateTimeInterface::ATOM),
+            $historyDTOs,
+        );
+    }
+
+    /**
+     * @param StorageContainerMaterial[] $storageContainerMaterials
+     */
+    public function createStorageContainerMaterialListResponseDTO(
+        array $storageContainerMaterials,
+        int $pageCount
+    ): StorageContainerMaterialListResponseDTO {
+        $dtos = [];
+
+        foreach ($storageContainerMaterials as $material) {
+            $dtos[] = $this->createStorageContainerMaterialDTO($material);
+        }
+
+        return new StorageContainerMaterialListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $dtos,
+            $pageCount,
+        );
+    }
+
+    public function createStorageContainerMaterialCreateResponseDTO(StorageContainerMaterial $storageContainerMaterial): StorageContainerMaterialCreateResponseDTO
+    {
+        return new StorageContainerMaterialCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createStorageContainerMaterialDTO($storageContainerMaterial),
+        );
+    }
+
+    public function createStorageContainerMaterialUpdateResponseDTO(StorageContainerMaterial $storageContainerMaterial): StorageContainerMaterialUpdateResponseDTO
+    {
+        return new StorageContainerMaterialUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createStorageContainerMaterialDTO($storageContainerMaterial),
+        );
+    }
+
+    public function createStorageContainerMaterialInfoResponseDTO(StorageContainerMaterial $storageContainerMaterial): StorageContainerMaterialInfoResponseDTO
+    {
+        return new StorageContainerMaterialInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createStorageContainerMaterialDTO($storageContainerMaterial),
+        );
+    }
+
+    public function createStorageContainerMaterialDeleteResponseDTO(): StorageContainerMaterialDeleteResponseDTO
+    {
+        return new StorageContainerMaterialDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    /**
+     * @param StorageContainerMaterialHistory[] $history
+     */
+    public function createStorageContainerMaterialHistoryListResponseDTO(
+        array $history,
+        int $pageCount
+    ): StorageContainerMaterialHistoryListResponseDTO {
+        $historyDTOs = [];
+
+        foreach ($history as $historyItem) {
+            $historyDTOs[] = $this->createStorageContainerMaterialHistoryDTO($historyItem);
+        }
+
+        return new StorageContainerMaterialHistoryListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $historyDTOs,
+            $pageCount,
+        );
+    }
+
+    public function createStorageContainerMaterialHistoryDeleteResponseDTO(): StorageContainerMaterialHistoryDeleteResponseDTO
+    {
+        return new StorageContainerMaterialHistoryDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    /**
+     * @param StorageContainerMaterial[]|null $storageContainerMaterials
+     */
+    public function createRecyclingDTO(
+        Recycling $recycling,
+        ?array $storageContainerMaterials = null,
+    ): RecyclingDTO {
+        $storageContainerDTOs = [];
+
+        foreach ($recycling->getStorageContainers() as $storageContainer) {
+            $storageContainerDTOs[] = $this->createStorageContainerSummaryDTO($storageContainer);
+        }
+
+        $materials = $storageContainerMaterials ?? $recycling->getStorageContainerMaterials()->toArray();
+
+        $materialDTOs = [];
+
+        foreach ($materials as $material) {
+            $materialDTOs[] = $this->createStorageContainerMaterialDTO($material);
+        }
+
+        return new RecyclingDTO(
+            $recycling->getId()->__toString(),
+            $recycling->getRecycledAt()?->format('Y-m-d'),
+            $recycling->getRecycledBy()?->getId()->__toString(),
+            $recycling->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $recycling->getUpdatedAt()->format(DateTimeInterface::ATOM),
+            $storageContainerDTOs,
+            $materialDTOs,
+        );
+    }
+
+    /**
+     * @param Recycling[] $recyclings
+     * @param array<string, StorageContainerMaterial[]> $storageContainerMaterialsByRecyclingId
+     */
+    public function createRecyclingListResponseDTO(
+        array $recyclings,
+        int $pageCount,
+        array $storageContainerMaterialsByRecyclingId = [],
+    ): RecyclingListResponseDTO {
+        $dtos = [];
+
+        foreach ($recyclings as $recycling) {
+            $materials = $storageContainerMaterialsByRecyclingId[$recycling->getId()->__toString()] ?? null;
+            $dtos[] = $this->createRecyclingDTO($recycling, $materials);
+        }
+
+        return new RecyclingListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $dtos,
+            $pageCount,
+        );
+    }
+
+    public function createRecyclingCreateResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingCreateResponseDTO
+    {
+        return new RecyclingCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createRecyclingDTO($recycling, $storageContainerMaterials),
+        );
+    }
+
+    public function createRecyclingUpdateResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingUpdateResponseDTO
+    {
+        return new RecyclingUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createRecyclingDTO($recycling, $storageContainerMaterials),
+        );
+    }
+
+    public function createRecyclingInfoResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingInfoResponseDTO
+    {
+        return new RecyclingInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createRecyclingDTO($recycling, $storageContainerMaterials),
+        );
+    }
+
+    public function createRecyclingDeleteResponseDTO(): RecyclingDeleteResponseDTO
+    {
+        return new RecyclingDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createRecyclingRecycleResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingRecycleResponseDTO
+    {
+        return new RecyclingRecycleResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createRecyclingDTO($recycling, $storageContainerMaterials),
+        );
+    }
+
+    private function createStorageContainerMaterialHistoryDTO(StorageContainerMaterialHistory $history): StorageContainerMaterialHistoryDTO
+    {
+        return new StorageContainerMaterialHistoryDTO(
+            $history->getId()->__toString(),
+            $this->createStorageContainerMaterialSummaryDTO($history->getStorageContainerMaterial()),
+            $this->createStorageContainerSummaryDTO($history->getStorageContainer()),
+            $history->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $history->getCreatedBy()->getId()->__toString(),
+        );
+    }
+
+    private function createStorageContainerMaterialSummaryDTO(StorageContainerMaterial $storageContainerMaterial): StorageContainerMaterialSummaryDTO
+    {
+        return new StorageContainerMaterialSummaryDTO(
+            $storageContainerMaterial->getId()->__toString(),
+            $this->createWasteMaterialSummaryDTO($storageContainerMaterial->getWasteMaterial()),
+            $storageContainerMaterial->getVolume(),
+            $storageContainerMaterial->getIsRecycled(),
+        );
+    }
+
+    private function createRecyclingSummaryDTO(Recycling $recycling): RecyclingSummaryDTO
+    {
+        return new RecyclingSummaryDTO(
+            $recycling->getId()->__toString(),
+            $recycling->getRecycledAt()?->format('Y-m-d'),
+            $recycling->getRecycledBy()?->getId()->__toString(),
         );
     }
 

@@ -6,6 +6,7 @@ namespace App\Warehouse\DBAL\Repository;
 
 use App\Warehouse\DBAL\Entity\StorageContainerMaterialHistory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -22,5 +23,10 @@ class StorageContainerMaterialHistoryRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, StorageContainerMaterialHistory::class);
+    }
+
+    public function getQueryBuilderWithAlias(): QueryBuilder
+    {
+        return $this->createQueryBuilder(self::ALIAS);
     }
 }

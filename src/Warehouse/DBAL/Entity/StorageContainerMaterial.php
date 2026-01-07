@@ -119,10 +119,6 @@ class StorageContainerMaterial
 
     private function assertSingleOrigin(?Warehouse $warehouse, ?Route $route): void
     {
-        if ($warehouse === null && $route === null) {
-            throw new InvalidArgumentException('Storage container material must reference a warehouse or a route.');
-        }
-
         if ($warehouse !== null && $route !== null) {
             throw new InvalidArgumentException('Storage container material cannot reference a warehouse and a route at the same time.');
         }
@@ -162,12 +158,15 @@ class StorageContainerMaterial
         return $this->warehouse;
     }
 
-    public function setWarehouse(Warehouse $warehouse): self
+    public function setWarehouse(?Warehouse $warehouse): self
     {
-        $this->assertSingleOrigin($warehouse, null);
+        $this->assertSingleOrigin($warehouse, $this->route);
 
         $this->warehouse = $warehouse;
-        $this->route = null;
+
+        if ($warehouse !== null) {
+            $this->route = null;
+        }
 
         return $this;
     }
@@ -177,12 +176,15 @@ class StorageContainerMaterial
         return $this->route;
     }
 
-    public function setRoute(Route $route): self
+    public function setRoute(?Route $route): self
     {
-        $this->assertSingleOrigin(null, $route);
+        $this->assertSingleOrigin($this->warehouse, $route);
 
         $this->route = $route;
-        $this->warehouse = null;
+
+        if ($route !== null) {
+            $this->warehouse = null;
+        }
 
         return $this;
     }

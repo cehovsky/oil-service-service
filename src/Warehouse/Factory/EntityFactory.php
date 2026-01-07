@@ -149,6 +149,11 @@ class EntityFactory
 
         $material->addHistory($history);
 
+        if ($recycling !== null) {
+            $recycling->addStorageContainerMaterial($material);
+            $recycling->addStorageContainer($storageContainer);
+        }
+
         return $material;
     }
 
@@ -170,8 +175,8 @@ class EntityFactory
     }
 
     public function createRecycling(
-        DateTimeImmutable $recycledAt,
-        User $recycledBy,
+        ?DateTimeImmutable $recycledAt = null,
+        ?User $recycledBy = null,
     ): Recycling {
         $now = new DateTimeImmutable();
 
