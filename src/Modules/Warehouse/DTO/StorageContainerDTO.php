@@ -46,7 +46,18 @@ class StorageContainerDTO
     private ?StorageContainerActualLocationDTO $actualLocation;
 
     /**
+     * @var StorageContainerMaterialSummaryDTO[]
+     */
+    #[OA\Property(
+        description: 'Actual content of the storage container consisting of non-recycled materials.',
+        type: 'array',
+        items: new OA\Items(ref: new Model(type: StorageContainerMaterialSummaryDTO::class))
+    )]
+    private array $currentContent;
+
+    /**
      * @param WasteMaterialSummaryDTO[] $preferredWasteMaterials
+     * @param StorageContainerMaterialSummaryDTO[] $currentContent
      */
     public function __construct(
         string $id,
@@ -60,6 +71,7 @@ class StorageContainerDTO
         string $updatedAt,
         array $preferredWasteMaterials,
         ?StorageContainerActualLocationDTO $actualLocation,
+        array $currentContent,
     ) {
         $this->id = $id;
         $this->code = $code;
@@ -72,6 +84,7 @@ class StorageContainerDTO
         $this->updatedAt = $updatedAt;
         $this->preferredWasteMaterials = $preferredWasteMaterials;
         $this->actualLocation = $actualLocation;
+        $this->currentContent = $currentContent;
     }
 
     public function getId(): string
@@ -130,5 +143,13 @@ class StorageContainerDTO
     public function getActualLocation(): ?StorageContainerActualLocationDTO
     {
         return $this->actualLocation;
+    }
+
+    /**
+     * @return StorageContainerMaterialSummaryDTO[]
+     */
+    public function getCurrentContent(): array
+    {
+        return $this->currentContent;
     }
 }

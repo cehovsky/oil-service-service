@@ -14,6 +14,7 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Warehouse\DBAL\Entity\StorageContainerLocation;
+use App\Warehouse\DBAL\Entity\StorageContainerMaterial;
 use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Order;
 
@@ -57,6 +58,10 @@ class Route
     #[ORM\OneToMany(mappedBy: 'route', targetEntity: RouteUser::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $routeUsers;
 
+    /** @var Collection<int, StorageContainerMaterial> */
+    #[ORM\OneToMany(mappedBy: 'route', targetEntity: StorageContainerMaterial::class)]
+    private Collection $storageContainerMaterials;
+
     public function __construct(
         Uuid $id,
         ?Car $car,
@@ -73,6 +78,7 @@ class Route
         $this->orders = new ArrayCollection();
         $this->storageContainerLocations = new ArrayCollection();
         $this->routeUsers = new ArrayCollection();
+        $this->storageContainerMaterials = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -207,6 +213,35 @@ class Route
     public function removeRouteUser(RouteUser $routeUser): self
     {
         $this->routeUsers->removeElement($routeUser);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, StorageContainerMaterial>
+     */
+    public function getStorageContainerMaterials(): Collection
+    {
+        return $this->storageContainerMaterials;
+    }
+
+    public function addStorageContainerMaterial(StorageContainerMaterial $storageContainerMaterial): self
+    {
+        if (!$this->storageContainerMaterials->contains($storageContainerMaterial)) {
+            $this->storageContainerMaterials->add($storageContainerMaterial);
+            $storageContainerMaterial->setRoute($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStorageContainerMaterial(StorageContainerMaterial $storageContainerMaterial): self
+    {
+        if ($this->storageContainerMaterials->removeElement($storageContainerMaterial)) {
+            if ($storageContainerMaterial->getRoute() === $this) {
+                $storageContainerMaterial->setRoute(null);
+            }
+        }
 
         return $this;
     }

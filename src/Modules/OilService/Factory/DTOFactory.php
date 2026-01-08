@@ -39,7 +39,10 @@ use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
 use App\Modules\OilService\DTO\RouteInfoResponseDTO;
 use App\Modules\OilService\DTO\RouteListResponseDTO;
 use App\Modules\OilService\DTO\RouteTermDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialDTO;
 use App\Modules\Warehouse\DTO\StorageContainerSummaryDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialSummaryDTO;
+use App\Modules\Warehouse\Factory\DTOFactory as WarehouseDTOFactory;
 use App\Modules\OilService\DTO\CarDTO;
 use App\Modules\OilService\DTO\CarCreateResponseDTO;
 use App\Modules\OilService\DTO\CarUpdateResponseDTO;
@@ -53,6 +56,7 @@ use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 use App\Warehouse\DBAL\Entity\StorageContainer;
+use App\Warehouse\DBAL\Entity\WasteMaterial;
 use DateTimeInterface;
 
 class DTOFactory
@@ -390,7 +394,11 @@ class DTOFactory
         $car = $route->getCar();
         $routeTerms = [];
         $storageContainers = [];
+        /** @var StorageContainerMaterialDTO[] $storageContainerMaterials */
+        $storageContainerMaterials = [];
         $routeUsers = [];
+
+        $warehouseDTOFactory = new WarehouseDTOFactory();
 
         foreach ($route->getTerms() as $term) {
             $routeTerms[] = $this->createRouteTermDTO($term);
@@ -402,6 +410,10 @@ class DTOFactory
             $storageContainers[$storageContainer->getId()->__toString()] = $this->createStorageContainerSummaryDTO(
                 $storageContainer
             );
+        }
+
+        foreach ($route->getStorageContainerMaterials() as $storageContainerMaterial) {
+            $storageContainerMaterials[] = $warehouseDTOFactory->createStorageContainerMaterialDTO($storageContainerMaterial);
         }
 
         foreach ($route->getRouteUsers() as $routeUser) {
@@ -416,6 +428,7 @@ class DTOFactory
             $route->getCreatedAt()->format(DateTimeInterface::ATOM),
             $routeTerms,
             array_values($storageContainers),
+            $storageContainerMaterials,
             $routeUsers,
         );
     }
@@ -466,11 +479,28 @@ class DTOFactory
 
     private function createStorageContainerSummaryDTO(StorageContainer $storageContainer): StorageContainerSummaryDTO
     {
+        $preferredWasteMaterials = [];
+
+        foreach ($storageContainer->getPreferredWasteMaterials() as $preferredWasteMaterial) {
+            $preferredWasteMaterials[] = $this->createWasteMaterialSummaryDTO($preferredWasteMaterial);
+        }
+
         return new StorageContainerSummaryDTO(
             $storageContainer->getId()->__toString(),
             $storageContainer->getCode(),
             $storageContainer->getType()->value,
             $storageContainer->getVolumeUnit()->value,
+            $preferredWasteMaterials,
+        );
+    }
+
+    private function createWasteMaterialSummaryDTO(WasteMaterial $wasteMaterial): WasteMaterialSummaryDTO
+    {
+        return new WasteMaterialSummaryDTO(
+            $wasteMaterial->getId()->__toString(),
+            $wasteMaterial->getCode(),
+            $wasteMaterial->getLabel(),
+            $wasteMaterial->getVolumeUnit()->value,
         );
     }
 

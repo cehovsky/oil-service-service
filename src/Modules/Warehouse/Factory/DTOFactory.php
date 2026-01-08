@@ -238,9 +238,13 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[] $currentMaterials
+     */
     public function createStorageContainerDTO(
         StorageContainer $storageContainer,
         ?StorageContainerLocation $actualLocation = null,
+        array $currentMaterials = [],
     ): StorageContainerDTO {
         $preferredWasteMaterials = [];
 
@@ -251,6 +255,12 @@ class DTOFactory
         $actualLocationDTO = $actualLocation !== null
             ? $this->createStorageContainerActualLocationDTO($actualLocation)
             : null;
+
+        $currentContent = [];
+
+        foreach ($currentMaterials as $material) {
+            $currentContent[] = $this->createStorageContainerMaterialSummaryDTO($material);
+        }
 
         return new StorageContainerDTO(
             $storageContainer->getId()->__toString(),
@@ -264,23 +274,27 @@ class DTOFactory
             $storageContainer->getUpdatedAt()->format(DateTimeInterface::ATOM),
             $preferredWasteMaterials,
             $actualLocationDTO,
+            $currentContent,
         );
     }
 
     /**
      * @param StorageContainer[] $storageContainers
      * @param array<string, StorageContainerLocation> $actualLocations
+     * @param array<string, StorageContainerMaterial[]> $currentMaterials
      */
     public function createStorageContainerListResponseDTO(
         array $storageContainers,
         array $actualLocations,
-        int $pageCount
+        int $pageCount,
+        array $currentMaterials = []
     ): StorageContainerListResponseDTO {
         $storageContainerDTOs = [];
 
         foreach ($storageContainers as $storageContainer) {
             $actualLocation = $actualLocations[$storageContainer->getId()->__toString()] ?? null;
-            $storageContainerDTOs[] = $this->createStorageContainerDTO($storageContainer, $actualLocation);
+            $materials = $currentMaterials[$storageContainer->getId()->__toString()] ?? [];
+            $storageContainerDTOs[] = $this->createStorageContainerDTO($storageContainer, $actualLocation, $materials);
         }
 
         return new StorageContainerListResponseDTO(
@@ -291,36 +305,48 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[] $currentMaterials
+     */
     public function createStorageContainerCreateResponseDTO(
         StorageContainer $storageContainer,
-        ?StorageContainerLocation $actualLocation
+        ?StorageContainerLocation $actualLocation,
+        array $currentMaterials = []
     ): StorageContainerCreateResponseDTO {
         return new StorageContainerCreateResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $this->createStorageContainerDTO($storageContainer, $actualLocation),
+            $this->createStorageContainerDTO($storageContainer, $actualLocation, $currentMaterials),
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[] $currentMaterials
+     */
     public function createStorageContainerUpdateResponseDTO(
         StorageContainer $storageContainer,
-        ?StorageContainerLocation $actualLocation
+        ?StorageContainerLocation $actualLocation,
+        array $currentMaterials = []
     ): StorageContainerUpdateResponseDTO {
         return new StorageContainerUpdateResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $this->createStorageContainerDTO($storageContainer, $actualLocation),
+            $this->createStorageContainerDTO($storageContainer, $actualLocation, $currentMaterials),
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[] $currentMaterials
+     */
     public function createStorageContainerInfoResponseDTO(
         StorageContainer $storageContainer,
-        ?StorageContainerLocation $actualLocation
+        ?StorageContainerLocation $actualLocation,
+        array $currentMaterials = []
     ): StorageContainerInfoResponseDTO {
         return new StorageContainerInfoResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $this->createStorageContainerDTO($storageContainer, $actualLocation),
+            $this->createStorageContainerDTO($storageContainer, $actualLocation, $currentMaterials),
         );
     }
 
@@ -679,11 +705,18 @@ class DTOFactory
 
     private function createStorageContainerSummaryDTO(StorageContainer $storageContainer): StorageContainerSummaryDTO
     {
+        $preferredWasteMaterials = [];
+
+        foreach ($storageContainer->getPreferredWasteMaterials() as $preferredWasteMaterial) {
+            $preferredWasteMaterials[] = $this->createWasteMaterialSummaryDTO($preferredWasteMaterial);
+        }
+
         return new StorageContainerSummaryDTO(
             $storageContainer->getId()->__toString(),
             $storageContainer->getCode(),
             $storageContainer->getType()->value,
             $storageContainer->getVolumeUnit()->value,
+            $preferredWasteMaterials,
         );
     }
 

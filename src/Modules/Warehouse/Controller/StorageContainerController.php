@@ -27,6 +27,7 @@ use App\Modules\Warehouse\Validation\Constraint\UniqueStorageContainerCode;
 use App\Warehouse\DBAL\Enum\StorageContainerTypeEnum;
 use App\Warehouse\DBAL\Enum\VolumeUnitEnum;
 use App\Warehouse\DBAL\Repository\StorageContainerLocationRepository;
+use App\Warehouse\DBAL\Repository\StorageContainerMaterialRepository;
 use App\Warehouse\DBAL\Repository\StorageContainerRepository;
 use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\StorageContainerService;
@@ -57,6 +58,7 @@ class StorageContainerController extends AbstractController
         private readonly ResponseFactory $responseFactory,
         private readonly StorageContainerRepository $storageContainerRepository,
         private readonly StorageContainerLocationRepository $storageContainerLocationRepository,
+        private readonly StorageContainerMaterialRepository $storageContainerMaterialRepository,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
@@ -140,9 +142,15 @@ class StorageContainerController extends AbstractController
                 $storageContainer->getId()->__toString(),
             ]);
 
+            $currentMaterialsMap = $this->storageContainerMaterialRepository->findCurrentByStorageContainerIds([
+                $storageContainer->getId()->__toString(),
+            ]);
+            $currentMaterials = $currentMaterialsMap[$storageContainer->getId()->__toString()] ?? [];
+
             $storageContainerCreateResponseDTO = $this->dtoFactory->createStorageContainerCreateResponseDTO(
                 $storageContainer,
                 $actualLocations[$storageContainer->getId()->__toString()] ?? null,
+                $currentMaterials,
             );
 
             return $this->json($storageContainerCreateResponseDTO);
@@ -247,9 +255,15 @@ class StorageContainerController extends AbstractController
                 $storageContainer->getId()->__toString(),
             ]);
 
+            $currentMaterialsMap = $this->storageContainerMaterialRepository->findCurrentByStorageContainerIds([
+                $storageContainer->getId()->__toString(),
+            ]);
+            $currentMaterials = $currentMaterialsMap[$storageContainer->getId()->__toString()] ?? [];
+
             $storageContainerUpdateResponseDTO = $this->dtoFactory->createStorageContainerUpdateResponseDTO(
                 $storageContainer,
                 $actualLocations[$storageContainer->getId()->__toString()] ?? null,
+                $currentMaterials,
             );
 
             return $this->json($storageContainerUpdateResponseDTO);
@@ -318,9 +332,15 @@ class StorageContainerController extends AbstractController
             $storageContainer->getId()->__toString(),
         ]);
 
+        $currentMaterialsMap = $this->storageContainerMaterialRepository->findCurrentByStorageContainerIds([
+            $storageContainer->getId()->__toString(),
+        ]);
+        $currentMaterials = $currentMaterialsMap[$storageContainer->getId()->__toString()] ?? [];
+
         $storageContainerInfoResponseDTO = $this->dtoFactory->createStorageContainerInfoResponseDTO(
             $storageContainer,
             $actualLocations[$storageContainer->getId()->__toString()] ?? null,
+            $currentMaterials,
         );
 
         return $this->json($storageContainerInfoResponseDTO);
@@ -588,6 +608,7 @@ class StorageContainerController extends AbstractController
         );
 
         $actualLocations = $this->storageContainerLocationRepository->findLatestByStorageContainerIds($storageContainerIds);
+        $currentMaterials = $this->storageContainerMaterialRepository->findCurrentByStorageContainerIds($storageContainerIds);
 
         $storageContainerListResponseDTO = $this->dtoFactory->createStorageContainerListResponseDTO(
             $storageContainers,
@@ -595,7 +616,8 @@ class StorageContainerController extends AbstractController
             $this->apiGridPropertyHelper->createPageCount(
                 $storageContainersPaginator->count(),
                 $maxResults
-            )
+            ),
+            $currentMaterials,
         );
 
         return $this->json($storageContainerListResponseDTO);

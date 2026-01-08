@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Warehouse\DTO;
 
+use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
 class StorageContainerSummaryDTO
@@ -20,12 +21,22 @@ class StorageContainerSummaryDTO
     #[OA\Property(example: 'l')]
     private string $volumeUnit;
 
-    public function __construct(string $id, string $code, string $type, string $volumeUnit)
+    /**
+     * @var WasteMaterialSummaryDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: WasteMaterialSummaryDTO::class)))]
+    private array $preferredWasteMaterials;
+
+    /**
+     * @param WasteMaterialSummaryDTO[] $preferredWasteMaterials
+     */
+    public function __construct(string $id, string $code, string $type, string $volumeUnit, array $preferredWasteMaterials)
     {
         $this->id = $id;
         $this->code = $code;
         $this->type = $type;
         $this->volumeUnit = $volumeUnit;
+        $this->preferredWasteMaterials = $preferredWasteMaterials;
     }
 
     public function getId(): string
@@ -46,5 +57,13 @@ class StorageContainerSummaryDTO
     public function getVolumeUnit(): string
     {
         return $this->volumeUnit;
+    }
+
+    /**
+     * @return WasteMaterialSummaryDTO[]
+     */
+    public function getPreferredWasteMaterials(): array
+    {
+        return $this->preferredWasteMaterials;
     }
 }

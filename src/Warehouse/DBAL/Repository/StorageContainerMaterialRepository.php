@@ -29,4 +29,43 @@ class StorageContainerMaterialRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder(self::ALIAS);
     }
+
+    /**
+     * @param string[] $storageContainerIds
+     * @return array<string, StorageContainerMaterial[]>
+     */
+    public function findCurrentByStorageContainerIds(array $storageContainerIds): array
+    {
+        if ($storageContainerIds === []) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder(self::ALIAS);
+
+        $qb->addSelect('storageContainer', 'wasteMaterial');
+        $qb->innerJoin(self::ALIAS . '.storageContainer', 'storageContainer');
+        $qb->innerJoin(self::ALIAS . '.wasteMaterial', 'wasteMaterial');
+        $qb->andWhere($qb->expr()->in('storageContainer.id', ':storageContainerIds'));
+        $qb->setParameter('storageContainerIds', $storageContainerIds);
+        $qb->andWhere($qb->expr()->eq(self::ALIAS . '.isRecycled', ':isRecycled'));
+        $qb->setParameter('isRecycled', false);
+        $qb->orderBy(self::ALIAS . '.createdAt', 'ASC');
+
+        /** @var StorageContainerMaterial[] $materials */
+        $materials = $qb->getQuery()->getResult();
+
+        $map = [];
+
+        foreach ($materials as $material) {
+            $containerId = $material->getStorageContainer()->getId()->__toString();
+
+            if (!array_key_exists($containerId, $map)) {
+                $map[$containerId] = [];
+            }
+
+            $map[$containerId][] = $material;
+        }
+
+        return $map;
+    }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\DTO;
 
 use App\Modules\Users\DTO\UserDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialDTO;
 use App\Modules\Warehouse\DTO\StorageContainerSummaryDTO;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -39,6 +40,12 @@ class RouteDTO
     private array $storageContainers;
 
     /**
+     * @var StorageContainerMaterialDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: StorageContainerMaterialDTO::class)))]
+    private array $storageContainerMaterials;
+
+    /**
      * @var UserDTO[]
      */
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: UserDTO::class)))]
@@ -47,6 +54,7 @@ class RouteDTO
     /**
      * @param RouteTermDTO[] $terms
      * @param StorageContainerSummaryDTO[] $storageContainers
+     * @param StorageContainerMaterialDTO[] $storageContainerMaterials
      * @param UserDTO[] $users
      */
     public function __construct(
@@ -57,6 +65,7 @@ class RouteDTO
         string $createdAt,
         array $terms,
         array $storageContainers,
+        array $storageContainerMaterials,
         array $users,
     ) {
         $this->id = $id;
@@ -66,6 +75,7 @@ class RouteDTO
         $this->createdAt = $createdAt;
         $this->terms = $terms;
         $this->storageContainers = $storageContainers;
+        $this->storageContainerMaterials = $storageContainerMaterials;
         $this->users = $users;
     }
 
@@ -108,6 +118,14 @@ class RouteDTO
     public function getStorageContainers(): array
     {
         return $this->storageContainers;
+    }
+
+    /**
+     * @return StorageContainerMaterialDTO[]
+     */
+    public function getStorageContainerMaterials(): array
+    {
+        return $this->storageContainerMaterials;
     }
 
     /**
