@@ -22,6 +22,7 @@ use App\Modules\OilService\DTO\OilServiceUserInfoResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserListDTO;
 use App\Modules\OilService\DTO\OilServiceUserListResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserUpdateResponseDTO;
+use App\Modules\OilService\DTO\OilServiceUserWithOrdersDTO;
 use App\Modules\OilService\DTO\AvailableTermDTO;
 use App\Modules\OilService\DTO\AvailableTermListResponseDTO;
 use App\Modules\OilService\DTO\TermDTO;
@@ -90,6 +91,21 @@ class DTOFactory
             $user->getFullName(),
             $user->getCreatedAt()->format(DateTimeInterface::ATOM),
             $user->getOrders()->count(),
+        );
+    }
+
+    public function createOilServiceUserWithOrdersDTO(User $user): OilServiceUserWithOrdersDTO
+    {
+        /** @var OrderDTO[] $orders */
+        $orders = $this->createOrderDTOCollection($user->getOrders()->toArray())->toArray();
+
+        return new OilServiceUserWithOrdersDTO(
+            $user->getId()->__toString(),
+            $user->getEmail(),
+            $user->getPhone(),
+            $user->getFullName(),
+            $user->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $orders,
         );
     }
 
@@ -246,7 +262,7 @@ class DTOFactory
         return new OilServiceUserInfoResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $this->createOilServiceUserDTO($user),
+            $this->createOilServiceUserWithOrdersDTO($user),
         );
     }
 

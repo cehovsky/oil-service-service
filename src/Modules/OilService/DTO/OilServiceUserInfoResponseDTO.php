@@ -15,13 +15,13 @@ class OilServiceUserInfoResponseDTO
 
     private int $timestamp;
 
-    #[OA\Property(ref: new Model(type: OilServiceUserDTO::class))]
-    private OilServiceUserDTO $user;
+    #[OA\Property(ref: new Model(type: OilServiceUserWithOrdersDTO::class))]
+    private OilServiceUserWithOrdersDTO $user;
 
     public function __construct(
         string $result,
         int $timestamp,
-        OilServiceUserDTO $user
+        OilServiceUserWithOrdersDTO $user
     ) {
         $this->result = $result;
         $this->timestamp = $timestamp;
@@ -38,7 +38,7 @@ class OilServiceUserInfoResponseDTO
         return $this->timestamp;
     }
 
-    public function getUser(): OilServiceUserDTO
+    public function getUser(): OilServiceUserWithOrdersDTO
     {
         return $this->user;
     }

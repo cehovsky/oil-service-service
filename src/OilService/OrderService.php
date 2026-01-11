@@ -77,6 +77,57 @@ class OrderService
         return $order;
     }
 
+    public function createOrder(
+        string $fullName,
+        string $phone,
+        string $email,
+        string $carModel,
+        string $licensePlate,
+        string $address,
+        ?string $note,
+        bool $isCompany,
+        ?string $companyName,
+        ?string $companyIdentificationNumber,
+        ?string $companyTaxId,
+        ?string $companyAddress,
+        OrderStatusEnum $status,
+        RealizationTimeSlotEnum $realizationTimeSlot,
+        DateTimeImmutable $realizationDate,
+        string $userId,
+        ?Route $route = null,
+    ): Order {
+        if ($route !== null) {
+            $realizationDate = $route->getDate();
+        }
+
+        $user = $this->findUser($userId);
+
+        $order = $this->entityFactory->createOrder(
+            $fullName,
+            $phone,
+            $email,
+            $carModel,
+            $licensePlate,
+            $address,
+            $note,
+            $isCompany,
+            $companyName,
+            $companyIdentificationNumber,
+            $companyTaxId,
+            $companyAddress,
+            $status,
+            $realizationTimeSlot,
+            $realizationDate,
+            $user,
+            $route,
+        );
+
+        $this->entityManager->persist($order);
+        $this->entityManager->flush();
+
+        return $order;
+    }
+
     public function updateOrder(
         Order $order,
         string $fullName,
@@ -94,7 +145,7 @@ class OrderService
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
-        string $userEmail,
+        string $userId,
         bool $routeProvided,
         ?string $routeId,
     ): Order {
@@ -127,10 +178,13 @@ class OrderService
             $order->setRealizationDate($realizationDate);
         }
 
-        if ($order->getUser()->getEmail() !== $userEmail) {
-            $user = $this->findOrCreateUser($userEmail, $phone, $fullName);
-            $order->setUser($user);
+        $user = $order->getUser();
+
+        if ($user->getId()->__toString() !== $userId) {
+            $user = $this->findUser($userId);
         }
+
+        $order->setUser($user);
 
         $this->entityManager->flush();
 
@@ -181,5 +235,16 @@ class OrderService
         }
 
         return $route;
+    }
+
+    private function findUser(string $userId): User
+    {
+        $user = $this->userRepository->find($userId);
+
+        if ($user === null) {
+            throw new NotFoundHttpException();
+        }
+
+        return $user;
     }
 }

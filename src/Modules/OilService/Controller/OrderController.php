@@ -135,7 +135,7 @@ class OrderController extends AbstractController
 
             $route = $this->findRoute($orderCreateRequestDTO->getRouteId());
 
-            $order = $this->orderService->createOrderWithUser(
+            $order = $this->orderService->createOrder(
                 $orderCreateRequestDTO->getFullName(),
                 $orderCreateRequestDTO->getPhone(),
                 $orderCreateRequestDTO->getEmail(),
@@ -151,6 +151,7 @@ class OrderController extends AbstractController
                 OrderStatusEnum::from($orderCreateRequestDTO->getStatus()),
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
                 $this->createRealizationDate($orderCreateRequestDTO->getRealizationDate()),
+                $orderCreateRequestDTO->getUserId(),
                 $route,
             );
 
@@ -259,7 +260,7 @@ class OrderController extends AbstractController
                 $orderUpdateRequestDTO->getCompanyIdentificationNumber(),
                 $orderUpdateRequestDTO->getCompanyTaxId(),
                 $orderUpdateRequestDTO->getCompanyAddress(),
-                $orderUpdateRequestDTO->getUserEmail(),
+                $orderUpdateRequestDTO->getUserId(),
                 $routeProvided,
                 $orderUpdateRequestDTO->getRouteId(),
             );

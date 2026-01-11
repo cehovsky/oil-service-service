@@ -6,6 +6,7 @@ namespace App\Modules\OilService\DTO;
 
 use App\Domain\Validation\Constraint\Iso8601DateTime;
 use App\Modules\OilService\Validation\Constraint\ExistingRoute;
+use App\Modules\OilService\Validation\Constraint\ExistingOilServiceUser;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use OpenApi\Attributes as OA;
@@ -83,11 +84,11 @@ class OrderUpdateRequestDTO
     #[Assert\Length(max: 500)]
     private ?string $companyAddress = null;
 
-    #[OA\Property(example: 'jan.novak@example.com', description: 'User email - if changed, a new user will be created or existing one linked')]
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', description: 'Existing oil-service user id')]
     #[Assert\NotBlank]
-    #[Assert\Email]
-    #[Assert\Length(max: 180)]
-    private string $userEmail;
+    #[Assert\Uuid]
+    #[ExistingOilServiceUser]
+    private string $userId;
 
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
     #[Assert\Uuid]
@@ -118,14 +119,14 @@ class OrderUpdateRequestDTO
         return $this;
     }
 
-    public function getEmail(): string
+    public function getUserId(): string
     {
-        return $this->email;
+        return $this->userId;
     }
 
-    public function setEmail(string $email): self
+    public function setUserId(string $userId): self
     {
-        $this->email = $email;
+        $this->userId = $userId;
 
         return $this;
     }
@@ -270,18 +271,6 @@ class OrderUpdateRequestDTO
     public function setCompanyAddress(?string $companyAddress): self
     {
         $this->companyAddress = $companyAddress;
-
-        return $this;
-    }
-
-    public function getUserEmail(): string
-    {
-        return $this->userEmail;
-    }
-
-    public function setUserEmail(string $userEmail): self
-    {
-        $this->userEmail = $userEmail;
 
         return $this;
     }
