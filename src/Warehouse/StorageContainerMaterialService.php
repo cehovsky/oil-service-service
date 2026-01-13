@@ -154,6 +154,135 @@ class StorageContainerMaterialService
         return $storageContainerMaterial;
     }
 
+    /**
+     * Move all non-recycled materials from one storage container to another.
+     * Returns moved materials (can be empty if none matched the criteria).
+     */
+    public function moveNonRecycledMaterials(
+        string $sourceStorageContainerId,
+        string $targetStorageContainerId,
+        User $actor,
+    ): array {
+        if ($sourceStorageContainerId === $targetStorageContainerId) {
+            $errorCollection = new ErrorCollection();
+            $errorCollection->add(
+                new ErrorItem(
+                    'Source and target storage container must differ.',
+                    'storageContainerSame',
+                    'targetStorageContainerId',
+                )
+            );
+
+            throw new ValidationException(errorCollection: $errorCollection);
+        }
+
+        $source = $this->getStorageContainer($sourceStorageContainerId);
+        $target = $this->getStorageContainer($targetStorageContainerId);
+
+        $materials = $this->storageContainerMaterialRepository->findBy([
+            'storageContainer' => $source,
+            'isRecycled' => false,
+        ]);
+
+        $moved = [];
+
+        foreach ($materials as $material) {
+            $moved[] = $this->updateStorageContainerMaterial(
+                $material,
+                $targetStorageContainerId,
+                $material->getWasteMaterial()->getId()->__toString(),
+                $material->getVolume(),
+                $material->getIsRecycled(),
+                $actor,
+                $material->getWarehouse()?->getId()->__toString(),
+                $material->getRoute()?->getId()->__toString(),
+                $material->getRecycling()?->getId()->__toString(),
+                $material->getOrder()?->getId()->__toString(),
+            );
+        }
+
+        return $moved;
+    }
+
+    /**
+     * Move selected materials to a target storage container.
+     * Only non-recycled materials are accepted.
+     * Returns moved materials.
+     *
+     * @param string[] $storageContainerMaterialIds
+     */
+    public function moveSelectedMaterials(
+        string $targetStorageContainerId,
+        array $storageContainerMaterialIds,
+        User $actor,
+    ): array {
+        if ($storageContainerMaterialIds === []) {
+            $errorCollection = new ErrorCollection();
+            $errorCollection->add(
+                new ErrorItem(
+                    'At least one storage container material ID must be provided.',
+                    'storageContainerMaterialIdsEmpty',
+                    'storageContainerMaterialIds',
+                )
+            );
+
+            throw new ValidationException(errorCollection: $errorCollection);
+        }
+
+        $target = $this->getStorageContainer($targetStorageContainerId);
+
+        $materials = $this->storageContainerMaterialRepository->findBy([
+            'id' => $storageContainerMaterialIds,
+        ]);
+
+        if (count($materials) !== count($storageContainerMaterialIds)) {
+            $errorCollection = new ErrorCollection();
+            $errorCollection->add(
+                new ErrorItem(
+                    'Some storage container materials were not found.',
+                    'storageContainerMaterialNotFound',
+                    'storageContainerMaterialIds',
+                )
+            );
+
+            throw new ValidationException(errorCollection: $errorCollection);
+        }
+
+        foreach ($materials as $material) {
+            if ($material->getIsRecycled()) {
+                $errorCollection = new ErrorCollection();
+                $errorCollection->add(
+                    new ErrorItem(
+                        'Recycled materials cannot be moved.',
+                        'storageContainerMaterialIsRecycled',
+                        'storageContainerMaterialIds',
+                    )
+                );
+
+                throw new ValidationException(errorCollection: $errorCollection);
+            }
+        }
+
+        $moved = [];
+
+        foreach ($materials as $material) {
+            $moved[] = $this->updateStorageContainerMaterial(
+                $material,
+                $targetStorageContainerId,
+                $material->getWasteMaterial()->getId()->__toString(),
+                $material->getVolume(),
+                $material->getIsRecycled(),
+                $actor,
+                $material->getWarehouse()?->getId()->__toString(),
+                $material->getRoute()?->getId()->__toString(),
+                $material->getRecycling()?->getId()->__toString(),
+                $material->getOrder()?->getId()->__toString(),
+            );
+        }
+
+        return $moved;
+    }
+
     public function deleteStorageContainerMaterial(StorageContainerMaterial $storageContainerMaterial): void
     {
         $recycling = $storageContainerMaterial->getRecycling();

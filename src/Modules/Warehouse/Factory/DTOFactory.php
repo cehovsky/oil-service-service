@@ -55,6 +55,7 @@ use App\Modules\Warehouse\DTO\StorageContainerMaterialHistoryListResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialSummaryDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialInfoResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialListResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialMoveResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialUpdateResponseDTO;
 use App\OilService\DBAL\Entity\Route;
 use App\Warehouse\DBAL\Entity\Recycling;
@@ -494,6 +495,24 @@ class DTOFactory
             DTOValueResolver::RESULT_SUCCESS,
             time(),
             $this->createStorageContainerMaterialDTO($storageContainerMaterial),
+        );
+    }
+
+    /**
+     * @param StorageContainerMaterial[] $storageContainerMaterials
+     */
+    public function createStorageContainerMaterialMoveResponseDTO(array $storageContainerMaterials): StorageContainerMaterialMoveResponseDTO
+    {
+        $dtos = [];
+
+        foreach ($storageContainerMaterials as $material) {
+            $dtos[] = $this->createStorageContainerMaterialDTO($material);
+        }
+
+        return new StorageContainerMaterialMoveResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $dtos,
         );
     }
 

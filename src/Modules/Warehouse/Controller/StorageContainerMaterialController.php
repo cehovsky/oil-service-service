@@ -19,6 +19,9 @@ use App\Modules\Warehouse\DTO\StorageContainerMaterialCreateResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialDeleteResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialInfoResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialListResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialMoveAllRequestDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialMoveResponseDTO;
+use App\Modules\Warehouse\DTO\StorageContainerMaterialMoveSelectedRequestDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialUpdateRequestDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialUpdateResponseDTO;
 use App\Modules\Warehouse\Factory\DTOFactory;
@@ -141,6 +144,174 @@ class StorageContainerMaterialController extends AbstractController
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()
             );
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Post(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                ref: new Model(
+                    type: StorageContainerMaterialMoveAllRequestDTO::class
+                ),
+            )
+        ),
+        tags: [
+            'Storage Container Materials',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Moved',
+                content: new Model(
+                    type: StorageContainerMaterialMoveResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/warehouse/storage-container-materials/{storageContainerId}/move-all',
+        name: 'storage_container_material_move_all',
+        methods: ['POST']
+    )]
+    public function moveAll(Request $request, string $storageContainerId): JsonResponse
+    {
+        $user = $this->requireAdminUser();
+
+        try {
+            $moveDTO = $this->dtoValueResolver->resolveRequest(
+                $request,
+                StorageContainerMaterialMoveAllRequestDTO::class
+            );
+
+            $this->dtoValueResolver->validateDTO($moveDTO);
+
+            $materials = $this->storageContainerMaterialService->moveNonRecycledMaterials(
+                $storageContainerId,
+                $moveDTO->getTargetStorageContainerId(),
+                $user,
+            );
+
+            $responseDTO = $this->dtoFactory->createStorageContainerMaterialMoveResponseDTO($materials);
+
+            return $this->json($responseDTO);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection($e->getErrorCollection());
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Post(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                ref: new Model(
+                    type: StorageContainerMaterialMoveSelectedRequestDTO::class
+                ),
+            )
+        ),
+        tags: [
+            'Storage Container Materials',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Moved',
+                content: new Model(
+                    type: StorageContainerMaterialMoveResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/warehouse/storage-containers/{storageContainerId}/assign-materials',
+        name: 'storage_container_material_move_selected',
+        methods: ['POST']
+    )]
+    public function moveSelected(Request $request, string $storageContainerId): JsonResponse
+    {
+        $user = $this->requireAdminUser();
+
+        try {
+            $moveDTO = $this->dtoValueResolver->resolveRequest(
+                $request,
+                StorageContainerMaterialMoveSelectedRequestDTO::class
+            );
+
+            $this->dtoValueResolver->validateDTO($moveDTO);
+
+            $materials = $this->storageContainerMaterialService->moveSelectedMaterials(
+                $storageContainerId,
+                $moveDTO->getStorageContainerMaterialIds(),
+                $user,
+            );
+
+            $responseDTO = $this->dtoFactory->createStorageContainerMaterialMoveResponseDTO($materials);
+
+            return $this->json($responseDTO);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection($e->getErrorCollection());
         } catch (InvalidDataException) {
             throw new BadRequestHttpException();
         } catch (Throwable $e) {
