@@ -19,6 +19,7 @@ use App\Modules\OilService\DTO\RouteCreateResponseDTO;
 use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
 use App\Modules\OilService\DTO\RouteInfoResponseDTO;
 use App\Modules\OilService\DTO\RouteListResponseDTO;
+use App\Modules\OilService\DTO\RouteOrdersUpdateRequestDTO;
 use App\Modules\OilService\DTO\RouteUpdateRequestDTO;
 use App\Modules\OilService\DTO\RouteUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
@@ -227,6 +228,97 @@ class RouteController extends AbstractController
                 $routeUpdateRequestDTO->getTermIds(),
                 $routeUpdateRequestDTO->getStorageContainerIds(),
                 $routeUpdateRequestDTO->getUserIds(),
+            );
+
+            $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);
+
+            return $this->json($routeUpdateResponseDTO);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection(
+                $e->getErrorCollection()
+            );
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                ref: new Model(
+                    type: RouteOrdersUpdateRequestDTO::class
+                ),
+            )
+        ),
+        tags: [
+            'Routes',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: RouteUpdateResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/routes/{routeId}/orders',
+        name: 'oil_service_route_orders_update',
+        methods: ['PUT']
+    )]
+    public function updateOrders(Request $request, string $routeId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $route = $this->routeRepository->find($routeId);
+
+        if ($route === null) {
+            throw new NotFoundHttpException('Route not found');
+        }
+
+        try {
+            $routeOrdersUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
+                $request,
+                RouteOrdersUpdateRequestDTO::class
+            );
+
+            $this->dtoValueResolver->validateDTO($routeOrdersUpdateRequestDTO);
+
+            $route = $this->routeService->updateRouteOrders(
+                $route,
+                $routeOrdersUpdateRequestDTO->getOrderIds(),
             );
 
             $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);

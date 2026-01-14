@@ -57,6 +57,7 @@ use App\Modules\Warehouse\DTO\StorageContainerMaterialInfoResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialListResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialMoveResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialUpdateResponseDTO;
+use App\Modules\OilService\DTO\OrderSummaryDTO;
 use App\OilService\DBAL\Entity\Route;
 use App\Warehouse\DBAL\Entity\Recycling;
 use App\Warehouse\DBAL\Entity\StorageContainer;
@@ -436,6 +437,19 @@ class DTOFactory
         $warehouse = $storageContainerMaterial->getWarehouse();
         $route = $storageContainerMaterial->getRoute();
         $recycling = $storageContainerMaterial->getRecycling();
+        $order = $storageContainerMaterial->getOrder();
+
+        $orderSummary = null;
+
+        if ($order !== null) {
+            $orderSummary = new OrderSummaryDTO(
+                $order->getId()->__toString(),
+                $order->getFormattedIdent(),
+                $order->getFullName(),
+                $order->getStatus()->value,
+                $order->getRealizationDate()->format('Y-m-d'),
+            );
+        }
 
         $historyDTOs = [];
 
@@ -450,7 +464,7 @@ class DTOFactory
             $warehouse ? $this->createWarehouseSummaryDTO($warehouse) : null,
             $route ? $this->createRouteSummaryDTO($route) : null,
             $recycling ? $this->createRecyclingSummaryDTO($recycling) : null,
-            $storageContainerMaterial->getOrder()?->getId()->__toString(),
+            $orderSummary,
             $storageContainerMaterial->getVolume(),
             $storageContainerMaterial->getIsRecycled(),
             $storageContainerMaterial->getCreatedAt()->format(DateTimeInterface::ATOM),

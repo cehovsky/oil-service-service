@@ -212,7 +212,19 @@ class StorageContainerMaterial
 
     public function setOrder(?Order $order): self
     {
+        if ($this->order === $order) {
+            return $this;
+        }
+
+        if ($this->order !== null) {
+            $this->order->getStorageContainerMaterials()->removeElement($this);
+        }
+
         $this->order = $order;
+
+        if ($order !== null && !$order->getStorageContainerMaterials()->contains($this)) {
+            $order->addStorageContainerMaterial($this);
+        }
 
         return $this;
     }

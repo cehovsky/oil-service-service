@@ -6,6 +6,7 @@ namespace App\Modules\OilService\DTO;
 
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
 class OrderDTO
@@ -68,6 +69,12 @@ class OrderDTO
 
     private ?RouteDTO $route;
 
+    /**
+     * @var OrderStorageContainerMaterialDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: OrderStorageContainerMaterialDTO::class)))]
+    private array $materials;
+
     public function __construct(
         string $id,
         string $ident,
@@ -88,7 +95,8 @@ class OrderDTO
         string $realizationDate,
         string $createdAt,
         OilServiceUserDTO $user,
-        ?RouteDTO $route = null
+        ?RouteDTO $route = null,
+        array $materials = []
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -110,6 +118,7 @@ class OrderDTO
         $this->createdAt = $createdAt;
         $this->user = $user;
         $this->route = $route;
+        $this->materials = $materials;
     }
 
     public function getId(): string
@@ -210,5 +219,13 @@ class OrderDTO
     public function getRoute(): ?RouteDTO
     {
         return $this->route;
+    }
+
+    /**
+     * @return OrderStorageContainerMaterialDTO[]
+     */
+    public function getMaterials(): array
+    {
+        return $this->materials;
     }
 }

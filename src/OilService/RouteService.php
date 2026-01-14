@@ -9,7 +9,9 @@ use App\Auth\DBAL\Repository\UserRepository as AuthUserRepository;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Route as RouteEntity;
 use App\OilService\DBAL\Entity\Term;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Repository\CarRepository;
+use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\Factory\EntityFactory;
 use App\Warehouse\StorageContainerLocationService;
@@ -22,6 +24,7 @@ class RouteService
     public function __construct(
         private readonly AuthUserRepository $authUserRepository,
         private readonly CarRepository $carRepository,
+        private readonly OrderRepository $orderRepository,
         private readonly TermRepository $termRepository,
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
@@ -88,9 +91,21 @@ class RouteService
     {
         $this->syncRouteTerms($route, []);
         $this->syncRouteUsers($route, []);
+        $this->syncRouteOrders($route, []);
 
         $this->entityManager->remove($route);
         $this->entityManager->flush();
+    }
+
+    /**
+     * @param string[] $orderIds
+     */
+    public function updateRouteOrders(RouteEntity $route, array $orderIds): RouteEntity
+    {
+        $this->syncRouteOrders($route, $orderIds);
+        $this->entityManager->flush();
+
+        return $route;
     }
 
     /**
@@ -206,5 +221,49 @@ class RouteService
                 $movedAt,
             );
         }
+    }
+
+    /**
+     * @param string[]|null $orderIds
+     */
+    private function syncRouteOrders(RouteEntity $route, ?array $orderIds): void
+    {
+        if ($orderIds === null) {
+            return;
+        }
+
+        $orderIds = array_values(array_unique($orderIds));
+
+        $existingOrdersById = [];
+
+        foreach ($route->getOrders()->toArray() as $order) {
+            $existingOrdersById[$order->getId()->toRfc4122()] = $order;
+        }
+
+        foreach ($orderIds as $orderId) {
+            if (isset($existingOrdersById[$orderId])) {
+                unset($existingOrdersById[$orderId]);
+
+                continue;
+            }
+
+            $order = $this->findOrder($orderId);
+            $order->setRoute($route);
+        }
+
+        foreach ($existingOrdersById as $order) {
+            $order->setRoute(null);
+        }
+    }
+
+    private function findOrder(string $orderId): Order
+    {
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException('Order not found: ' . $orderId);
+        }
+
+        return $order;
     }
 }

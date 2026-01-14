@@ -52,10 +52,17 @@ class RouteDTO
     private array $users;
 
     /**
+     * @var OrderSummaryDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: OrderSummaryDTO::class)))]
+    private array $orders;
+
+    /**
      * @param RouteTermDTO[] $terms
      * @param StorageContainerSummaryDTO[] $storageContainers
      * @param StorageContainerMaterialDTO[] $storageContainerMaterials
      * @param UserDTO[] $users
+     * @param OrderSummaryDTO[] $orders
      */
     public function __construct(
         string $id,
@@ -67,6 +74,7 @@ class RouteDTO
         array $storageContainers,
         array $storageContainerMaterials,
         array $users,
+        array $orders,
     ) {
         $this->id = $id;
         $this->car = $car;
@@ -77,6 +85,7 @@ class RouteDTO
         $this->storageContainers = $storageContainers;
         $this->storageContainerMaterials = $storageContainerMaterials;
         $this->users = $users;
+        $this->orders = $orders;
     }
 
     public function getId(): string
@@ -134,5 +143,13 @@ class RouteDTO
     public function getUsers(): array
     {
         return $this->users;
+    }
+
+    /**
+     * @return OrderSummaryDTO[]
+     */
+    public function getOrders(): array
+    {
+        return $this->orders;
     }
 }

@@ -7,7 +7,10 @@ namespace App\OilService\DBAL\Entity;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Repository\OrderRepository;
+use App\Warehouse\DBAL\Entity\StorageContainerMaterial;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -105,6 +108,10 @@ class Order
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
+    /** @var Collection<int, StorageContainerMaterial> */
+    #[ORM\OneToMany(mappedBy: 'order', targetEntity: StorageContainerMaterial::class)]
+    private Collection $storageContainerMaterials;
+
     public function __construct(
         Uuid $id,
         int $ident,
@@ -147,6 +154,7 @@ class Order
         $this->user = $user;
         $this->createdAt = $createdAt;
         $this->route = $route;
+        $this->storageContainerMaterials = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -373,7 +381,44 @@ class Order
 
     public function setRoute(?Route $route): self
     {
+        if ($this->route !== null && $this->route !== $route) {
+            $this->route->getOrders()->removeElement($this);
+        }
+
         $this->route = $route;
+
+        if ($route !== null && !$route->getOrders()->contains($this)) {
+            $route->getOrders()->add($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, StorageContainerMaterial>
+     */
+    public function getStorageContainerMaterials(): Collection
+    {
+        return $this->storageContainerMaterials;
+    }
+
+    public function addStorageContainerMaterial(StorageContainerMaterial $storageContainerMaterial): self
+    {
+        if (!$this->storageContainerMaterials->contains($storageContainerMaterial)) {
+            $this->storageContainerMaterials->add($storageContainerMaterial);
+            $storageContainerMaterial->setOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStorageContainerMaterial(StorageContainerMaterial $storageContainerMaterial): self
+    {
+        if ($this->storageContainerMaterials->removeElement($storageContainerMaterial)) {
+            if ($storageContainerMaterial->getOrder() === $this) {
+                $storageContainerMaterial->setOrder(null);
+            }
+        }
 
         return $this;
     }

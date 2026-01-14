@@ -2,13 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Warehouse\DTO;
+namespace App\Modules\OilService\DTO;
 
-use App\Modules\OilService\DTO\OrderSummaryDTO;
+use App\Modules\Warehouse\DTO\RecyclingSummaryDTO;
+use App\Modules\Warehouse\DTO\RouteSummaryDTO;
+use App\Modules\Warehouse\DTO\StorageContainerSummaryDTO;
+use App\Modules\Warehouse\DTO\WarehouseSummaryDTO;
+use App\Modules\Warehouse\DTO\WasteMaterialSummaryDTO;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class StorageContainerMaterialDTO
+class OrderStorageContainerMaterialDTO
 {
     #[OA\Property(example: '2aab3a6d-1bde-47b2-8f12-a6120f8470c0')]
     private string $id;
@@ -28,9 +32,6 @@ class StorageContainerMaterialDTO
     #[OA\Property(ref: new Model(type: RecyclingSummaryDTO::class), nullable: true)]
     private ?RecyclingSummaryDTO $recycling;
 
-    #[OA\Property(ref: new Model(type: OrderSummaryDTO::class), nullable: true)]
-    private ?OrderSummaryDTO $order;
-
     #[OA\Property(example: 120.5)]
     private float $volume;
 
@@ -43,15 +44,6 @@ class StorageContainerMaterialDTO
     #[OA\Property(example: '2026-01-05T10:00:00+00:00')]
     private string $updatedAt;
 
-    /**
-     * @var StorageContainerMaterialHistoryDTO[]
-     */
-    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: StorageContainerMaterialHistoryDTO::class)))]
-    private array $history;
-
-    /**
-     * @param StorageContainerMaterialHistoryDTO[] $history
-     */
     public function __construct(
         string $id,
         StorageContainerSummaryDTO $storageContainer,
@@ -59,12 +51,10 @@ class StorageContainerMaterialDTO
         ?WarehouseSummaryDTO $warehouse,
         ?RouteSummaryDTO $route,
         ?RecyclingSummaryDTO $recycling,
-        ?OrderSummaryDTO $order,
         float $volume,
         bool $isRecycled,
         string $createdAt,
         string $updatedAt,
-        array $history,
     ) {
         $this->id = $id;
         $this->storageContainer = $storageContainer;
@@ -72,12 +62,10 @@ class StorageContainerMaterialDTO
         $this->warehouse = $warehouse;
         $this->route = $route;
         $this->recycling = $recycling;
-        $this->order = $order;
         $this->volume = $volume;
         $this->isRecycled = $isRecycled;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
-        $this->history = $history;
     }
 
     public function getId(): string
@@ -110,11 +98,6 @@ class StorageContainerMaterialDTO
         return $this->recycling;
     }
 
-    public function getOrder(): ?OrderSummaryDTO
-    {
-        return $this->order;
-    }
-
     public function getVolume(): float
     {
         return $this->volume;
@@ -133,13 +116,5 @@ class StorageContainerMaterialDTO
     public function getUpdatedAt(): string
     {
         return $this->updatedAt;
-    }
-
-    /**
-     * @return StorageContainerMaterialHistoryDTO[]
-     */
-    public function getHistory(): array
-    {
-        return $this->history;
     }
 }

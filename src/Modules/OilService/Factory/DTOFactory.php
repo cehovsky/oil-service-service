@@ -40,8 +40,13 @@ use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
 use App\Modules\OilService\DTO\RouteInfoResponseDTO;
 use App\Modules\OilService\DTO\RouteListResponseDTO;
 use App\Modules\OilService\DTO\RouteTermDTO;
+use App\Modules\OilService\DTO\OrderStorageContainerMaterialDTO;
+use App\Modules\OilService\DTO\OrderSummaryDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialDTO;
 use App\Modules\Warehouse\DTO\StorageContainerSummaryDTO;
+use App\Modules\Warehouse\DTO\WarehouseSummaryDTO;
+use App\Modules\Warehouse\DTO\RecyclingSummaryDTO;
+use App\Modules\Warehouse\DTO\RouteSummaryDTO as WarehouseRouteSummaryDTO;
 use App\Modules\Warehouse\DTO\WasteMaterialSummaryDTO;
 use App\Modules\Warehouse\Factory\DTOFactory as WarehouseDTOFactory;
 use App\Modules\OilService\DTO\CarDTO;
@@ -57,6 +62,9 @@ use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 use App\Warehouse\DBAL\Entity\StorageContainer;
+use App\Warehouse\DBAL\Entity\StorageContainerMaterial;
+use App\Warehouse\DBAL\Entity\Recycling;
+use App\Warehouse\DBAL\Entity\Warehouse;
 use App\Warehouse\DBAL\Entity\WasteMaterial;
 use DateTimeInterface;
 
@@ -112,6 +120,7 @@ class DTOFactory
     public function createOrderDTO(Order $order): OrderDTO
     {
         $route = $order->getRoute();
+        $materials = $this->createOrderStorageContainerMaterialDTOs($order);
 
         return new OrderDTO(
             $order->getId()->__toString(),
@@ -133,7 +142,8 @@ class DTOFactory
             $order->getRealizationDate()->format('Y-m-d'),
             $order->getCreatedAt()->format(DateTimeInterface::ATOM),
             $this->createOilServiceUserDTO($order->getUser()),
-            $route ? $this->createRouteDTO($route) : null
+            $route ? $this->createRouteDTO($route) : null,
+            $materials,
         );
     }
 
@@ -413,6 +423,7 @@ class DTOFactory
         /** @var StorageContainerMaterialDTO[] $storageContainerMaterials */
         $storageContainerMaterials = [];
         $routeUsers = [];
+        $orders = [];
 
         $warehouseDTOFactory = new WarehouseDTOFactory();
 
@@ -436,6 +447,10 @@ class DTOFactory
             $routeUsers[] = $this->createAuthUserDTO($routeUser->getUser());
         }
 
+        foreach ($route->getOrders() as $order) {
+            $orders[] = $this->createOrderSummaryDTO($order);
+        }
+
         return new RouteDTO(
             $route->getId()->__toString(),
             $car ? $this->createCarDTO($car) : null,
@@ -446,6 +461,52 @@ class DTOFactory
             array_values($storageContainers),
             $storageContainerMaterials,
             $routeUsers,
+            $orders,
+        );
+    }
+
+    /**
+     * @return OrderStorageContainerMaterialDTO[]
+     */
+    private function createOrderStorageContainerMaterialDTOs(Order $order): array
+    {
+        $materials = [];
+
+        foreach ($order->getStorageContainerMaterials() as $material) {
+            $materials[] = $this->createOrderStorageContainerMaterialDTO($material);
+        }
+
+        return $materials;
+    }
+
+    private function createOrderStorageContainerMaterialDTO(StorageContainerMaterial $material): OrderStorageContainerMaterialDTO
+    {
+        $warehouse = $material->getWarehouse();
+        $route = $material->getRoute();
+        $recycling = $material->getRecycling();
+
+        return new OrderStorageContainerMaterialDTO(
+            $material->getId()->__toString(),
+            $this->createStorageContainerSummaryDTO($material->getStorageContainer()),
+            $this->createWasteMaterialSummaryDTO($material->getWasteMaterial()),
+            $warehouse ? $this->createWarehouseSummaryDTO($warehouse) : null,
+            $route ? $this->createWarehouseRouteSummaryDTO($route) : null,
+            $recycling ? $this->createRecyclingSummaryDTO($recycling) : null,
+            $material->getVolume(),
+            $material->getIsRecycled(),
+            $material->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $material->getUpdatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    private function createOrderSummaryDTO(Order $order): OrderSummaryDTO
+    {
+        return new OrderSummaryDTO(
+            $order->getId()->__toString(),
+            $order->getFormattedIdent(),
+            $order->getFullName(),
+            $order->getStatus()->value,
+            $order->getRealizationDate()->format('Y-m-d'),
         );
     }
 
@@ -507,6 +568,33 @@ class DTOFactory
             $storageContainer->getType()->value,
             $storageContainer->getVolumeUnit()->value,
             $preferredWasteMaterials,
+        );
+    }
+
+    private function createWarehouseSummaryDTO(Warehouse $warehouse): WarehouseSummaryDTO
+    {
+        return new WarehouseSummaryDTO(
+            $warehouse->getId()->__toString(),
+            $warehouse->getLabel(),
+            $warehouse->getShortLabel(),
+        );
+    }
+
+    private function createWarehouseRouteSummaryDTO(Route $route): WarehouseRouteSummaryDTO
+    {
+        return new WarehouseRouteSummaryDTO(
+            $route->getId()->__toString(),
+            $route->getDate()->format('Y-m-d'),
+            $route->getIsActive(),
+        );
+    }
+
+    private function createRecyclingSummaryDTO(Recycling $recycling): RecyclingSummaryDTO
+    {
+        return new RecyclingSummaryDTO(
+            $recycling->getId()->__toString(),
+            $recycling->getRecycledAt()?->format('Y-m-d'),
+            $recycling->getRecycledBy()?->getId()->__toString(),
         );
     }
 

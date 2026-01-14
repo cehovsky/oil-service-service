@@ -162,6 +162,27 @@ class Route
         return $this->orders;
     }
 
+    public function addOrder(Order $order): self
+    {
+        if (!$this->orders->contains($order)) {
+            $this->orders->add($order);
+            $order->setRoute($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrder(Order $order): self
+    {
+        if ($this->orders->removeElement($order)) {
+            if ($order->getRoute() === $this) {
+                $order->setRoute(null);
+            }
+        }
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, StorageContainerLocation>
      */
