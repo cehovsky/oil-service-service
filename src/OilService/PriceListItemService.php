@@ -22,7 +22,7 @@ class PriceListItemService
         string $label,
         ?string $description,
         ?string $invoiceLabel,
-        string $price,
+        string $priceVat,
         ?int $vat,
         bool $isActive,
         bool $isPublic,
@@ -33,7 +33,8 @@ class PriceListItemService
         ?string $externalCode,
     ): PriceListItem {
         $vatValue = $vat ?? self::DEFAULT_VAT;
-        $priceVat = $this->calculatePriceVat($price, $vatValue);
+        $priceVatValue = $this->normalizePrice($priceVat);
+        $price = $this->calculatePriceFromVat($priceVatValue, $vatValue);
 
         $priceListItem = $this->entityFactory->createPriceListItem(
             $label,
@@ -41,7 +42,7 @@ class PriceListItemService
             $invoiceLabel,
             $price,
             $vatValue,
-            $priceVat,
+            $priceVatValue,
             $isActive,
             $isPublic,
             $isDefault,
@@ -62,7 +63,7 @@ class PriceListItemService
         string $label,
         ?string $description,
         ?string $invoiceLabel,
-        string $price,
+        string $priceVat,
         int $vat,
         bool $isActive,
         bool $isPublic,
@@ -72,14 +73,15 @@ class PriceListItemService
         ?string $brand,
         ?string $externalCode,
     ): PriceListItem {
-        $priceVat = $this->calculatePriceVat($price, $vat);
+        $priceVatValue = $this->normalizePrice($priceVat);
+        $price = $this->calculatePriceFromVat($priceVatValue, $vat);
 
         $priceListItem->setLabel($label);
         $priceListItem->setDescription($description);
         $priceListItem->setInvoiceLabel($invoiceLabel);
         $priceListItem->setPrice($price);
         $priceListItem->setVat($vat);
-        $priceListItem->setPriceVat($priceVat);
+        $priceListItem->setPriceVat($priceVatValue);
         $priceListItem->setIsActive($isActive);
         $priceListItem->setIsPublic($isPublic);
         $priceListItem->setIsDefault($isDefault);
@@ -99,12 +101,17 @@ class PriceListItemService
         $this->entityManager->flush();
     }
 
-    private function calculatePriceVat(string $price, int $vat): string
+    private function calculatePriceFromVat(string $priceVat, int $vat): string
     {
-        $priceValue = (float) $price;
+        $priceVatValue = (float) $priceVat;
         $vatMultiplier = 1 + ($vat / 100);
-        $priceVat = round($priceValue * $vatMultiplier, 2);
+        $price = round($priceVatValue / $vatMultiplier, 2);
 
-        return number_format($priceVat, 2, '.', '');
+        return number_format($price, 2, '.', '');
+    }
+
+    private function normalizePrice(string $price): string
+    {
+        return number_format((float) $price, 2, '.', '');
     }
 }

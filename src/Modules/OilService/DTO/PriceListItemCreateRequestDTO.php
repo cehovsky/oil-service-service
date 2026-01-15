@@ -24,10 +24,10 @@ class PriceListItemCreateRequestDTO
     #[Assert\Length(max: 255)]
     private ?string $invoiceLabel = null;
 
-    #[OA\Property(example: '1200.00')]
+    #[OA\Property(example: '1452.00')]
     #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^\d+(?:\.\d{1,2})?$/')]
-    private string $price;
+    private string $priceVat;
 
     #[OA\Property(example: 21, nullable: true)]
     #[Assert\PositiveOrZero]
@@ -100,14 +100,14 @@ class PriceListItemCreateRequestDTO
         return $this;
     }
 
-    public function getPrice(): string
+    public function getPriceVat(): string
     {
-        return $this->price;
+        return $this->priceVat;
     }
 
-    public function setPrice(string $price): self
+    public function setPriceVat(string $priceVat): self
     {
-        $this->price = $price;
+        $this->priceVat = $priceVat;
 
         return $this;
     }
