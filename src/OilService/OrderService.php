@@ -9,9 +9,14 @@ use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\User;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use App\Domain\Error\ErrorCollection;
+use App\Domain\Error\ErrorItem;
 use App\Domain\Exception\InvalidDataException;
+use App\Domain\Exception\ValidationException;
+use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Repository\RouteRepository;
 use App\OilService\DBAL\Repository\UserRepository;
+use App\OilService\DBAL\Repository\PriceListItemRepository;
 use App\OilService\Factory\EntityFactory;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,11 +27,15 @@ class OrderService
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly RouteRepository $routeRepository,
+        private readonly PriceListItemRepository $priceListItemRepository,
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
+    /**
+     * @param string[] $priceListItemIds
+     */
     public function createOrderWithUser(
         string $fullName,
         string $phone,
@@ -43,6 +52,7 @@ class OrderService
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
+        array $priceListItemIds,
         ?Route $route = null,
     ): Order {
         if ($route !== null) {
@@ -50,6 +60,8 @@ class OrderService
         }
 
         $user = $this->findOrCreateUser($email, $phone, $fullName);
+
+        $priceListItems = $this->resolvePublicPriceListItems($priceListItemIds);
 
         $order = $this->entityFactory->createOrder(
             $fullName,
@@ -71,12 +83,17 @@ class OrderService
             $route,
         );
 
+        $this->syncPriceListItems($order, $priceListItems);
+
         $this->entityManager->persist($order);
         $this->entityManager->flush();
 
         return $order;
     }
 
+    /**
+     * @param string[] $priceListItemIds
+     */
     public function createOrder(
         string $fullName,
         string $phone,
@@ -94,6 +111,7 @@ class OrderService
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         string $userId,
+        array $priceListItemIds,
         ?Route $route = null,
     ): Order {
         if ($route !== null) {
@@ -101,6 +119,8 @@ class OrderService
         }
 
         $user = $this->findUser($userId);
+
+        $priceListItems = $this->resolveAdminPriceListItems($priceListItemIds);
 
         $order = $this->entityFactory->createOrder(
             $fullName,
@@ -122,12 +142,17 @@ class OrderService
             $route,
         );
 
+        $this->syncPriceListItems($order, $priceListItems);
+
         $this->entityManager->persist($order);
         $this->entityManager->flush();
 
         return $order;
     }
 
+    /**
+     * @param string[] $priceListItemIds
+     */
     public function updateOrder(
         Order $order,
         string $fullName,
@@ -148,6 +173,7 @@ class OrderService
         string $userId,
         bool $routeProvided,
         ?string $routeId,
+        array $priceListItemIds,
     ): Order {
         $route = $order->getRoute();
 
@@ -185,6 +211,8 @@ class OrderService
         }
 
         $order->setUser($user);
+
+        $this->syncPriceListItems($order, $this->resolvePriceListItemsByIds($priceListItemIds));
 
         $this->entityManager->flush();
 
@@ -246,5 +274,103 @@ class OrderService
         }
 
         return $user;
+    }
+
+    /**
+     * @param string[] $priceListItemIds
+     *
+     * @return PriceListItem[]
+     */
+    private function resolveAdminPriceListItems(array $priceListItemIds): array
+    {
+        $selectedItems = $this->resolvePriceListItemsByIds($priceListItemIds);
+        $defaultItems = $this->priceListItemRepository->findDefaultActiveItems();
+
+        return $this->mergePriceListItems($selectedItems, $defaultItems);
+    }
+
+    /**
+     * @param string[] $priceListItemIds
+     *
+     * @return PriceListItem[]
+     */
+    private function resolvePublicPriceListItems(array $priceListItemIds): array
+    {
+        $normalizedIds = array_values(array_unique($priceListItemIds));
+        $selectedItems = $this->priceListItemRepository->findActiveVisibleNonDefaultByIds($normalizedIds);
+
+        if (count($selectedItems) !== count($normalizedIds)) {
+            throw $this->createInvalidPriceListItemsException();
+        }
+
+        $defaultItems = $this->priceListItemRepository->findDefaultActiveItems();
+
+        return $this->mergePriceListItems($selectedItems, $defaultItems);
+    }
+
+    /**
+     * @param string[] $priceListItemIds
+     *
+     * @return PriceListItem[]
+     */
+    private function resolvePriceListItemsByIds(array $priceListItemIds): array
+    {
+        return $this->priceListItemRepository->findByIds($priceListItemIds);
+    }
+
+    /**
+     * @param PriceListItem[] ...$itemsCollections
+     *
+     * @return PriceListItem[]
+     */
+    private function mergePriceListItems(array ...$itemsCollections): array
+    {
+        $itemsById = [];
+
+        foreach ($itemsCollections as $items) {
+            foreach ($items as $item) {
+                $itemsById[$item->getId()->__toString()] = $item;
+            }
+        }
+
+        return array_values($itemsById);
+    }
+
+    /**
+     * @param PriceListItem[] $priceListItems
+     */
+    private function syncPriceListItems(Order $order, array $priceListItems): void
+    {
+        $itemsById = [];
+
+        foreach ($priceListItems as $priceListItem) {
+            $itemsById[$priceListItem->getId()->__toString()] = $priceListItem;
+        }
+
+        foreach ($order->getPriceListItems()->toArray() as $existingItem) {
+            if (!isset($itemsById[$existingItem->getId()->__toString()])) {
+                $order->removePriceListItem($existingItem);
+            }
+        }
+
+        foreach ($itemsById as $priceListItem) {
+            if (!$order->getPriceListItems()->contains($priceListItem)) {
+                $order->addPriceListItem($priceListItem);
+            }
+        }
+    }
+
+    private function createInvalidPriceListItemsException(): ValidationException
+    {
+        $errorCollection = new ErrorCollection();
+        $errorCollection->add(
+            new ErrorItem(
+                'Selected price list items are not available for public orders.',
+                'invalidPriceListItems',
+                null,
+            )
+        );
+
+        return new ValidationException(errorCollection: $errorCollection);
     }
 }

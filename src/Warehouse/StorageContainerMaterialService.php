@@ -157,6 +157,8 @@ class StorageContainerMaterialService
     /**
      * Move all non-recycled materials from one storage container to another.
      * Returns moved materials (can be empty if none matched the criteria).
+     *
+     * @return StorageContainerMaterial[]
      */
     public function moveNonRecycledMaterials(
         string $sourceStorageContainerId,
@@ -210,6 +212,7 @@ class StorageContainerMaterialService
      * Returns moved materials.
      *
      * @param string[] $storageContainerMaterialIds
+     * @return StorageContainerMaterial[]
      */
     public function moveSelectedMaterials(
         string $targetStorageContainerId,

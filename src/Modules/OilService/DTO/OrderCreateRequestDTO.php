@@ -6,6 +6,7 @@ namespace App\Modules\OilService\DTO;
 
 use App\Domain\Validation\Constraint\Iso8601DateTime;
 use App\Modules\OilService\Validation\Constraint\AvailableTermSlot;
+use App\Modules\OilService\Validation\Constraint\ExistingPriceListItemIds;
 use App\Modules\OilService\Validation\Constraint\FutureRealizationDate;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
@@ -85,6 +86,16 @@ class OrderCreateRequestDTO
     #[OA\Property(example: 'Firemní 123, Praha 5, 150 00', nullable: true)]
     #[Assert\Length(max: 500)]
     private ?string $companyAddress = null;
+
+    /**
+     * @var string[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string', example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7'))]
+    #[Assert\All([
+        new Assert\Uuid(),
+    ])]
+    #[ExistingPriceListItemIds]
+    private array $priceListItemIds = [];
 
     public function getFullName(): string
     {
@@ -262,6 +273,24 @@ class OrderCreateRequestDTO
     public function setCompanyAddress(?string $companyAddress): self
     {
         $this->companyAddress = $companyAddress;
+
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getPriceListItemIds(): array
+    {
+        return $this->priceListItemIds;
+    }
+
+    /**
+     * @param string[] $priceListItemIds
+     */
+    public function setPriceListItemIds(array $priceListItemIds): self
+    {
+        $this->priceListItemIds = $priceListItemIds;
 
         return $this;
     }

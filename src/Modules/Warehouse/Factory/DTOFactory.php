@@ -632,6 +632,9 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[]|null $storageContainerMaterials
+     */
     public function createRecyclingCreateResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingCreateResponseDTO
     {
         return new RecyclingCreateResponseDTO(
@@ -641,6 +644,9 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[]|null $storageContainerMaterials
+     */
     public function createRecyclingUpdateResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingUpdateResponseDTO
     {
         return new RecyclingUpdateResponseDTO(
@@ -650,6 +656,9 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[]|null $storageContainerMaterials
+     */
     public function createRecyclingInfoResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingInfoResponseDTO
     {
         return new RecyclingInfoResponseDTO(
@@ -667,6 +676,9 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param StorageContainerMaterial[]|null $storageContainerMaterials
+     */
     public function createRecyclingRecycleResponseDTO(Recycling $recycling, ?array $storageContainerMaterials = null): RecyclingRecycleResponseDTO
     {
         return new RecyclingRecycleResponseDTO(

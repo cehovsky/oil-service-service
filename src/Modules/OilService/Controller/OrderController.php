@@ -152,6 +152,7 @@ class OrderController extends AbstractController
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
                 $this->createRealizationDate($orderCreateRequestDTO->getRealizationDate()),
                 $orderCreateRequestDTO->getUserId(),
+                $orderCreateRequestDTO->getPriceListItemIds(),
                 $route,
             );
 
@@ -263,6 +264,7 @@ class OrderController extends AbstractController
                 $orderUpdateRequestDTO->getUserId(),
                 $routeProvided,
                 $orderUpdateRequestDTO->getRouteId(),
+                $orderUpdateRequestDTO->getPriceListItemIds(),
             );
 
             $orderUpdateResponseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($order);

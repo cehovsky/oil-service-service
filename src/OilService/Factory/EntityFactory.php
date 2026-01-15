@@ -7,6 +7,7 @@ namespace App\OilService\Factory;
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Order;
+use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Term;
@@ -135,6 +136,40 @@ class EntityFactory
             $ident,
             $licensePlate,
             $status,
+            new DateTimeImmutable(),
+        );
+    }
+
+    public function createPriceListItem(
+        string $label,
+        ?string $description,
+        ?string $invoiceLabel,
+        string $price,
+        int $vat,
+        string $priceVat,
+        bool $isActive,
+        bool $isPublic,
+        bool $isDefault,
+        bool $isHiddenOnInvoice,
+        string $code,
+        ?string $brand,
+        ?string $externalCode,
+    ): PriceListItem {
+        return new PriceListItem(
+            $this->uuidFactory->timeBased()->create(),
+            $label,
+            $description,
+            $invoiceLabel,
+            $price,
+            $vat,
+            $priceVat,
+            $isActive,
+            $isPublic,
+            $isDefault,
+            $isHiddenOnInvoice,
+            $code,
+            $brand,
+            $externalCode,
             new DateTimeImmutable(),
         );
     }

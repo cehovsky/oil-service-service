@@ -75,6 +75,16 @@ class OrderDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: OrderStorageContainerMaterialDTO::class)))]
     private array $materials;
 
+    /**
+     * @var PriceListItemDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: PriceListItemDTO::class)))]
+    private array $priceListItems;
+
+    /**
+     * @param OrderStorageContainerMaterialDTO[] $materials
+     * @param PriceListItemDTO[] $priceListItems
+     */
     public function __construct(
         string $id,
         string $ident,
@@ -96,7 +106,8 @@ class OrderDTO
         string $createdAt,
         OilServiceUserDTO $user,
         ?RouteDTO $route = null,
-        array $materials = []
+        array $materials = [],
+        array $priceListItems = [],
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -119,6 +130,7 @@ class OrderDTO
         $this->user = $user;
         $this->route = $route;
         $this->materials = $materials;
+        $this->priceListItems = $priceListItems;
     }
 
     public function getId(): string
@@ -227,5 +239,13 @@ class OrderDTO
     public function getMaterials(): array
     {
         return $this->materials;
+    }
+
+    /**
+     * @return PriceListItemDTO[]
+     */
+    public function getPriceListItems(): array
+    {
+        return $this->priceListItems;
     }
 }

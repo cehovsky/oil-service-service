@@ -14,6 +14,14 @@ use App\Modules\OilService\DTO\OrderDTOCollection;
 use App\Modules\OilService\DTO\OrderInfoResponseDTO;
 use App\Modules\OilService\DTO\OrderListResponseDTO;
 use App\Modules\OilService\DTO\OrderUpdateResponseDTO;
+use App\Modules\OilService\DTO\PriceListItemCreateResponseDTO;
+use App\Modules\OilService\DTO\PriceListItemDTO;
+use App\Modules\OilService\DTO\PriceListItemDeleteResponseDTO;
+use App\Modules\OilService\DTO\PriceListItemInfoResponseDTO;
+use App\Modules\OilService\DTO\PriceListItemListResponseDTO;
+use App\Modules\OilService\DTO\PriceListItemPublicDTO;
+use App\Modules\OilService\DTO\PriceListItemPublicListResponseDTO;
+use App\Modules\OilService\DTO\PriceListItemUpdateResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserCreateResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserDeleteResponseDTO;
 use App\Modules\OilService\DTO\OilServiceUserDTO;
@@ -58,6 +66,7 @@ use App\Modules\OilService\DTO\CarListResponseDTO;
 use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Order;
+use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
@@ -121,6 +130,7 @@ class DTOFactory
     {
         $route = $order->getRoute();
         $materials = $this->createOrderStorageContainerMaterialDTOs($order);
+        $priceListItems = $this->createPriceListItemDTOs($order->getPriceListItems()->toArray());
 
         return new OrderDTO(
             $order->getId()->__toString(),
@@ -144,6 +154,7 @@ class DTOFactory
             $this->createOilServiceUserDTO($order->getUser()),
             $route ? $this->createRouteDTO($route) : null,
             $materials,
+            $priceListItems,
         );
     }
 
@@ -659,6 +670,124 @@ class DTOFactory
         return new RouteDeleteResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
+        );
+    }
+
+    public function createPriceListItemDTO(PriceListItem $priceListItem): PriceListItemDTO
+    {
+        return new PriceListItemDTO(
+            $priceListItem->getId()->__toString(),
+            $priceListItem->getLabel(),
+            $priceListItem->getDescription(),
+            $priceListItem->getInvoiceLabel(),
+            $priceListItem->getPrice(),
+            $priceListItem->getVat(),
+            $priceListItem->getPriceVat(),
+            $priceListItem->getIsActive(),
+            $priceListItem->getIsPublic(),
+            $priceListItem->getIsDefault(),
+            $priceListItem->getIsHiddenOnInvoice(),
+            $priceListItem->getCode(),
+            $priceListItem->getBrand(),
+            $priceListItem->getExternalCode(),
+            $priceListItem->getCreatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param PriceListItem[] $priceListItems
+     *
+     * @return PriceListItemDTO[]
+     */
+    public function createPriceListItemDTOs(array $priceListItems): array
+    {
+        $dtoItems = [];
+
+        foreach ($priceListItems as $priceListItem) {
+            $dtoItems[] = $this->createPriceListItemDTO($priceListItem);
+        }
+
+        return $dtoItems;
+    }
+
+    /**
+     * @param PriceListItem[] $priceListItems
+     */
+    public function createPriceListItemListResponseDTO(array $priceListItems, int $pageCount): PriceListItemListResponseDTO
+    {
+        $dtoItems = $this->createPriceListItemDTOs($priceListItems);
+
+        return new PriceListItemListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $dtoItems,
+            $pageCount,
+        );
+    }
+
+    public function createPriceListItemInfoResponseDTO(PriceListItem $priceListItem): PriceListItemInfoResponseDTO
+    {
+        return new PriceListItemInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createPriceListItemDTO($priceListItem),
+        );
+    }
+
+    public function createPriceListItemCreateResponseDTO(PriceListItem $priceListItem): PriceListItemCreateResponseDTO
+    {
+        return new PriceListItemCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createPriceListItemDTO($priceListItem),
+        );
+    }
+
+    public function createPriceListItemUpdateResponseDTO(PriceListItem $priceListItem): PriceListItemUpdateResponseDTO
+    {
+        return new PriceListItemUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createPriceListItemDTO($priceListItem),
+        );
+    }
+
+    public function createPriceListItemDeleteResponseDTO(): PriceListItemDeleteResponseDTO
+    {
+        return new PriceListItemDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createPriceListItemPublicDTO(PriceListItem $priceListItem): PriceListItemPublicDTO
+    {
+        return new PriceListItemPublicDTO(
+            $priceListItem->getId()->__toString(),
+            $priceListItem->getLabel(),
+            $priceListItem->getDescription(),
+            $priceListItem->getInvoiceLabel(),
+            $priceListItem->getPrice(),
+            $priceListItem->getVat(),
+            $priceListItem->getPriceVat(),
+        );
+    }
+
+    /**
+     * @param PriceListItem[] $priceListItems
+     */
+    public function createPriceListItemPublicListResponseDTO(array $priceListItems): PriceListItemPublicListResponseDTO
+    {
+        $dtoItems = [];
+
+        foreach ($priceListItems as $priceListItem) {
+            $dtoItems[] = $this->createPriceListItemPublicDTO($priceListItem);
+        }
+
+        return new PriceListItemPublicListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $dtoItems,
         );
     }
 

@@ -112,6 +112,11 @@ class Order
     #[ORM\OneToMany(mappedBy: 'order', targetEntity: StorageContainerMaterial::class)]
     private Collection $storageContainerMaterials;
 
+    /** @var Collection<int, PriceListItem> */
+    #[ORM\ManyToMany(targetEntity: PriceListItem::class)]
+    #[ORM\JoinTable(name: 'oil_service_order_price_list_item')]
+    private Collection $priceListItems;
+
     public function __construct(
         Uuid $id,
         int $ident,
@@ -155,6 +160,7 @@ class Order
         $this->createdAt = $createdAt;
         $this->route = $route;
         $this->storageContainerMaterials = new ArrayCollection();
+        $this->priceListItems = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -419,6 +425,30 @@ class Order
                 $storageContainerMaterial->setOrder(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, PriceListItem>
+     */
+    public function getPriceListItems(): Collection
+    {
+        return $this->priceListItems;
+    }
+
+    public function addPriceListItem(PriceListItem $priceListItem): self
+    {
+        if (!$this->priceListItems->contains($priceListItem)) {
+            $this->priceListItems->add($priceListItem);
+        }
+
+        return $this;
+    }
+
+    public function removePriceListItem(PriceListItem $priceListItem): self
+    {
+        $this->priceListItems->removeElement($priceListItem);
 
         return $this;
     }

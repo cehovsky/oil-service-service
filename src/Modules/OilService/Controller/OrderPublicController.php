@@ -141,6 +141,7 @@ class OrderPublicController extends AbstractController
                 OrderStatusEnum::from($orderCreateRequestDTO->getStatus()),
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
                 $this->createRealizationDate($orderCreateRequestDTO->getRealizationDate()),
+                $orderCreateRequestDTO->getPriceListItemIds(),
                 null,
             );
 
