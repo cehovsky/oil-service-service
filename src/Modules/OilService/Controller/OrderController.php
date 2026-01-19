@@ -20,6 +20,7 @@ use App\Modules\OilService\DTO\OrderInfoResponseDTO;
 use App\Modules\OilService\DTO\OrderListResponseDTO;
 use App\Modules\OilService\DTO\OrderUpdateRequestDTO;
 use App\Modules\OilService\DTO\OrderUpdateResponseDTO;
+use App\Modules\OilService\DTO\OrderInventoryItemsUpdateRequestDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\OrderGridSortEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
@@ -28,6 +29,7 @@ use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route as RouteEntity;
 use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\RouteRepository;
+use App\OilService\OrderInventoryItemService;
 use App\OilService\OrderService;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\QueryBuilder;
@@ -68,6 +70,7 @@ class OrderController extends AbstractController
         private readonly ApiGridManager $apiGridManager,
         private readonly Security $security,
         private readonly OrderService $orderService,
+        private readonly OrderInventoryItemService $orderInventoryItemService,
     ) {
     }
 
@@ -270,6 +273,111 @@ class OrderController extends AbstractController
             $orderUpdateResponseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($order);
 
             return $this->json($orderUpdateResponseDTO);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection(
+                $e->getErrorCollection()
+            );
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                ref: new Model(
+                    type: OrderInventoryItemsUpdateRequestDTO::class
+                ),
+            )
+        ),
+        tags: [
+            'Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: OrderUpdateResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/orders/{orderId}/inventory-items',
+        name: 'oil_service_order_inventory_items_update',
+        methods: ['PUT']
+    )]
+    public function updateInventoryItems(Request $request, string $orderId): JsonResponse
+    {
+        $user = $this->requireAdminUser();
+
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        try {
+            $updateRequestDTO = $this->dtoValueResolver->resolveRequest(
+                $request,
+                OrderInventoryItemsUpdateRequestDTO::class
+            );
+
+            $this->dtoValueResolver->validateDTO($updateRequestDTO);
+
+            $items = [];
+
+            foreach ($updateRequestDTO->getItems() as $item) {
+                if (!is_array($item)) {
+                    throw new InvalidDataException();
+                }
+
+                $items[] = [
+                    'inventoryItemId' => $item['inventoryItemId'] ?? null,
+                    'quantity' => $item['quantity'] ?? null,
+                ];
+            }
+
+            $order = $this->orderInventoryItemService->updateOrderInventoryItems(
+                $order,
+                $items,
+                $user,
+            );
+
+            $responseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($order);
+
+            return $this->json($responseDTO);
         } catch (ValidationException $e) {
             return $this->responseFactory->createResponseErrorCollection(
                 $e->getErrorCollection()

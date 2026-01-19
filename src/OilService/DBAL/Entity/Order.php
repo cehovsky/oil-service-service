@@ -112,6 +112,10 @@ class Order
     #[ORM\OneToMany(mappedBy: 'order', targetEntity: StorageContainerMaterial::class)]
     private Collection $storageContainerMaterials;
 
+    /** @var Collection<int, OrderInventoryItem> */
+    #[ORM\OneToMany(mappedBy: 'order', targetEntity: OrderInventoryItem::class, cascade: ['persist'], orphanRemoval: true)]
+    private Collection $orderInventoryItems;
+
     /** @var Collection<int, PriceListItem> */
     #[ORM\ManyToMany(targetEntity: PriceListItem::class)]
     #[ORM\JoinTable(name: 'oil_service_order_price_list_item')]
@@ -160,6 +164,7 @@ class Order
         $this->createdAt = $createdAt;
         $this->route = $route;
         $this->storageContainerMaterials = new ArrayCollection();
+        $this->orderInventoryItems = new ArrayCollection();
         $this->priceListItems = new ArrayCollection();
     }
 
@@ -425,6 +430,31 @@ class Order
                 $storageContainerMaterial->setOrder(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderInventoryItem>
+     */
+    public function getOrderInventoryItems(): Collection
+    {
+        return $this->orderInventoryItems;
+    }
+
+    public function addOrderInventoryItem(OrderInventoryItem $orderInventoryItem): self
+    {
+        if (!$this->orderInventoryItems->contains($orderInventoryItem)) {
+            $this->orderInventoryItems->add($orderInventoryItem);
+            $orderInventoryItem->setOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderInventoryItem(OrderInventoryItem $orderInventoryItem): self
+    {
+        $this->orderInventoryItems->removeElement($orderInventoryItem);
 
         return $this;
     }

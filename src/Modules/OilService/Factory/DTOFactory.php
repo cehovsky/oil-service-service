@@ -49,7 +49,18 @@ use App\Modules\OilService\DTO\RouteInfoResponseDTO;
 use App\Modules\OilService\DTO\RouteListResponseDTO;
 use App\Modules\OilService\DTO\RouteTermDTO;
 use App\Modules\OilService\DTO\OrderStorageContainerMaterialDTO;
+use App\Modules\OilService\DTO\OrderInventoryItemDTO;
 use App\Modules\OilService\DTO\OrderSummaryDTO;
+use App\Modules\OilService\DTO\InventoryItemCreateResponseDTO;
+use App\Modules\OilService\DTO\InventoryItemDTO;
+use App\Modules\OilService\DTO\InventoryItemDeleteResponseDTO;
+use App\Modules\OilService\DTO\InventoryItemHistoryDTO;
+use App\Modules\OilService\DTO\InventoryItemInfoResponseDTO;
+use App\Modules\OilService\DTO\InventoryItemListResponseDTO;
+use App\Modules\OilService\DTO\InventoryItemStockInResponseDTO;
+use App\Modules\OilService\DTO\InventoryItemStockOutResponseDTO;
+use App\Modules\OilService\DTO\InventoryItemSummaryDTO;
+use App\Modules\OilService\DTO\InventoryItemUpdateResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialDTO;
 use App\Modules\Warehouse\DTO\StorageContainerSummaryDTO;
 use App\Modules\Warehouse\DTO\WarehouseSummaryDTO;
@@ -65,7 +76,10 @@ use App\Modules\OilService\DTO\CarInfoResponseDTO;
 use App\Modules\OilService\DTO\CarListResponseDTO;
 use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Entity\Car;
+use App\OilService\DBAL\Entity\InventoryItem;
+use App\OilService\DBAL\Entity\InventoryItemHistory;
 use App\OilService\DBAL\Entity\Order;
+use App\OilService\DBAL\Entity\OrderInventoryItem;
 use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
@@ -130,6 +144,7 @@ class DTOFactory
     {
         $route = $order->getRoute();
         $materials = $this->createOrderStorageContainerMaterialDTOs($order);
+        $inventoryItems = $this->createOrderInventoryItemDTOs($order);
         $priceListItems = $this->createPriceListItemDTOs($order->getPriceListItems()->toArray());
 
         return new OrderDTO(
@@ -154,6 +169,7 @@ class DTOFactory
             $this->createOilServiceUserDTO($order->getUser()),
             $route ? $this->createRouteDTO($route) : null,
             $materials,
+            $inventoryItems,
             $priceListItems,
         );
     }
@@ -510,6 +526,30 @@ class DTOFactory
         );
     }
 
+    /**
+     * @return OrderInventoryItemDTO[]
+     */
+    private function createOrderInventoryItemDTOs(Order $order): array
+    {
+        $items = [];
+
+        foreach ($order->getOrderInventoryItems() as $orderInventoryItem) {
+            $items[] = $this->createOrderInventoryItemDTO($orderInventoryItem);
+        }
+
+        return $items;
+    }
+
+    private function createOrderInventoryItemDTO(OrderInventoryItem $orderInventoryItem): OrderInventoryItemDTO
+    {
+        $inventoryItem = $orderInventoryItem->getInventoryItem();
+
+        return new OrderInventoryItemDTO(
+            $this->createInventoryItemSummaryDTO($inventoryItem),
+            $orderInventoryItem->getQuantity(),
+        );
+    }
+
     private function createOrderSummaryDTO(Order $order): OrderSummaryDTO
     {
         return new OrderSummaryDTO(
@@ -757,6 +797,153 @@ class DTOFactory
         return new PriceListItemDeleteResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
+        );
+    }
+
+    public function createInventoryItemSummaryDTO(InventoryItem $inventoryItem): InventoryItemSummaryDTO
+    {
+        return new InventoryItemSummaryDTO(
+            $inventoryItem->getId()->__toString(),
+            $inventoryItem->getLabel(),
+            $inventoryItem->getStockCount(),
+        );
+    }
+
+    public function createInventoryItemHistoryDTO(InventoryItemHistory $history): InventoryItemHistoryDTO
+    {
+        $order = $history->getOrder();
+
+        return new InventoryItemHistoryDTO(
+            $history->getId()->__toString(),
+            $history->getMovementType()->value,
+            $history->getQuantity(),
+            $history->getIsIncrement(),
+            $history->getPrice(),
+            $history->getVat(),
+            $history->getPriceVat(),
+            $history->getNote(),
+            $order ? $this->createOrderSummaryDTO($order) : null,
+            $history->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $history->getCreatedBy()->getId()->__toString(),
+        );
+    }
+
+    /**
+     * @param InventoryItemHistory[] $historyItems
+     *
+     * @return InventoryItemHistoryDTO[]
+     */
+    public function createInventoryItemHistoryDTOs(array $historyItems): array
+    {
+        $dtoItems = [];
+
+        foreach ($historyItems as $historyItem) {
+            $dtoItems[] = $this->createInventoryItemHistoryDTO($historyItem);
+        }
+
+        return $dtoItems;
+    }
+
+    public function createInventoryItemDTO(InventoryItem $inventoryItem): InventoryItemDTO
+    {
+        $historyItems = $inventoryItem->getHistory()->slice(0, 20);
+        $historyDTOs = $this->createInventoryItemHistoryDTOs($historyItems);
+
+        return new InventoryItemDTO(
+            $inventoryItem->getId()->__toString(),
+            $inventoryItem->getLabel(),
+            $inventoryItem->getDescription(),
+            $inventoryItem->getPrice(),
+            $inventoryItem->getVat(),
+            $inventoryItem->getPriceVat(),
+            $inventoryItem->getStockCount(),
+            $inventoryItem->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $inventoryItem->getUpdatedAt()->format(DateTimeInterface::ATOM),
+            $inventoryItem->getCreatedBy()->getId()->__toString(),
+            $inventoryItem->getUpdatedBy()->getId()->__toString(),
+            $historyDTOs,
+        );
+    }
+
+    /**
+     * @param InventoryItem[] $inventoryItems
+     *
+     * @return InventoryItemDTO[]
+     */
+    public function createInventoryItemDTOs(array $inventoryItems): array
+    {
+        $dtoItems = [];
+
+        foreach ($inventoryItems as $inventoryItem) {
+            $dtoItems[] = $this->createInventoryItemDTO($inventoryItem);
+        }
+
+        return $dtoItems;
+    }
+
+    /**
+     * @param InventoryItem[] $inventoryItems
+     */
+    public function createInventoryItemListResponseDTO(array $inventoryItems, int $pageCount): InventoryItemListResponseDTO
+    {
+        return new InventoryItemListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createInventoryItemDTOs($inventoryItems),
+            $pageCount,
+        );
+    }
+
+    public function createInventoryItemInfoResponseDTO(InventoryItem $inventoryItem): InventoryItemInfoResponseDTO
+    {
+        return new InventoryItemInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createInventoryItemDTO($inventoryItem),
+        );
+    }
+
+    public function createInventoryItemCreateResponseDTO(InventoryItem $inventoryItem): InventoryItemCreateResponseDTO
+    {
+        return new InventoryItemCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createInventoryItemDTO($inventoryItem),
+        );
+    }
+
+    public function createInventoryItemUpdateResponseDTO(InventoryItem $inventoryItem): InventoryItemUpdateResponseDTO
+    {
+        return new InventoryItemUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createInventoryItemDTO($inventoryItem),
+        );
+    }
+
+    public function createInventoryItemDeleteResponseDTO(): InventoryItemDeleteResponseDTO
+    {
+        return new InventoryItemDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createInventoryItemStockInResponseDTO(InventoryItem $inventoryItem): InventoryItemStockInResponseDTO
+    {
+        return new InventoryItemStockInResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createInventoryItemDTO($inventoryItem),
+        );
+    }
+
+    public function createInventoryItemStockOutResponseDTO(InventoryItem $inventoryItem): InventoryItemStockOutResponseDTO
+    {
+        return new InventoryItemStockOutResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createInventoryItemDTO($inventoryItem),
         );
     }
 

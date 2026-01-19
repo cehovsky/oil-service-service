@@ -17,7 +17,7 @@ class UsersUpdateRequestDTO
 
     #[OA\Property(example: 'NewPassword123!')]
     #[Assert\Length(min: 8, max: 255)]
-    #[Assert\NotBlank(allowNull: true)]
+    #[Assert\NotBlank]
     private ?string $password = null;
 
     #[OA\Property(example: 'User Name')]

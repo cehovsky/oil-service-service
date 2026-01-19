@@ -6,13 +6,17 @@ namespace App\OilService\Factory;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\OilService\DBAL\Entity\Car;
+use App\OilService\DBAL\Entity\InventoryItem;
+use App\OilService\DBAL\Entity\InventoryItemHistory;
 use App\OilService\DBAL\Entity\Order;
+use App\OilService\DBAL\Entity\OrderInventoryItem;
 use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 use App\OilService\DBAL\Enum\CarStatusEnum;
+use App\OilService\DBAL\Enum\InventoryMovementTypeEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\OrderRepository;
@@ -171,6 +175,82 @@ class EntityFactory
             $brand,
             $externalCode,
             new DateTimeImmutable(),
+        );
+    }
+
+    public function createInventoryItem(
+        string $label,
+        ?string $description,
+        ?string $price,
+        ?int $vat,
+        ?string $priceVat,
+        int $stockCount,
+        AuthUser $createdBy,
+        AuthUser $updatedBy,
+    ): InventoryItem {
+        $now = new DateTimeImmutable();
+
+        return new InventoryItem(
+            $this->uuidFactory->timeBased()->create(),
+            $label,
+            $description,
+            $price,
+            $vat,
+            $priceVat,
+            $stockCount,
+            $createdBy,
+            $updatedBy,
+            $now,
+            $now,
+        );
+    }
+
+    public function createInventoryItemHistory(
+        InventoryItem $inventoryItem,
+        InventoryMovementTypeEnum $movementType,
+        int $quantity,
+        bool $isIncrement,
+        AuthUser $createdBy,
+        ?Order $order = null,
+        ?string $price = null,
+        ?int $vat = null,
+        ?string $priceVat = null,
+        ?string $note = null,
+        ?DateTimeImmutable $createdAt = null,
+    ): InventoryItemHistory {
+        $createdAt ??= new DateTimeImmutable();
+
+        return new InventoryItemHistory(
+            $this->uuidFactory->timeBased()->create(),
+            $inventoryItem,
+            $movementType,
+            $quantity,
+            $isIncrement,
+            $createdBy,
+            $createdAt,
+            $order,
+            $price,
+            $vat,
+            $priceVat,
+            $note,
+        );
+    }
+
+    public function createOrderInventoryItem(
+        Order $order,
+        InventoryItem $inventoryItem,
+        int $quantity,
+        ?DateTimeImmutable $createdAt = null,
+    ): OrderInventoryItem {
+        $createdAt ??= new DateTimeImmutable();
+
+        return new OrderInventoryItem(
+            $this->uuidFactory->timeBased()->create(),
+            $order,
+            $inventoryItem,
+            $quantity,
+            $createdAt,
+            $createdAt,
         );
     }
 }
