@@ -48,4 +48,17 @@ class InventoryItemRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function findByCode(string $code): ?InventoryItem
+    {
+        $qb = $this->getQueryBuilderWithAlias();
+
+        $qb->andWhere($qb->expr()->eq(self::ALIAS . '.code', ':code'))
+            ->setParameter('code', $code)
+            ->setMaxResults(1);
+
+        $result = $qb->getQuery()->getResult();
+
+        return $result[0] ?? null;
+    }
 }

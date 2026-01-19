@@ -18,6 +18,16 @@ class InventoryItemUpdateRequestDTO
     #[Assert\Length(max: 2000)]
     private ?string $description = null;
 
+    #[OA\Property(example: '1001')]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
+    #[Assert\Regex(pattern: '/^\d+$/')]
+    private string $code;
+
+    #[OA\Property(example: 'EXT-001', nullable: true)]
+    #[Assert\Length(max: 255)]
+    private ?string $externalCode = null;
+
     #[OA\Property(example: '1200.00', nullable: true)]
     #[Assert\Regex(pattern: '/^\d+(?:\.\d{1,2})?$/')]
     private ?string $price = null;
@@ -71,6 +81,30 @@ class InventoryItemUpdateRequestDTO
     public function setVat(?int $vat): self
     {
         $this->vat = $vat;
+
+        return $this;
+    }
+
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function setCode(string $code): self
+    {
+        $this->code = $code;
+
+        return $this;
+    }
+
+    public function getExternalCode(): ?string
+    {
+        return $this->externalCode;
+    }
+
+    public function setExternalCode(?string $externalCode): self
+    {
+        $this->externalCode = $externalCode;
 
         return $this;
     }

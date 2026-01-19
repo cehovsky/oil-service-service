@@ -33,6 +33,15 @@ class InventoryItem
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
+    #[ORM\Column(length: 20, unique: true)]
+    private string $code;
+
+    #[Assert\Length(max: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $externalCode = null;
+
     #[ORM\Column(type: Types::DECIMAL, precision: 16, scale: 2, nullable: true)]
     private ?string $price;
 
@@ -75,6 +84,8 @@ class InventoryItem
         Uuid $id,
         string $label,
         ?string $description,
+        string $code,
+        ?string $externalCode,
         ?string $price,
         ?int $vat,
         ?string $priceVat,
@@ -87,6 +98,8 @@ class InventoryItem
         $this->id = $id;
         $this->label = $label;
         $this->description = $description;
+        $this->code = $code;
+        $this->externalCode = $externalCode;
         $this->price = $price;
         $this->vat = $vat;
         $this->priceVat = $priceVat;
@@ -97,6 +110,30 @@ class InventoryItem
         $this->updatedAt = $updatedAt;
         $this->history = new ArrayCollection();
         $this->orderInventoryItems = new ArrayCollection();
+    }
+
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function setCode(string $code): self
+    {
+        $this->code = $code;
+
+        return $this;
+    }
+
+    public function getExternalCode(): ?string
+    {
+        return $this->externalCode;
+    }
+
+    public function setExternalCode(?string $externalCode): self
+    {
+        $this->externalCode = $externalCode;
+
+        return $this;
     }
 
     public function getId(): Uuid

@@ -18,6 +18,12 @@ class InventoryItemDTO
     #[OA\Property(example: 'Replacement cabin filter', nullable: true)]
     private ?string $description;
 
+    #[OA\Property(example: '1001')]
+    private string $code;
+
+    #[OA\Property(example: 'EXT-001', nullable: true)]
+    private ?string $externalCode;
+
     #[OA\Property(example: '1200.00', nullable: true)]
     private ?string $price;
 
@@ -55,6 +61,8 @@ class InventoryItemDTO
         string $id,
         string $label,
         ?string $description,
+        string $code,
+        ?string $externalCode,
         ?string $price,
         ?int $vat,
         ?string $priceVat,
@@ -68,6 +76,8 @@ class InventoryItemDTO
         $this->id = $id;
         $this->label = $label;
         $this->description = $description;
+        $this->code = $code;
+        $this->externalCode = $externalCode;
         $this->price = $price;
         $this->vat = $vat;
         $this->priceVat = $priceVat;
@@ -92,6 +102,16 @@ class InventoryItemDTO
     public function getDescription(): ?string
     {
         return $this->description;
+    }
+
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function getExternalCode(): ?string
+    {
+        return $this->externalCode;
     }
 
     public function getPrice(): ?string

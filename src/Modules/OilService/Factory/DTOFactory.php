@@ -805,6 +805,8 @@ class DTOFactory
         return new InventoryItemSummaryDTO(
             $inventoryItem->getId()->__toString(),
             $inventoryItem->getLabel(),
+            $inventoryItem->getCode(),
+            $inventoryItem->getExternalCode(),
             $inventoryItem->getStockCount(),
         );
     }
@@ -853,6 +855,8 @@ class DTOFactory
             $inventoryItem->getId()->__toString(),
             $inventoryItem->getLabel(),
             $inventoryItem->getDescription(),
+            $inventoryItem->getCode(),
+            $inventoryItem->getExternalCode(),
             $inventoryItem->getPrice(),
             $inventoryItem->getVat(),
             $inventoryItem->getPriceVat(),

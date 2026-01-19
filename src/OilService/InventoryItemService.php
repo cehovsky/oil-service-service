@@ -31,6 +31,8 @@ class InventoryItemService
     public function createInventoryItem(
         string $label,
         ?string $description,
+        string $code,
+        ?string $externalCode,
         ?string $price,
         ?int $vat,
         AuthUser $actor,
@@ -53,6 +55,8 @@ class InventoryItemService
         $inventoryItem = $this->entityFactory->createInventoryItem(
             $label,
             $description,
+            $code,
+            $externalCode,
             $priceValue,
             $vatValue,
             $priceVatValue,
@@ -71,6 +75,8 @@ class InventoryItemService
         InventoryItem $inventoryItem,
         string $label,
         ?string $description,
+        string $code,
+        ?string $externalCode,
         ?string $price,
         ?int $vat,
         AuthUser $actor,
@@ -90,6 +96,8 @@ class InventoryItemService
 
         $inventoryItem->setLabel($label);
         $inventoryItem->setDescription($description);
+        $inventoryItem->setCode($code);
+        $inventoryItem->setExternalCode($externalCode);
         $inventoryItem->setPrice($priceValue);
         $inventoryItem->setVat($vatValue);
         $inventoryItem->setPriceVat($priceVatValue);

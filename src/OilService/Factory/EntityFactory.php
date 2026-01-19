@@ -181,6 +181,8 @@ class EntityFactory
     public function createInventoryItem(
         string $label,
         ?string $description,
+        string $code,
+        ?string $externalCode,
         ?string $price,
         ?int $vat,
         ?string $priceVat,
@@ -194,6 +196,8 @@ class EntityFactory
             $this->uuidFactory->timeBased()->create(),
             $label,
             $description,
+            $code,
+            $externalCode,
             $price,
             $vat,
             $priceVat,

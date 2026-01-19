@@ -47,6 +47,8 @@ class InventoryItemController extends AbstractController
 {
     private const string FILTER_LABEL_KEY = 'label';
     private const string FILTER_DESCRIPTION_KEY = 'description';
+    private const string FILTER_CODE_KEY = 'code';
+    private const string FILTER_EXTERNAL_CODE_KEY = 'externalCode';
     private const string FILTER_PRICE_KEY = 'price';
     private const string FILTER_VAT_KEY = 'vat';
     private const string FILTER_PRICE_VAT_KEY = 'priceVat';
@@ -123,6 +125,8 @@ class InventoryItemController extends AbstractController
             $inventoryItem = $this->inventoryItemService->createInventoryItem(
                 $createRequestDTO->getLabel(),
                 $createRequestDTO->getDescription(),
+                $createRequestDTO->getCode(),
+                $createRequestDTO->getExternalCode(),
                 $createRequestDTO->getPrice(),
                 $createRequestDTO->getVat(),
                 $user,
@@ -210,6 +214,8 @@ class InventoryItemController extends AbstractController
                 $inventoryItem,
                 $updateRequestDTO->getLabel(),
                 $updateRequestDTO->getDescription(),
+                $updateRequestDTO->getCode(),
+                $updateRequestDTO->getExternalCode(),
                 $updateRequestDTO->getPrice(),
                 $updateRequestDTO->getVat(),
                 $user,
@@ -305,6 +311,22 @@ class InventoryItemController extends AbstractController
                 required: false,
                 schema: new OA\Schema(type: 'string'),
                 example: 'filter'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_CODE_KEY,
+                description: 'Filter by code',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string'),
+                example: '1001'
+            ),
+            new OA\Parameter(
+                name: self::FILTER_EXTERNAL_CODE_KEY,
+                description: 'non-strict filtering',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string'),
+                example: 'EXT-001'
             ),
             new OA\Parameter(
                 name: self::FILTER_PRICE_KEY,
@@ -429,6 +451,38 @@ class InventoryItemController extends AbstractController
                     )
                 );
                 $qb->setParameter('description', '%' . $description . '%');
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $code = $request->query->get(self::FILTER_CODE_KEY);
+
+                assert(is_string($code));
+
+                $qb->andWhere(
+                    $qb->expr()->eq(
+                        InventoryItemRepository::ALIAS . '.code',
+                        ':code'
+                    )
+                );
+                $qb->setParameter('code', $code);
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $externalCode = $request->query->get(self::FILTER_EXTERNAL_CODE_KEY);
+
+                assert(is_string($externalCode));
+
+                $qb->andWhere(
+                    $qb->expr()->like(
+                        InventoryItemRepository::ALIAS . '.externalCode',
+                        ':externalCode'
+                    )
+                );
+                $qb->setParameter('externalCode', '%' . $externalCode . '%');
             } catch (Throwable) {
                 // pass
             }

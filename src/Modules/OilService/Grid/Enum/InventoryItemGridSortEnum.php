@@ -10,6 +10,8 @@ use App\OilService\DBAL\Repository\InventoryItemRepository;
 enum InventoryItemGridSortEnum: string implements OrderEnumInterface
 {
     case LABEL = 'label';
+    case CODE = 'code';
+    case EXTERNAL_CODE = 'externalCode';
     case PRICE = 'price';
     case VAT = 'vat';
     case PRICE_VAT = 'priceVat';
