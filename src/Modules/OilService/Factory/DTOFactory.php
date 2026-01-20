@@ -68,6 +68,23 @@ use App\Modules\Warehouse\DTO\RecyclingSummaryDTO;
 use App\Modules\Warehouse\DTO\RouteSummaryDTO as WarehouseRouteSummaryDTO;
 use App\Modules\Warehouse\DTO\WasteMaterialSummaryDTO;
 use App\Modules\Warehouse\Factory\DTOFactory as WarehouseDTOFactory;
+use App\Modules\OilService\DTO\ChatDefaultMessageResponseDTO;
+use App\Modules\OilService\DTO\ChatMessageDTO;
+use App\Modules\OilService\DTO\ChatMessageListResponseDTO;
+use App\Modules\OilService\DTO\ChatMessageResponseDTO;
+use App\Modules\OilService\DTO\ChatSessionCompleteResponseDTO;
+use App\Modules\OilService\DTO\ChatSessionCreateResponseDTO;
+use App\Modules\OilService\DTO\ChatKnowledgeItemDTO;
+use App\Modules\OilService\DTO\ChatKnowledgeItemCreateResponseDTO;
+use App\Modules\OilService\DTO\ChatKnowledgeItemUpdateResponseDTO;
+use App\Modules\OilService\DTO\ChatKnowledgeItemDeleteResponseDTO;
+use App\Modules\OilService\DTO\ChatKnowledgeItemListResponseDTO;
+use App\Modules\OilService\DTO\ChatKnowledgeItemInfoResponseDTO;
+use App\Modules\OilService\DTO\ChatUserRequestDTO;
+use App\Modules\OilService\DTO\ChatUserRequestListResponseDTO;
+use App\Modules\OilService\DTO\ChatUserRequestInfoResponseDTO;
+use App\Modules\OilService\DTO\ChatUserRequestResolveResponseDTO;
+use App\Modules\OilService\DTO\ChatSessionLightDTO;
 use App\Modules\OilService\DTO\CarDTO;
 use App\Modules\OilService\DTO\CarCreateResponseDTO;
 use App\Modules\OilService\DTO\CarUpdateResponseDTO;
@@ -76,6 +93,10 @@ use App\Modules\OilService\DTO\CarInfoResponseDTO;
 use App\Modules\OilService\DTO\CarListResponseDTO;
 use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Entity\Car;
+use App\OilService\DBAL\Entity\ChatKnowledgeItem;
+use App\OilService\DBAL\Entity\ChatMessage;
+use App\OilService\DBAL\Entity\ChatSession;
+use App\OilService\DBAL\Entity\ChatUserRequest;
 use App\OilService\DBAL\Entity\InventoryItem;
 use App\OilService\DBAL\Entity\InventoryItemHistory;
 use App\OilService\DBAL\Entity\Order;
@@ -1045,6 +1066,248 @@ class DTOFactory
         return new CarDeleteResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
+        );
+    }
+
+    public function createChatMessageDTO(ChatMessage $message): ChatMessageDTO
+    {
+        return new ChatMessageDTO(
+            $message->getRole()->value,
+            $message->getContent(),
+            $message->getCreatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param ChatMessage[] $messages
+     *
+     * @return ChatMessageDTO[]
+     */
+    private function createChatMessageDTOs(array $messages): array
+    {
+        $items = [];
+
+        foreach ($messages as $message) {
+            $items[] = $this->createChatMessageDTO($message);
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param ChatMessage[] $messages
+     */
+    public function createChatSessionCreateResponseDTO(
+        ChatSession $session,
+        string $greeting,
+        array $messages,
+    ): ChatSessionCreateResponseDTO {
+        return new ChatSessionCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $session->getId()->__toString(),
+            $session->getLanguage(),
+            $greeting,
+            $this->createChatMessageDTOs($messages),
+        );
+    }
+
+    /**
+     * @param ChatMessage[] $messages
+     */
+    public function createChatMessageResponseDTO(
+        ChatSession $session,
+        ChatMessage $assistantMessage,
+        array $messages,
+    ): ChatMessageResponseDTO {
+        return new ChatMessageResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $session->getId()->__toString(),
+            $assistantMessage->getContent(),
+            $this->createChatMessageDTOs($messages),
+        );
+    }
+
+    /**
+     * @param ChatMessage[] $messages
+     */
+    public function createChatMessageListResponseDTO(ChatSession $session, array $messages): ChatMessageListResponseDTO
+    {
+        return new ChatMessageListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $session->getId()->__toString(),
+            $session->getLanguage(),
+            $this->createChatMessageDTOs($messages),
+        );
+    }
+
+    public function createChatDefaultMessageResponseDTO(string $language, string $message): ChatDefaultMessageResponseDTO
+    {
+        return new ChatDefaultMessageResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $language,
+            $message,
+        );
+    }
+
+    public function createChatSessionCompleteResponseDTO(): ChatSessionCompleteResponseDTO
+    {
+        return new ChatSessionCompleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createChatKnowledgeItemDTO(ChatKnowledgeItem $item): ChatKnowledgeItemDTO
+    {
+        return new ChatKnowledgeItemDTO(
+            $item->getId()->__toString(),
+            $item->getName(),
+            $item->getContent(),
+            $item->getType()->value,
+            $item->getLanguage(),
+            $item->getIsActive(),
+            $item->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $item->getUpdatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param ChatKnowledgeItem[] $items
+     *
+     * @return ChatKnowledgeItemDTO[]
+     */
+    private function createChatKnowledgeItemDTOs(array $items): array
+    {
+        $result = [];
+
+        foreach ($items as $item) {
+            $result[] = $this->createChatKnowledgeItemDTO($item);
+        }
+
+        return $result;
+    }
+
+    public function createChatKnowledgeItemCreateResponseDTO(ChatKnowledgeItem $item): ChatKnowledgeItemCreateResponseDTO
+    {
+        return new ChatKnowledgeItemCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createChatKnowledgeItemDTO($item),
+        );
+    }
+
+    public function createChatKnowledgeItemUpdateResponseDTO(ChatKnowledgeItem $item): ChatKnowledgeItemUpdateResponseDTO
+    {
+        return new ChatKnowledgeItemUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createChatKnowledgeItemDTO($item),
+        );
+    }
+
+    public function createChatKnowledgeItemDeleteResponseDTO(): ChatKnowledgeItemDeleteResponseDTO
+    {
+        return new ChatKnowledgeItemDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    /**
+     * @param ChatKnowledgeItem[] $items
+     */
+    public function createChatKnowledgeItemListResponseDTO(array $items): ChatKnowledgeItemListResponseDTO
+    {
+        return new ChatKnowledgeItemListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createChatKnowledgeItemDTOs($items),
+        );
+    }
+
+    public function createChatKnowledgeItemInfoResponseDTO(ChatKnowledgeItem $item): ChatKnowledgeItemInfoResponseDTO
+    {
+        return new ChatKnowledgeItemInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createChatKnowledgeItemDTO($item),
+        );
+    }
+
+    public function createChatSessionLightDTO(ChatSession $session): ChatSessionLightDTO
+    {
+        return new ChatSessionLightDTO(
+            $session->getId()->__toString(),
+            $session->getStatus()->value,
+            $session->getLanguage(),
+            $session->getCreatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    public function createChatUserRequestDTO(ChatUserRequest $request): ChatUserRequestDTO
+    {
+        $session = $request->getSession();
+        $sessionDTO = $session !== null
+            ? $this->createChatSessionLightDTO($session)
+            : new ChatSessionLightDTO('', 'active', '', '');
+
+        return new ChatUserRequestDTO(
+            $request->getId()->__toString(),
+            $request->getStatus()->value,
+            $request->getContent(),
+            $request->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $request->getResolvedAt()?->format(DateTimeInterface::ATOM),
+            $sessionDTO,
+        );
+    }
+
+    /**
+     * @param ChatUserRequest[] $requests
+     *
+     * @return ChatUserRequestDTO[]
+     */
+    private function createChatUserRequestDTOs(array $requests): array
+    {
+        $items = [];
+
+        foreach ($requests as $request) {
+            $items[] = $this->createChatUserRequestDTO($request);
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param ChatUserRequest[] $requests
+     */
+    public function createChatUserRequestListResponseDTO(array $requests): ChatUserRequestListResponseDTO
+    {
+        return new ChatUserRequestListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createChatUserRequestDTOs($requests),
+        );
+    }
+
+    public function createChatUserRequestInfoResponseDTO(ChatUserRequest $request): ChatUserRequestInfoResponseDTO
+    {
+        return new ChatUserRequestInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createChatUserRequestDTO($request),
+        );
+    }
+
+    public function createChatUserRequestResolveResponseDTO(ChatUserRequest $request): ChatUserRequestResolveResponseDTO
+    {
+        return new ChatUserRequestResolveResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createChatUserRequestDTO($request),
         );
     }
 }

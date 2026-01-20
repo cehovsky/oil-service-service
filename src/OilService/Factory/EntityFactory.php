@@ -6,6 +6,10 @@ namespace App\OilService\Factory;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\OilService\DBAL\Entity\Car;
+use App\OilService\DBAL\Entity\ChatKnowledgeItem;
+use App\OilService\DBAL\Entity\ChatMessage;
+use App\OilService\DBAL\Entity\ChatSession;
+use App\OilService\DBAL\Entity\ChatUserRequest;
 use App\OilService\DBAL\Entity\InventoryItem;
 use App\OilService\DBAL\Entity\InventoryItemHistory;
 use App\OilService\DBAL\Entity\Order;
@@ -15,6 +19,10 @@ use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
+use App\OilService\DBAL\Enum\ChatKnowledgeItemTypeEnum;
+use App\OilService\DBAL\Enum\ChatMessageRoleEnum;
+use App\OilService\DBAL\Enum\ChatSessionStatusEnum;
+use App\OilService\DBAL\Enum\ChatUserRequestStatusEnum;
 use App\OilService\DBAL\Enum\CarStatusEnum;
 use App\OilService\DBAL\Enum\InventoryMovementTypeEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
@@ -255,6 +263,71 @@ class EntityFactory
             $quantity,
             $createdAt,
             $createdAt,
+        );
+    }
+
+    public function createChatSession(
+        string $language,
+        ChatSessionStatusEnum $status,
+    ): ChatSession {
+        $now = new DateTimeImmutable();
+
+        return new ChatSession(
+            $this->uuidFactory->timeBased()->create(),
+            $language,
+            $status,
+            $now,
+            $now,
+        );
+    }
+
+    public function createChatMessage(
+        ChatSession $session,
+        ChatMessageRoleEnum $role,
+        string $content,
+    ): ChatMessage {
+        $createdAt = new DateTimeImmutable();
+
+        return new ChatMessage(
+            $this->uuidFactory->timeBased()->create(),
+            $session,
+            $role,
+            $content,
+            $createdAt,
+        );
+    }
+
+    public function createChatKnowledgeItem(
+        string $name,
+        string $content,
+        ChatKnowledgeItemTypeEnum $type,
+        string $language,
+        bool $isActive,
+    ): ChatKnowledgeItem {
+        $now = new DateTimeImmutable();
+
+        return new ChatKnowledgeItem(
+            $this->uuidFactory->timeBased()->create(),
+            $name,
+            $content,
+            $type,
+            $language,
+            $isActive,
+            $now,
+            $now,
+        );
+    }
+
+    public function createChatUserRequest(
+        ?ChatSession $session,
+        string $content,
+    ): ChatUserRequest {
+        return new ChatUserRequest(
+            $this->uuidFactory->timeBased()->create(),
+            $session,
+            $content,
+            ChatUserRequestStatusEnum::OPEN,
+            new DateTimeImmutable(),
         );
     }
 }

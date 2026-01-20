@@ -20,7 +20,7 @@ security:
             lazy: true
             pattern: ^/auth
             security: false
-        codeNow:
+        healthcheck:
             lazy: true
             pattern: ^/health
             security: false
@@ -31,6 +31,10 @@ security:
         oilServicePublic:
             lazy: true
             pattern: ^/oil-service/orders/submit$
+            security: false
+        oilServiceChat:
+            lazy: true
+            pattern: ^/oil-service/chat/
             security: false
         main:
             lazy: true
