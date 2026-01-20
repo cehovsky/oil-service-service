@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\Users\DTO\UserDTO;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
@@ -42,8 +43,8 @@ class InventoryItemDTO
     #[OA\Property(example: '2026-01-05T12:00:00+00:00')]
     private string $updatedAt;
 
-    #[OA\Property(example: '5d812c3d-31c4-4d13-a7c5-98b35ab63c9f')]
-    private string $createdByUserId;
+    #[OA\Property(ref: new Model(type: UserDTO::class))]
+    private UserDTO $createdByUser;
 
     #[OA\Property(example: '5d812c3d-31c4-4d13-a7c5-98b35ab63c9f')]
     private string $updatedByUserId;
@@ -69,7 +70,7 @@ class InventoryItemDTO
         int $stockCount,
         string $createdAt,
         string $updatedAt,
-        string $createdByUserId,
+        UserDTO $createdByUser,
         string $updatedByUserId,
         array $history,
     ) {
@@ -84,7 +85,7 @@ class InventoryItemDTO
         $this->stockCount = $stockCount;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
-        $this->createdByUserId = $createdByUserId;
+        $this->createdByUser = $createdByUser;
         $this->updatedByUserId = $updatedByUserId;
         $this->history = $history;
     }
@@ -144,9 +145,9 @@ class InventoryItemDTO
         return $this->updatedAt;
     }
 
-    public function getCreatedByUserId(): string
+    public function getCreatedByUser(): UserDTO
     {
-        return $this->createdByUserId;
+        return $this->createdByUser;
     }
 
     public function getUpdatedByUserId(): string

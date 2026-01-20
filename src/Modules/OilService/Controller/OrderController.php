@@ -18,6 +18,7 @@ use App\Modules\OilService\DTO\OrderCreateWithTermRequestDTO;
 use App\Modules\OilService\DTO\OrderDeleteResponseDTO;
 use App\Modules\OilService\DTO\OrderInfoResponseDTO;
 use App\Modules\OilService\DTO\OrderListResponseDTO;
+use App\Modules\OilService\DTO\OrderInventoryItemUpdateItemDTO;
 use App\Modules\OilService\DTO\OrderUpdateRequestDTO;
 use App\Modules\OilService\DTO\OrderUpdateResponseDTO;
 use App\Modules\OilService\DTO\OrderInventoryItemsUpdateRequestDTO;
@@ -359,13 +360,13 @@ class OrderController extends AbstractController
             $items = [];
 
             foreach ($updateRequestDTO->getItems() as $item) {
-                if (!is_array($item)) {
+                if (!$item instanceof OrderInventoryItemUpdateItemDTO) {
                     throw new InvalidDataException();
                 }
 
                 $items[] = [
-                    'inventoryItemId' => $item['inventoryItemId'] ?? null,
-                    'quantity' => $item['quantity'] ?? null,
+                    'inventoryItemId' => $item->getInventoryItemId(),
+                    'quantity' => $item->getQuantity(),
                 ];
             }
 

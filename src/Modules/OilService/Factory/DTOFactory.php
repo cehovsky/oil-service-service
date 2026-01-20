@@ -826,7 +826,7 @@ class DTOFactory
             $history->getNote(),
             $order ? $this->createOrderSummaryDTO($order) : null,
             $history->getCreatedAt()->format(DateTimeInterface::ATOM),
-            $history->getCreatedBy()->getId()->__toString(),
+            $this->createAuthUserDTO($history->getCreatedBy()),
         );
     }
 
@@ -863,7 +863,7 @@ class DTOFactory
             $inventoryItem->getStockCount(),
             $inventoryItem->getCreatedAt()->format(DateTimeInterface::ATOM),
             $inventoryItem->getUpdatedAt()->format(DateTimeInterface::ATOM),
-            $inventoryItem->getCreatedBy()->getId()->__toString(),
+            $this->createAuthUserDTO($inventoryItem->getCreatedBy()),
             $inventoryItem->getUpdatedBy()->getId()->__toString(),
             $historyDTOs,
         );

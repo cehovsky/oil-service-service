@@ -16,21 +16,9 @@ class OrderInventoryItemsUpdateRequestDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: OrderInventoryItemUpdateItemDTO::class)))]
     #[Assert\NotNull]
     #[Assert\All([
-        new Assert\Collection(
-            fields: [
-                'inventoryItemId' => [
-                    new Assert\NotBlank(),
-                    new Assert\Uuid(),
-                ],
-                'quantity' => [
-                    new Assert\NotNull(),
-                    new Assert\Positive(),
-                ],
-            ],
-            allowExtraFields: false,
-            allowMissingFields: false,
-        ),
+        new Assert\Type(OrderInventoryItemUpdateItemDTO::class),
     ])]
+    #[Assert\Valid]
     private array $items = [];
 
     /**

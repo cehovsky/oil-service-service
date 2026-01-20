@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Enum\InventoryMovementTypeEnum;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -40,8 +41,8 @@ class InventoryItemHistoryDTO
     #[OA\Property(example: '2026-01-05T12:00:00+00:00')]
     private string $createdAt;
 
-    #[OA\Property(example: '5d812c3d-31c4-4d13-a7c5-98b35ab63c9f')]
-    private string $createdByUserId;
+    #[OA\Property(ref: new Model(type: UserDTO::class))]
+    private UserDTO $createdByUser;
 
     public function __construct(
         string $id,
@@ -54,7 +55,7 @@ class InventoryItemHistoryDTO
         ?string $note,
         ?OrderSummaryDTO $order,
         string $createdAt,
-        string $createdByUserId,
+        UserDTO $createdByUser,
     ) {
         $this->id = $id;
         $this->movementType = $movementType;
@@ -66,7 +67,7 @@ class InventoryItemHistoryDTO
         $this->note = $note;
         $this->order = $order;
         $this->createdAt = $createdAt;
-        $this->createdByUserId = $createdByUserId;
+        $this->createdByUser = $createdByUser;
     }
 
     public function getId(): string
@@ -119,8 +120,8 @@ class InventoryItemHistoryDTO
         return $this->createdAt;
     }
 
-    public function getCreatedByUserId(): string
+    public function getCreatedByUser(): UserDTO
     {
-        return $this->createdByUserId;
+        return $this->createdByUser;
     }
 }

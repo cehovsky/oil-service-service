@@ -58,6 +58,8 @@ use App\Modules\Warehouse\DTO\StorageContainerMaterialListResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialMoveResponseDTO;
 use App\Modules\Warehouse\DTO\StorageContainerMaterialUpdateResponseDTO;
 use App\Modules\OilService\DTO\OrderSummaryDTO;
+use App\Modules\Users\DTO\UserDTO;
+use App\Auth\DBAL\Entity\User;
 use App\OilService\DBAL\Entity\Route;
 use App\Warehouse\DBAL\Entity\Recycling;
 use App\Warehouse\DBAL\Entity\StorageContainer;
@@ -695,7 +697,7 @@ class DTOFactory
             $this->createStorageContainerMaterialSummaryDTO($history->getStorageContainerMaterial()),
             $this->createStorageContainerSummaryDTO($history->getStorageContainer()),
             $history->getCreatedAt()->format(DateTimeInterface::ATOM),
-            $history->getCreatedBy()->getId()->__toString(),
+            $this->createUserDTO($history->getCreatedBy()),
         );
     }
 
@@ -790,6 +792,17 @@ class DTOFactory
             $route->getId()->__toString(),
             $route->getDate()->format('Y-m-d'),
             $route->getIsActive(),
+        );
+    }
+
+    private function createUserDTO(User $user): UserDTO
+    {
+        return new UserDTO(
+            $user->getId()->__toString(),
+            $user->getEmail(),
+            $user->getFullName(),
+            $user->getIsActive(),
+            $user->getIsAdmin(),
         );
     }
 }
