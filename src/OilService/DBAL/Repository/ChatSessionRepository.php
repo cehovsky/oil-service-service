@@ -7,6 +7,7 @@ namespace App\OilService\DBAL\Repository;
 use App\OilService\DBAL\Entity\ChatSession;
 use App\OilService\DBAL\Enum\ChatSessionStatusEnum;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -18,9 +19,16 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ChatSessionRepository extends ServiceEntityRepository
 {
+    public const ALIAS = 'oscs';
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, ChatSession::class);
+    }
+
+    public function getQueryBuilderWithAlias(): QueryBuilder
+    {
+        return $this->createQueryBuilder(self::ALIAS);
     }
 
     public function findActive(string $sessionId): ?ChatSession

@@ -34,24 +34,36 @@ class ChatUserRequest
     #[ORM\Column(type: Types::STRING, enumType: ChatUserRequestStatusEnum::class)]
     private ChatUserRequestStatusEnum $status;
 
+    #[Assert\NotNull]
+    #[ORM\Column]
+    private bool $isResolved;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $resolvedAt = null;
 
+    #[Assert\Length(max: 4000)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $note = null;
+
     public function __construct(
         Uuid $id,
         ?ChatSession $session,
         string $content,
         ChatUserRequestStatusEnum $status,
+        bool $isResolved,
         DateTimeImmutable $createdAt,
+        ?string $note = null,
     ) {
         $this->id = $id;
         $this->session = $session;
         $this->content = $content;
         $this->status = $status;
+        $this->isResolved = $isResolved;
         $this->createdAt = $createdAt;
+        $this->note = $note;
     }
 
     public function getId(): Uuid
@@ -77,8 +89,22 @@ class ChatUserRequest
     public function setStatus(ChatUserRequestStatusEnum $status): self
     {
         $this->status = $status;
+        $this->isResolved = $status === ChatUserRequestStatusEnum::RESOLVED;
+
+        if ($this->isResolved) {
+            if ($this->resolvedAt === null) {
+                $this->resolvedAt = new DateTimeImmutable();
+            }
+        } else {
+            $this->resolvedAt = null;
+        }
 
         return $this;
+    }
+
+    public function getIsResolved(): bool
+    {
+        return $this->isResolved;
     }
 
     public function getCreatedAt(): DateTimeImmutable
@@ -91,9 +117,36 @@ class ChatUserRequest
         return $this->resolvedAt;
     }
 
+    public function getNote(): ?string
+    {
+        return $this->note;
+    }
+
+    public function setNote(?string $note): self
+    {
+        $this->note = $note;
+
+        return $this;
+    }
+
+    public function setIsResolved(bool $isResolved, ?DateTimeImmutable $resolvedAt = null): self
+    {
+        $this->isResolved = $isResolved;
+        $this->status = $isResolved
+            ? ChatUserRequestStatusEnum::RESOLVED
+            : ChatUserRequestStatusEnum::OPEN;
+
+        if ($isResolved) {
+            $this->resolvedAt = $resolvedAt ?? $this->resolvedAt ?? new DateTimeImmutable();
+        } else {
+            $this->resolvedAt = null;
+        }
+
+        return $this;
+    }
+
     public function markResolved(DateTimeImmutable $resolvedAt): void
     {
-        $this->status = ChatUserRequestStatusEnum::RESOLVED;
-        $this->resolvedAt = $resolvedAt;
+        $this->setIsResolved(true, $resolvedAt);
     }
 }

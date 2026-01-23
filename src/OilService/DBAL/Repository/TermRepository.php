@@ -66,6 +66,41 @@ class TermRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function isAvailableTerm(
+        DateTimeImmutable $date,
+        RealizationTimeSlotEnum $timeSlot,
+        DateTimeImmutable $dateFrom,
+    ): bool {
+        $qb = $this->createQueryBuilder(self::ALIAS);
+
+        $subQb = $this->getEntityManager()->createQueryBuilder();
+
+        $subQb->select('COUNT(o.id)')
+            ->from(Order::class, 'o')
+            ->andWhere($subQb->expr()->eq('o.realizationDate', self::ALIAS . '.date'))
+            ->andWhere($subQb->expr()->eq('o.realizationTimeSlot', self::ALIAS . '.timeSlot'))
+            ->andWhere($subQb->expr()->neq('o.status', ':canceledStatus'));
+
+        $qb->select($qb->expr()->count(self::ALIAS . '.id'))
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.isActive', ':isActive'))
+            ->andWhere($qb->expr()->gte(self::ALIAS . '.date', ':dateFrom'))
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.date', ':date'))
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.timeSlot', ':timeSlot'))
+            ->andWhere(
+                $qb->expr()->gt(
+                    self::ALIAS . '.maxCount',
+                    '(' . $subQb->getDQL() . ')'
+                )
+            )
+            ->setParameter('isActive', true)
+            ->setParameter('dateFrom', $dateFrom->setTime(0, 0))
+            ->setParameter('date', $date)
+            ->setParameter('timeSlot', $timeSlot)
+            ->setParameter('canceledStatus', OrderStatusEnum::CANCELED->value);
+
+        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
+    }
+
     /**
      * @return Term[]
      */

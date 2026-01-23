@@ -6,6 +6,7 @@ namespace App\OilService\DBAL\Repository;
 
 use App\OilService\DBAL\Entity\ChatUserRequest;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -17,8 +18,15 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ChatUserRequestRepository extends ServiceEntityRepository
 {
+    public const ALIAS = 'oscur';
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, ChatUserRequest::class);
+    }
+
+    public function getQueryBuilderWithAlias(): QueryBuilder
+    {
+        return $this->createQueryBuilder(self::ALIAS);
     }
 }

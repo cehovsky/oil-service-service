@@ -327,7 +327,9 @@ class EntityFactory
             $session,
             $content,
             ChatUserRequestStatusEnum::OPEN,
+            false,
             new DateTimeImmutable(),
+            null,
         );
     }
 }

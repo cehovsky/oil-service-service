@@ -6,7 +6,6 @@ namespace App\OilService\Chat;
 
 use App\OilService\DBAL\Entity\ChatSession;
 use App\OilService\DBAL\Entity\ChatUserRequest;
-use App\OilService\DBAL\Enum\ChatUserRequestStatusEnum;
 use App\OilService\DBAL\Repository\ChatUserRequestRepository;
 use App\OilService\Factory\EntityFactory;
 use DateTimeImmutable;
@@ -40,10 +39,20 @@ class ChatUserRequestService
             throw new NotFoundHttpException();
         }
 
-        if ($request->getStatus() !== ChatUserRequestStatusEnum::RESOLVED) {
-            $request->markResolved(new DateTimeImmutable());
+        if (!$request->getIsResolved()) {
+            $request->setIsResolved(true, new DateTimeImmutable());
             $this->entityManager->flush();
         }
+
+        return $request;
+    }
+
+    public function updateRequest(ChatUserRequest $request, bool $isResolved, ?string $note): ChatUserRequest
+    {
+        $request->setIsResolved($isResolved);
+        $request->setNote($note);
+
+        $this->entityManager->flush();
 
         return $request;
     }

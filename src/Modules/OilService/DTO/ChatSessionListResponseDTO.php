@@ -8,7 +8,7 @@ use App\Domain\DTOValueResolver;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class ChatUserRequestListResponseDTO
+class ChatSessionListResponseDTO
 {
     #[OA\Property(example: DTOValueResolver::RESULT_SUCCESS)]
     private string $result;
@@ -16,15 +16,15 @@ class ChatUserRequestListResponseDTO
     private int $timestamp;
 
     /**
-     * @var ChatUserRequestDTO[]
+     * @var ChatSessionDTO[]
      */
-    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: ChatUserRequestDTO::class)))]
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: ChatSessionDTO::class)))]
     private array $items;
 
     private int $pageCount;
 
     /**
-     * @param ChatUserRequestDTO[] $items
+     * @param ChatSessionDTO[] $items
      */
     public function __construct(string $result, int $timestamp, array $items, int $pageCount)
     {
@@ -45,7 +45,7 @@ class ChatUserRequestListResponseDTO
     }
 
     /**
-     * @return ChatUserRequestDTO[]
+     * @return ChatSessionDTO[]
      */
     public function getItems(): array
     {

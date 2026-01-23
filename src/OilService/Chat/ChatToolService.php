@@ -9,17 +9,21 @@ use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\ChatKnowledgeItemRepository;
 use App\OilService\DBAL\Repository\PriceListItemRepository;
+use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\OrderService;
 use DateTimeImmutable;
 use RuntimeException;
 
 class ChatToolService
 {
+    private const string UUID_PATTERN = '/^[0-9a-fA-F-]{36}$/';
+
     public function __construct(
         private readonly OrderService $orderService,
         private readonly ChatSessionService $chatSessionService,
         private readonly ChatKnowledgeItemRepository $chatKnowledgeItemRepository,
         private readonly PriceListItemRepository $priceListItemRepository,
+        private readonly TermRepository $termRepository,
         private readonly ChatUserRequestService $chatUserRequestService,
     ) {
     }
@@ -49,15 +53,33 @@ class ChatToolService
         $companyTaxId = isset($payload['companyTaxId']) ? (string) $payload['companyTaxId'] : null;
         $companyAddress = isset($payload['companyAddress']) ? (string) $payload['companyAddress'] : null;
 
-        $realizationDateInput = isset($payload['realizationDate']) ? (string) $payload['realizationDate'] : null;
-        $realizationDate = $realizationDateInput ? $this->orderService->createRealizationDate($realizationDateInput) : new DateTimeImmutable('tomorrow');
+        $realizationDateInput = isset($payload['realizationDate']) ? (string) $payload['realizationDate'] : '';
+        if ($realizationDateInput === '') {
+            throw new RuntimeException('Missing realization date.');
+        }
 
-        $timeSlotValue = isset($payload['realizationTimeSlot']) ? (string) $payload['realizationTimeSlot'] : RealizationTimeSlotEnum::MORNING->value;
-        $timeSlot = RealizationTimeSlotEnum::tryFrom($timeSlotValue) ?? RealizationTimeSlotEnum::MORNING;
+        $realizationDate = $this->orderService->createRealizationDate($realizationDateInput);
 
-        $priceListItemIds = isset($payload['priceListItemIds']) && is_array($payload['priceListItemIds'])
+        $timeSlotValue = isset($payload['realizationTimeSlot']) ? (string) $payload['realizationTimeSlot'] : '';
+        $timeSlot = RealizationTimeSlotEnum::tryFrom($timeSlotValue);
+        if ($timeSlot === null) {
+            throw new RuntimeException('Missing realization time slot.');
+        }
+
+        $isAvailable = $this->termRepository->isAvailableTerm(
+            $realizationDate,
+            $timeSlot,
+            new DateTimeImmutable('tomorrow'),
+        );
+
+        if (!$isAvailable) {
+            throw new RuntimeException('Selected term is not available.');
+        }
+
+        $rawPriceListItems = isset($payload['priceListItemIds']) && is_array($payload['priceListItemIds'])
             ? array_values(array_map('strval', $payload['priceListItemIds']))
             : [];
+        $priceListItemIds = $this->normalizePriceListItemIds($rawPriceListItems);
 
         $order = $this->orderService->createOrderWithUser(
             $fullName,
@@ -79,6 +101,8 @@ class ChatToolService
             null,
         );
 
+        $this->chatSessionService->completeSession($session);
+
         return [
             'orderId' => $order->getId()->__toString(),
             'orderIdent' => $order->getFormattedIdent(),
@@ -86,6 +110,73 @@ class ChatToolService
             'realizationDate' => $order->getRealizationDate()->format('Y-m-d'),
             'realizationTimeSlot' => $order->getRealizationTimeSlot()->value,
         ];
+    }
+
+    /**
+     * @param string[] $rawValues
+     *
+     * @return string[]
+     */
+    private function normalizePriceListItemIds(array $rawValues): array
+    {
+        $normalized = [];
+        $labelsOrCodes = [];
+
+        $allowedItems = $this->priceListItemRepository->findActivePublicItemsOrderedByLabel();
+        $allowedMap = [];
+
+        foreach ($allowedItems as $item) {
+            if ($item->getIsDefault() || $item->getIsHiddenOnInvoice()) {
+                continue;
+            }
+
+            $id = $item->getId()->__toString();
+            $allowedMap[$id] = $id;
+            $allowedMap[mb_strtolower($item->getLabel())] = $id;
+            $allowedMap[mb_strtolower($item->getCode())] = $id;
+        }
+
+        foreach ($rawValues as $value) {
+            $trimmed = trim($value);
+            if ($trimmed === '') {
+                continue;
+            }
+
+            if (preg_match(self::UUID_PATTERN, $trimmed) === 1) {
+                if (isset($allowedMap[$trimmed])) {
+                    $normalized[] = $trimmed;
+                }
+                continue;
+            }
+
+            $labelsOrCodes[] = mb_strtolower($trimmed);
+        }
+
+        if ($labelsOrCodes !== []) {
+            foreach ($labelsOrCodes as $key) {
+                if (isset($allowedMap[$key])) {
+                    $normalized[] = $allowedMap[$key];
+                }
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function listAvailableTerms(): array
+    {
+        $terms = $this->termRepository->findUpcomingAvailableTerms(new DateTimeImmutable('tomorrow'));
+
+        return array_map(
+            static fn ($term) => [
+                'date' => $term->getDate()->format('Y-m-d'),
+                'timeSlot' => $term->getTimeSlot()->value,
+            ],
+            $terms,
+        );
     }
 
     /**

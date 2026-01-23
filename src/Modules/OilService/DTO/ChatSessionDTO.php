@@ -6,10 +6,9 @@ namespace App\Modules\OilService\DTO;
 
 use OpenApi\Attributes as OA;
 
-#[OA\Schema(schema: 'ChatSessionLightDTO')]
-class ChatSessionLightDTO
+class ChatSessionDTO
 {
-    #[OA\Property(example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890')]
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7')]
     private string $id;
 
     #[OA\Property(example: 'active')]
@@ -21,16 +20,26 @@ class ChatSessionLightDTO
     #[OA\Property(example: '2026-01-20T10:00:00+00:00')]
     private string $createdAt;
 
+    #[OA\Property(example: '2026-01-20T10:05:00+00:00')]
+    private string $updatedAt;
+
+    #[OA\Property(example: '2026-01-20T10:10:00+00:00', nullable: true)]
+    private ?string $closedAt;
+
     public function __construct(
         string $id,
         string $status,
         string $language,
         string $createdAt,
+        string $updatedAt,
+        ?string $closedAt,
     ) {
         $this->id = $id;
         $this->status = $status;
         $this->language = $language;
         $this->createdAt = $createdAt;
+        $this->updatedAt = $updatedAt;
+        $this->closedAt = $closedAt;
     }
 
     public function getId(): string
@@ -51,5 +60,15 @@ class ChatSessionLightDTO
     public function getCreatedAt(): string
     {
         return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): string
+    {
+        return $this->updatedAt;
+    }
+
+    public function getClosedAt(): ?string
+    {
+        return $this->closedAt;
     }
 }

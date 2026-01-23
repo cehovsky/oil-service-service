@@ -45,6 +45,16 @@ class AvailableTermSlotValidator extends ConstraintValidator
             return;
         }
 
+        $tomorrow = new DateTimeImmutable('tomorrow');
+        if ($date < $tomorrow) {
+            $this->context
+                ->buildViolation($constraint->termNotFoundMessage)
+                ->atPath('realizationTimeSlot')
+                ->addViolation();
+
+            return;
+        }
+
         $term = $this->termRepository->findOneBy([
             'date' => $date,
             'timeSlot' => $timeSlot,

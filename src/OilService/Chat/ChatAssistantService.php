@@ -128,9 +128,9 @@ class ChatAssistantService
                         'companyAddress' => ['type' => 'string'],
                         'realizationDate' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                         'realizationTimeSlot' => ['type' => 'string', 'enum' => RealizationTimeSlotEnum::VALUES],
-                        'priceListItemIds' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        'priceListItemIds' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Doplňkové služby podle ID, kódu nebo názvu. Pokud nic nepřidává, nech prázdné.'],
                     ],
-                    'required' => ['fullName', 'phone', 'email', 'carModel', 'licensePlate', 'address'],
+                    'required' => ['fullName', 'phone', 'email', 'carModel', 'licensePlate', 'address', 'realizationDate', 'realizationTimeSlot'],
                 ],
             ],
             [
@@ -146,6 +146,15 @@ class ChatAssistantService
                         ],
                     ],
                     'required' => ['names'],
+                ],
+            ],
+            [
+                'type' => 'function',
+                'name' => 'list_available_terms',
+                'description' => 'Vrátí seznam dostupných termínů podle stejné logiky jako /oil-service/terms/available.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => new stdClass(),
                 ],
             ],
             [
@@ -350,6 +359,12 @@ class ChatAssistantService
             return $this->chatToolService->completeSession($session);
         }
 
+        if ($name === 'list_available_terms') {
+            return [
+                'terms' => $this->chatToolService->listAvailableTerms(),
+            ];
+        }
+
         if ($name === 'store_user_request') {
             $content = (string) ($arguments['content'] ?? '');
             if ($content === '') {
@@ -413,10 +428,10 @@ class ChatAssistantService
                             'companyName' => ['type' => 'string'],
                             'companyIdentificationNumber' => ['type' => 'string'],
                             'companyTaxId' => ['type' => 'string'],
-                            'companyAddress' => ['type' => 'string'],
+                    'required' => ['fullName', 'phone', 'email', 'carModel', 'licensePlate', 'address', 'realizationDate', 'realizationTimeSlot'],
                             'realizationDate' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                             'realizationTimeSlot' => ['type' => 'string', 'enum' => RealizationTimeSlotEnum::VALUES],
-                            'priceListItemIds' => ['type' => 'array', 'items' => ['type' => 'string']],
+                            'priceListItemIds' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Doplňkové služby podle ID, kódu nebo názvu. Pokud nic nepřidává, nech prázdné.'],
                         ],
                         'required' => ['fullName', 'phone', 'email', 'carModel', 'licensePlate', 'address'],
                     ],
@@ -471,6 +486,17 @@ class ChatAssistantService
      * @param object $toolCall
      *
      * @return array<string, mixed>
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'list_available_terms',
+                    'description' => 'Vrátí seznam dostupných termínů podle stejné logiky jako /oil-service/terms/available.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => new stdClass(),
+                    ],
+                ],
+            ],
      */
     private function convertAssistantToolCallMessage(object $toolCallMessage): array
     {
@@ -510,6 +536,10 @@ class ChatAssistantService
             $result = $this->chatToolService->submitOrder($session, $decoded);
         } elseif ($name === 'fetch_knowledge') {
             $result = $this->chatToolService->fetchKnowledge($session, $decoded['names'] ?? []);
+        } elseif ($name === 'list_available_terms') {
+            $result = [
+                'terms' => $this->chatToolService->listAvailableTerms(),
+            ];
         } elseif ($name === 'complete_session') {
             $result = $this->chatToolService->completeSession($session);
         } elseif ($name === 'store_user_request') {

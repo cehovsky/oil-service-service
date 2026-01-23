@@ -8,17 +8,17 @@ use App\Domain\DTOValueResolver;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class ChatUserRequestInfoResponseDTO
+class ChatUserRequestUpdateResponseDTO
 {
     #[OA\Property(example: DTOValueResolver::RESULT_SUCCESS)]
     private string $result;
 
     private int $timestamp;
 
-    #[OA\Property(ref: new Model(type: ChatUserRequestDetailDTO::class))]
-    private ChatUserRequestDetailDTO $item;
+    #[OA\Property(ref: new Model(type: ChatUserRequestDTO::class))]
+    private ChatUserRequestDTO $item;
 
-    public function __construct(string $result, int $timestamp, ChatUserRequestDetailDTO $item)
+    public function __construct(string $result, int $timestamp, ChatUserRequestDTO $item)
     {
         $this->result = $result;
         $this->timestamp = $timestamp;
@@ -35,7 +35,7 @@ class ChatUserRequestInfoResponseDTO
         return $this->timestamp;
     }
 
-    public function getItem(): ChatUserRequestDetailDTO
+    public function getItem(): ChatUserRequestDTO
     {
         return $this->item;
     }

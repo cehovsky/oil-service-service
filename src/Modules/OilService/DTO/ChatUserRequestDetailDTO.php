@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
-use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
-class ChatUserRequestDTO
+class ChatUserRequestDetailDTO
 {
     #[OA\Property(example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890')]
     private string $id;
@@ -30,8 +29,8 @@ class ChatUserRequestDTO
     #[OA\Property(example: 'Call customer after 3pm', nullable: true)]
     private ?string $note;
 
-    #[OA\Property(ref: new Model(type: ChatSessionLightDTO::class))]
-    private ChatSessionLightDTO $session;
+    #[OA\Property(ref: new OA\Schema(ref: '#/components/schemas/ChatSessionDetailDTO'), nullable: true)]
+    private ?ChatSessionDetailDTO $session;
 
     public function __construct(
         string $id,
@@ -41,7 +40,7 @@ class ChatUserRequestDTO
         ?string $resolvedAt,
         bool $isResolved,
         ?string $note,
-        ChatSessionLightDTO $session,
+        ?ChatSessionDetailDTO $session,
     ) {
         $this->id = $id;
         $this->status = $status;
@@ -88,7 +87,7 @@ class ChatUserRequestDTO
         return $this->note;
     }
 
-    public function getSession(): ChatSessionLightDTO
+    public function getSession(): ?ChatSessionDetailDTO
     {
         return $this->session;
     }
