@@ -47,7 +47,9 @@ class ChatUserRequestController extends AbstractController
     private const string FILTER_STATUS_KEY = 'status';
     private const string FILTER_IS_RESOLVED_KEY = 'isResolved';
     private const string FILTER_ID_KEY = 'id';
+    private const string FILTER_IDENT_KEY = 'ident';
     private const string FILTER_SESSION_ID_KEY = 'sessionId';
+    private const string FILTER_SESSION_IDENT_KEY = 'sessionIdent';
     private const string FILTER_CONTENT_KEY = 'content';
     private const string FILTER_NOTE_KEY = 'note';
     private const string FILTER_LANGUAGE_KEY = 'language';
@@ -85,6 +87,13 @@ class ChatUserRequestController extends AbstractController
                 schema: new OA\Schema(type: 'string')
             ),
             new OA\Parameter(
+                name: self::FILTER_IDENT_KEY,
+                description: 'Filter by request ident (numeric or formatted RYYXXXXX)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
                 name: self::FILTER_STATUS_KEY,
                 description: 'Filter by status (open/resolved)',
                 in: 'query',
@@ -101,6 +110,13 @@ class ChatUserRequestController extends AbstractController
             new OA\Parameter(
                 name: self::FILTER_SESSION_ID_KEY,
                 description: 'Filter by chat session ID',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: self::FILTER_SESSION_IDENT_KEY,
+                description: 'Filter by chat session ident (numeric or formatted SYYXXXXX)',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(type: 'string')
@@ -224,6 +240,26 @@ class ChatUserRequestController extends AbstractController
             }
 
             try {
+                $identRaw = $request->query->get(self::FILTER_IDENT_KEY);
+
+                assert(is_string($identRaw));
+
+                $ident = $this->normalizeIdentFilter($identRaw);
+
+                if ($ident !== null) {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            ChatUserRequestRepository::ALIAS . '.ident',
+                            ':ident'
+                        )
+                    );
+                    $qb->setParameter('ident', $ident);
+                }
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
                 $status = $request->query->get(self::FILTER_STATUS_KEY);
 
                 assert(is_string($status));
@@ -275,6 +311,26 @@ class ChatUserRequestController extends AbstractController
                     )
                 );
                 $qb->setParameter('sessionId', $sessionId);
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $sessionIdentRaw = $request->query->get(self::FILTER_SESSION_IDENT_KEY);
+
+                assert(is_string($sessionIdentRaw));
+
+                $sessionIdent = $this->normalizeIdentFilter($sessionIdentRaw);
+
+                if ($sessionIdent !== null) {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            'session.ident',
+                            ':sessionIdent'
+                        )
+                    );
+                    $qb->setParameter('sessionIdent', $sessionIdent);
+                }
             } catch (Throwable) {
                 // pass
             }
@@ -628,5 +684,28 @@ class ChatUserRequestController extends AbstractController
         }
 
         return $user;
+    }
+
+    private function normalizeIdentFilter(?string $ident): ?int
+    {
+        if ($ident === null) {
+            return null;
+        }
+
+        $trimmed = trim($ident);
+
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (is_numeric($trimmed)) {
+            return (int) $trimmed;
+        }
+
+        if (preg_match('/^[A-Za-z]+(\d{2})(\d+)$/', $trimmed, $matches) === 1) {
+            return (int) $matches[2];
+        }
+
+        return null;
     }
 }

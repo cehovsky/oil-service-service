@@ -101,9 +101,12 @@ class ChatToolService
             null,
         );
 
+        $session->setOrder($order);
         $this->chatSessionService->completeSession($session);
 
         return [
+            'sessionId' => $session->getId()->__toString(),
+            'sessionIdent' => $session->getFormattedIdent(),
             'orderId' => $order->getId()->__toString(),
             'orderIdent' => $order->getFormattedIdent(),
             'status' => $order->getStatus()->value,
@@ -225,6 +228,7 @@ class ChatToolService
 
         return [
             'requestId' => $request->getId()->__toString(),
+            'requestIdent' => $request->getFormattedIdent(),
             'status' => $request->getStatus()->value,
         ];
     }

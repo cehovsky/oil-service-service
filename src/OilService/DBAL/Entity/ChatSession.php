@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Entity;
 
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Enum\ChatSessionStatusEnum;
 use App\OilService\DBAL\Repository\ChatSessionRepository;
 use DateTimeImmutable;
@@ -18,9 +19,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ChatSessionRepository::class)]
 class ChatSession
 {
+    private const string IDENT_PREFIX = 'S';
+
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME)]
     private Uuid $id;
+
+    #[ORM\Column(type: 'integer', unique: true)]
+    private int $ident;
 
     #[Assert\NotBlank]
     #[Assert\Length(max: 10)]
@@ -45,24 +51,44 @@ class ChatSession
     #[ORM\OrderBy(['createdAt' => 'ASC'])]
     private Collection $messages;
 
+    #[ORM\OneToOne(targetEntity: Order::class)]
+    #[ORM\JoinColumn(nullable: true, unique: true, onDelete: 'SET NULL')]
+    private ?Order $order = null;
+
     public function __construct(
         Uuid $id,
+        int $ident,
         string $language,
         ChatSessionStatusEnum $status,
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt,
+        ?Order $order = null,
     ) {
         $this->id = $id;
+        $this->ident = $ident;
         $this->language = $language;
         $this->status = $status;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
         $this->messages = new ArrayCollection();
+        $this->order = $order;
     }
 
     public function getId(): Uuid
     {
         return $this->id;
+    }
+
+    public function getIdent(): int
+    {
+        return $this->ident;
+    }
+
+    public function getFormattedIdent(): string
+    {
+        $year = $this->createdAt->format('y');
+
+        return sprintf('%s%s%05d', self::IDENT_PREFIX, $year, $this->ident);
     }
 
     public function getLanguage(): string
@@ -140,6 +166,23 @@ class ChatSession
     public function isActive(): bool
     {
         return $this->status === ChatSessionStatusEnum::ACTIVE;
+    }
+
+    public function getOrder(): ?Order
+    {
+        return $this->order;
+    }
+
+    public function setOrder(?Order $order): self
+    {
+        if ($this->order === $order) {
+            return $this;
+        }
+
+        $this->order = $order;
+        $this->touch();
+
+        return $this;
     }
 
     public function touch(): void

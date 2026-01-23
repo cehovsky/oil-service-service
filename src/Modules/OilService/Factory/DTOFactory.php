@@ -1110,12 +1110,17 @@ class DTOFactory
         string $greeting,
         array $messages,
     ): ChatSessionCreateResponseDTO {
+        $orderData = $this->resolveOrderIdentifiers($session->getOrder());
+
         return new ChatSessionCreateResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
             $session->getId()->__toString(),
+            $session->getFormattedIdent(),
             $session->getLanguage(),
             $greeting,
+            $orderData['orderId'],
+            $orderData['orderIdent'],
             $this->createChatMessageDTOs($messages),
         );
     }
@@ -1128,10 +1133,15 @@ class DTOFactory
         ChatMessage $assistantMessage,
         array $messages,
     ): ChatMessageResponseDTO {
+        $orderData = $this->resolveOrderIdentifiers($session->getOrder());
+
         return new ChatMessageResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
             $session->getId()->__toString(),
+            $session->getFormattedIdent(),
+            $orderData['orderId'],
+            $orderData['orderIdent'],
             $assistantMessage->getContent(),
             $this->createChatMessageDTOs($messages),
         );
@@ -1142,11 +1152,16 @@ class DTOFactory
      */
     public function createChatMessageListResponseDTO(ChatSession $session, array $messages): ChatMessageListResponseDTO
     {
+        $orderData = $this->resolveOrderIdentifiers($session->getOrder());
+
         return new ChatMessageListResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
             $session->getId()->__toString(),
+            $session->getFormattedIdent(),
             $session->getLanguage(),
+            $orderData['orderId'],
+            $orderData['orderIdent'],
             $this->createChatMessageDTOs($messages),
         );
     }
@@ -1167,6 +1182,17 @@ class DTOFactory
             DTOValueResolver::RESULT_SUCCESS,
             time(),
         );
+    }
+
+    /**
+     * @return array{orderId: ?string, orderIdent: ?string}
+     */
+    private function resolveOrderIdentifiers(?Order $order): array
+    {
+        return [
+            'orderId' => $order?->getId()?->__toString(),
+            'orderIdent' => $order?->getFormattedIdent(),
+        ];
     }
 
     public function createChatKnowledgeItemDTO(ChatKnowledgeItem $item): ChatKnowledgeItemDTO
@@ -1248,37 +1274,51 @@ class DTOFactory
 
     public function createChatSessionLightDTO(ChatSession $session): ChatSessionLightDTO
     {
+        $orderData = $this->resolveOrderIdentifiers($session->getOrder());
+
         return new ChatSessionLightDTO(
             $session->getId()->__toString(),
+            $session->getFormattedIdent(),
             $session->getStatus()->value,
             $session->getLanguage(),
             $session->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $orderData['orderId'],
+            $orderData['orderIdent'],
         );
     }
 
     public function createChatSessionDTO(ChatSession $session): ChatSessionDTO
     {
+        $orderData = $this->resolveOrderIdentifiers($session->getOrder());
+
         return new ChatSessionDTO(
             $session->getId()->__toString(),
+            $session->getFormattedIdent(),
             $session->getStatus()->value,
             $session->getLanguage(),
             $session->getCreatedAt()->format(DateTimeInterface::ATOM),
             $session->getUpdatedAt()->format(DateTimeInterface::ATOM),
             $session->getClosedAt()?->format(DateTimeInterface::ATOM),
+            $orderData['orderId'],
+            $orderData['orderIdent'],
         );
     }
 
     public function createChatSessionDetailDTO(ChatSession $session): ChatSessionDetailDTO
     {
         $messages = $session->getMessages()->toArray();
+        $orderData = $this->resolveOrderIdentifiers($session->getOrder());
 
         return new ChatSessionDetailDTO(
             $session->getId()->__toString(),
+            $session->getFormattedIdent(),
             $session->getStatus()->value,
             $session->getLanguage(),
             $session->getCreatedAt()->format(DateTimeInterface::ATOM),
             $session->getUpdatedAt()->format(DateTimeInterface::ATOM),
             $session->getClosedAt()?->format(DateTimeInterface::ATOM),
+            $orderData['orderId'],
+            $orderData['orderIdent'],
             $this->createChatMessageDTOs($messages),
         );
     }
@@ -1288,10 +1328,11 @@ class DTOFactory
         $session = $request->getSession();
         $sessionDTO = $session !== null
             ? $this->createChatSessionLightDTO($session)
-            : new ChatSessionLightDTO('', 'active', '', '');
+            : new ChatSessionLightDTO('', '', 'active', '', '', null, null);
 
         return new ChatUserRequestDTO(
             $request->getId()->__toString(),
+            $request->getFormattedIdent(),
             $request->getStatus()->value,
             $request->getContent(),
             $request->getCreatedAt()->format(DateTimeInterface::ATOM),
@@ -1311,6 +1352,7 @@ class DTOFactory
 
         return new ChatUserRequestDetailDTO(
             $request->getId()->__toString(),
+            $request->getFormattedIdent(),
             $request->getStatus()->value,
             $request->getContent(),
             $request->getCreatedAt()->format(DateTimeInterface::ATOM),

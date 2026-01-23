@@ -23,6 +23,17 @@ class ChatUserRequestService
 
     public function createRequest(?ChatSession $session, string $content): ChatUserRequest
     {
+        if ($session !== null) {
+            $existing = $this->chatUserRequestRepository->findOpenBySession($session);
+
+            if ($existing !== null) {
+                $existing->updateContent($this->mergeContent($existing->getContent(), $content));
+                $this->entityManager->flush();
+
+                return $existing;
+            }
+        }
+
         $request = $this->entityFactory->createChatUserRequest($session, $content);
 
         $this->entityManager->persist($request);
@@ -55,5 +66,21 @@ class ChatUserRequestService
         $this->entityManager->flush();
 
         return $request;
+    }
+
+    private function mergeContent(string $original, string $newContent): string
+    {
+        $original = trim($original);
+        $newContent = trim($newContent);
+
+        if ($original === '') {
+            return $newContent;
+        }
+
+        if ($newContent === '') {
+            return $original;
+        }
+
+        return $original . "\n\n" . $newContent;
     }
 }

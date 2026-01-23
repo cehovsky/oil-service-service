@@ -12,6 +12,9 @@ class ChatUserRequestDTO
     #[OA\Property(example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890')]
     private string $id;
 
+    #[OA\Property(example: 'R2600001')]
+    private string $ident;
+
     #[OA\Property(example: 'open')]
     private string $status;
 
@@ -35,6 +38,7 @@ class ChatUserRequestDTO
 
     public function __construct(
         string $id,
+        string $ident,
         string $status,
         string $content,
         string $createdAt,
@@ -44,6 +48,7 @@ class ChatUserRequestDTO
         ChatSessionLightDTO $session,
     ) {
         $this->id = $id;
+        $this->ident = $ident;
         $this->status = $status;
         $this->content = $content;
         $this->createdAt = $createdAt;
@@ -61,6 +66,11 @@ class ChatUserRequestDTO
     public function getStatus(): string
     {
         return $this->status;
+    }
+
+    public function getIdent(): string
+    {
+        return $this->ident;
     }
 
     public function getContent(): string

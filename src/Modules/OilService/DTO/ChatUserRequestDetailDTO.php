@@ -11,6 +11,9 @@ class ChatUserRequestDetailDTO
     #[OA\Property(example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890')]
     private string $id;
 
+    #[OA\Property(example: 'R2600001')]
+    private string $ident;
+
     #[OA\Property(example: 'open')]
     private string $status;
 
@@ -43,6 +46,7 @@ class ChatUserRequestDetailDTO
         ?ChatSessionDetailDTO $session,
     ) {
         $this->id = $id;
+        $this->ident = $ident;
         $this->status = $status;
         $this->content = $content;
         $this->createdAt = $createdAt;
@@ -60,6 +64,11 @@ class ChatUserRequestDetailDTO
     public function getStatus(): string
     {
         return $this->status;
+    }
+
+    public function getIdent(): string
+    {
+        return $this->ident;
     }
 
     public function getContent(): string

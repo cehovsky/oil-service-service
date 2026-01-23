@@ -31,6 +31,16 @@ class ChatSessionRepository extends ServiceEntityRepository
         return $this->createQueryBuilder(self::ALIAS);
     }
 
+    public function getNextIdent(): int
+    {
+        $qb = $this->createQueryBuilder('cs');
+        $qb->select('MAX(cs.ident)');
+
+        $maxIdent = $qb->getQuery()->getSingleScalarResult();
+
+        return $maxIdent !== null ? ((int) $maxIdent) + 1 : 1;
+    }
+
     public function findActive(string $sessionId): ?ChatSession
     {
         return $this->findOneBy([

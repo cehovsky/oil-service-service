@@ -35,10 +35,12 @@ class ChatSessionController extends AbstractController
 {
     private const string FILTER_STATUS_KEY = 'status';
     private const string FILTER_ID_KEY = 'id';
+    private const string FILTER_IDENT_KEY = 'ident';
     private const string FILTER_LANGUAGE_KEY = 'language';
     private const string FILTER_CREATED_AT_KEY = 'createdAt';
     private const string FILTER_UPDATED_AT_KEY = 'updatedAt';
     private const string FILTER_CLOSED_AT_KEY = 'closedAt';
+    private const string FILTER_ORDER_ID_KEY = 'orderId';
 
     public function __construct(
         private readonly DTOFactory $dtoFactory,
@@ -62,6 +64,13 @@ class ChatSessionController extends AbstractController
             new OA\Parameter(
                 name: self::FILTER_ID_KEY,
                 description: 'Filter by session ID',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: self::FILTER_IDENT_KEY,
+                description: 'Filter by session ident (numeric or formatted SYYXXXXX)',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(type: 'string')
@@ -97,6 +106,13 @@ class ChatSessionController extends AbstractController
             new OA\Parameter(
                 name: self::FILTER_CLOSED_AT_KEY,
                 description: 'Filter by closedAt (ATOM format)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: self::FILTER_ORDER_ID_KEY,
+                description: 'Filter by linked order ID',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(type: 'string')
@@ -177,6 +193,26 @@ class ChatSessionController extends AbstractController
                     )
                 );
                 $qb->setParameter('id', $id);
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $identRaw = $request->query->get(self::FILTER_IDENT_KEY);
+
+                assert(is_string($identRaw));
+
+                $ident = $this->normalizeIdentFilter($identRaw);
+
+                if ($ident !== null) {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            ChatSessionRepository::ALIAS . '.ident',
+                            ':ident'
+                        )
+                    );
+                    $qb->setParameter('ident', $ident);
+                }
             } catch (Throwable) {
                 // pass
             }
@@ -272,6 +308,24 @@ class ChatSessionController extends AbstractController
                         )
                     );
                     $qb->setParameter('closedAt', $closedAt, Types::DATETIME_IMMUTABLE);
+                }
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $orderId = $request->query->get(self::FILTER_ORDER_ID_KEY);
+
+                assert(is_string($orderId));
+
+                if ($orderId !== '') {
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            ChatSessionRepository::ALIAS . '.order',
+                            ':orderId'
+                        )
+                    );
+                    $qb->setParameter('orderId', $orderId);
                 }
             } catch (Throwable) {
                 // pass
@@ -380,5 +434,28 @@ class ChatSessionController extends AbstractController
         }
 
         return $user;
+    }
+
+    private function normalizeIdentFilter(?string $ident): ?int
+    {
+        if ($ident === null) {
+            return null;
+        }
+
+        $trimmed = trim($ident);
+
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (is_numeric($trimmed)) {
+            return (int) $trimmed;
+        }
+
+        if (preg_match('/^[A-Za-z]+(\d{2})(\d+)$/', $trimmed, $matches) === 1) {
+            return (int) $matches[2];
+        }
+
+        return null;
     }
 }

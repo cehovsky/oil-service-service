@@ -11,6 +11,9 @@ class ChatSessionDTO
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7')]
     private string $id;
 
+    #[OA\Property(example: 'S2600001')]
+    private string $ident;
+
     #[OA\Property(example: 'active')]
     private string $status;
 
@@ -26,25 +29,42 @@ class ChatSessionDTO
     #[OA\Property(example: '2026-01-20T10:10:00+00:00', nullable: true)]
     private ?string $closedAt;
 
+    #[OA\Property(example: 'c4d5e6f7-8901-2345-6789-abcdefabcdef', nullable: true)]
+    private ?string $orderId;
+
+    #[OA\Property(example: 'O2600001', nullable: true)]
+    private ?string $orderIdent;
+
     public function __construct(
         string $id,
+        string $ident,
         string $status,
         string $language,
         string $createdAt,
         string $updatedAt,
         ?string $closedAt,
+        ?string $orderId,
+        ?string $orderIdent,
     ) {
         $this->id = $id;
+        $this->ident = $ident;
         $this->status = $status;
         $this->language = $language;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
         $this->closedAt = $closedAt;
+        $this->orderId = $orderId;
+        $this->orderIdent = $orderIdent;
     }
 
     public function getId(): string
     {
         return $this->id;
+    }
+
+    public function getIdent(): string
+    {
+        return $this->ident;
     }
 
     public function getStatus(): string
@@ -70,5 +90,15 @@ class ChatSessionDTO
     public function getClosedAt(): ?string
     {
         return $this->closedAt;
+    }
+
+    public function getOrderId(): ?string
+    {
+        return $this->orderId;
+    }
+
+    public function getOrderIdent(): ?string
+    {
+        return $this->orderIdent;
     }
 }

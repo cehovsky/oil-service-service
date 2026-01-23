@@ -27,6 +27,8 @@ use App\OilService\DBAL\Enum\CarStatusEnum;
 use App\OilService\DBAL\Enum\InventoryMovementTypeEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use App\OilService\DBAL\Repository\ChatSessionRepository;
+use App\OilService\DBAL\Repository\ChatUserRequestRepository;
 use App\OilService\DBAL\Repository\OrderRepository;
 use DateTimeImmutable;
 use Symfony\Component\Uid\Factory\UuidFactory;
@@ -36,6 +38,8 @@ class EntityFactory
     public function __construct(
         private readonly UuidFactory $uuidFactory,
         private readonly OrderRepository $orderRepository,
+        private readonly ChatSessionRepository $chatSessionRepository,
+        private readonly ChatUserRequestRepository $chatUserRequestRepository,
     ) {
     }
 
@@ -274,6 +278,7 @@ class EntityFactory
 
         return new ChatSession(
             $this->uuidFactory->timeBased()->create(),
+            $this->chatSessionRepository->getNextIdent(),
             $language,
             $status,
             $now,
@@ -324,6 +329,7 @@ class EntityFactory
     ): ChatUserRequest {
         return new ChatUserRequest(
             $this->uuidFactory->timeBased()->create(),
+            $this->chatUserRequestRepository->getNextIdent(),
             $session,
             $content,
             ChatUserRequestStatusEnum::OPEN,

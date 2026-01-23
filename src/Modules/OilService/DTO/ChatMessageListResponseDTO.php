@@ -18,8 +18,17 @@ class ChatMessageListResponseDTO
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7')]
     private string $sessionId;
 
+    #[OA\Property(example: 'S2600001')]
+    private string $sessionIdent;
+
     #[OA\Property(example: 'cs-CZ')]
     private string $language;
+
+    #[OA\Property(example: 'c4d5e6f7-8901-2345-6789-abcdefabcdef', nullable: true)]
+    private ?string $orderId;
+
+    #[OA\Property(example: 'O2600001', nullable: true)]
+    private ?string $orderIdent;
 
     /**
      * @var ChatMessageDTO[]
@@ -31,13 +40,19 @@ class ChatMessageListResponseDTO
         string $result,
         int $timestamp,
         string $sessionId,
+        string $sessionIdent,
         string $language,
+        ?string $orderId,
+        ?string $orderIdent,
         array $messages,
     ) {
         $this->result = $result;
         $this->timestamp = $timestamp;
         $this->sessionId = $sessionId;
+        $this->sessionIdent = $sessionIdent;
         $this->language = $language;
+        $this->orderId = $orderId;
+        $this->orderIdent = $orderIdent;
         $this->messages = $messages;
     }
 
@@ -56,9 +71,24 @@ class ChatMessageListResponseDTO
         return $this->sessionId;
     }
 
+    public function getSessionIdent(): string
+    {
+        return $this->sessionIdent;
+    }
+
     public function getLanguage(): string
     {
         return $this->language;
+    }
+
+    public function getOrderId(): ?string
+    {
+        return $this->orderId;
+    }
+
+    public function getOrderIdent(): ?string
+    {
+        return $this->orderIdent;
     }
 
     /**

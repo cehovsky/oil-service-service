@@ -17,9 +17,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ChatUserRequestRepository::class)]
 class ChatUserRequest
 {
+    private const string IDENT_PREFIX = 'R';
+
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME)]
     private Uuid $id;
+
+    #[ORM\Column(type: 'integer', unique: true)]
+    private int $ident;
 
     #[ORM\ManyToOne(targetEntity: ChatSession::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
@@ -50,6 +55,7 @@ class ChatUserRequest
 
     public function __construct(
         Uuid $id,
+        int $ident,
         ?ChatSession $session,
         string $content,
         ChatUserRequestStatusEnum $status,
@@ -58,6 +64,7 @@ class ChatUserRequest
         ?string $note = null,
     ) {
         $this->id = $id;
+        $this->ident = $ident;
         $this->session = $session;
         $this->content = $content;
         $this->status = $status;
@@ -69,6 +76,18 @@ class ChatUserRequest
     public function getId(): Uuid
     {
         return $this->id;
+    }
+
+    public function getIdent(): int
+    {
+        return $this->ident;
+    }
+
+    public function getFormattedIdent(): string
+    {
+        $year = $this->createdAt->format('y');
+
+        return sprintf('%s%s%05d', self::IDENT_PREFIX, $year, $this->ident);
     }
 
     public function getSession(): ?ChatSession
@@ -148,5 +167,15 @@ class ChatUserRequest
     public function markResolved(DateTimeImmutable $resolvedAt): void
     {
         $this->setIsResolved(true, $resolvedAt);
+    }
+
+    public function updateContent(string $content): self
+    {
+        $this->content = $content;
+        $this->status = ChatUserRequestStatusEnum::OPEN;
+        $this->isResolved = false;
+        $this->resolvedAt = null;
+
+        return $this;
     }
 }

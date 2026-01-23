@@ -9,6 +9,7 @@ use App\OilService\DBAL\Repository\ChatSessionRepository;
 
 enum ChatSessionGridSortEnum: string implements OrderEnumInterface
 {
+    case IDENT = 'ident';
     case ID = 'id';
     case STATUS = 'status';
     case LANGUAGE = 'language';
