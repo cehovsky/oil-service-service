@@ -34,7 +34,7 @@ security:
             security: false
         oilServiceChat:
             lazy: true
-            pattern: ^/oil-service/chat/
+            pattern: ^/oil-service/chat/(default-message|sessions(?:$|/.*))
             security: false
         main:
             lazy: true
