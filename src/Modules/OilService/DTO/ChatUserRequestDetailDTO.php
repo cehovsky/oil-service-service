@@ -37,6 +37,7 @@ class ChatUserRequestDetailDTO
 
     public function __construct(
         string $id,
+        string $ident,
         string $status,
         string $content,
         string $createdAt,

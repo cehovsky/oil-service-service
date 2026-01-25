@@ -74,7 +74,7 @@ class ChatController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/chat/default-message',
+        '/chat/default-message',
         name: 'oil_service_chat_default_message',
         methods: ['GET']
     )]
@@ -124,7 +124,7 @@ class ChatController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/chat/sessions',
+        '/chat/sessions',
         name: 'oil_service_chat_session_create',
         methods: ['POST']
     )]
@@ -186,7 +186,7 @@ class ChatController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/chat/sessions/{sessionId}',
+        '/chat/sessions/{sessionId}',
         name: 'oil_service_chat_session_detail',
         methods: ['GET']
     )]
@@ -246,7 +246,7 @@ class ChatController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/chat/sessions/{sessionId}/messages',
+        '/chat/sessions/{sessionId}/messages',
         name: 'oil_service_chat_message_create',
         methods: ['POST']
     )]
@@ -319,7 +319,7 @@ class ChatController extends AbstractController
         ]
     )]
     #[Route(
-        '/oil-service/chat/sessions/{sessionId}/complete',
+        '/chat/sessions/{sessionId}/complete',
         name: 'oil_service_chat_session_complete',
         methods: ['POST']
     )]
