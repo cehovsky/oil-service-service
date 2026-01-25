@@ -6,14 +6,12 @@ namespace App\OilService\Chat;
 
 use App\OilService\DBAL\Entity\ChatKnowledgeItem;
 use App\OilService\DBAL\Enum\ChatKnowledgeItemTypeEnum;
-use App\OilService\DBAL\Repository\ChatKnowledgeItemRepository;
 use App\OilService\Factory\EntityFactory;
 use Doctrine\ORM\EntityManagerInterface;
 
 class ChatKnowledgeService
 {
     public function __construct(
-        private readonly ChatKnowledgeItemRepository $chatKnowledgeItemRepository,
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
     ) {

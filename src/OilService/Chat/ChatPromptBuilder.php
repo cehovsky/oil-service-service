@@ -45,9 +45,8 @@ class ChatPromptBuilder
 
         $defaultServiceLines = array_map(
             static fn (PriceListItem $item): string => sprintf(
-                '- %s (code: %s, %s Kč vč. DPH)',
+                '- %s (%s Kč vč. DPH)',
                 $item->getLabel(),
-                $item->getCode(),
                 $item->getPriceVat(),
             ),
             $defaultServices,
@@ -55,9 +54,8 @@ class ChatPromptBuilder
 
         $addonServiceLines = array_map(
             static fn (PriceListItem $item): string => sprintf(
-                '- %s (code: %s, %s Kč vč. DPH)',
+                '- %s (%s Kč vč. DPH)',
                 $item->getLabel(),
-                $item->getCode(),
                 $item->getPriceVat(),
             ),
             $addonServices,
@@ -94,6 +92,12 @@ class ChatPromptBuilder
         );
         $completionRule = 'Objednávku ukládej až po získání všech povinných údajů včetně data a časového slotu. Po úspěšném uložení objednávky odpověz finálním potvrzením, které musí obsahovat větu „Objednávka byla založena a obsluha vás bude kontaktovat.“ a zavolej complete_session.';
         $finishRule = 'Pokud objednávka ještě není uložená, vždy odpověď zakonči otázkou na chybějící údaje. Pokud je objednávka uložená, odpověz finálně bez další otázky.';
+        $noForcedOilChangeRule = 'Nikdy nevnucuj výměnu oleje vlastním olejem, pokud se na to zákazník sám nezeptá.';
+        $productSuggestionRule = 'Nenabízej prvoplánově produkty. Po dokončení objednávky se zeptej, jestli zákazník nechce ještě další produkty, ale nabízej je pouze podle názvu a ceny, nikoliv podle kódu.';
+        $locationPermissionRule = 'Při objednávce se vždy zeptej, zda bude výměna prováděna na pozemku zákazníka nebo zda má zákazník povolení k provedení výměny na daném místě. Upozorni, že výměna oleje na veřejné silnici není možná.';
+        $oilAndVolumeRule = 'Pokud znáš typ oleje a objem náplně, rovnou je vyplň do formuláře. Typ oleje zákazníkovi sděl pro kontrolu, pokud je to potřeba. Objem náplně vyplň pouze, pokud je znám.';
+        $additionalServiceOfferRule = 'Po získání všech údajů se zeptej, zda zákazník nechce ještě nějakou další službu z ceníku. Pokud zákazník souhlasí, přidej cenu za výměnu oleje.';
+
         $defaultServicesBlock = $defaultServiceLines === []
             ? ''
             : "Základní služby (vždy součástí objednávky):\n" . implode("\n", $defaultServiceLines);
@@ -112,6 +116,11 @@ class ChatPromptBuilder
             $termRule,
             $completionRule,
             $finishRule,
+            $noForcedOilChangeRule,
+            $productSuggestionRule,
+            $locationPermissionRule,
+            $oilAndVolumeRule,
+            $additionalServiceOfferRule,
             $defaultServicesBlock,
             $addonServicesBlock,
             $knowledgeBlock,
