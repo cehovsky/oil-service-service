@@ -8,6 +8,7 @@ use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Enum\ChatKnowledgeItemTypeEnum;
 use App\OilService\DBAL\Repository\ChatKnowledgeItemRepository;
 use App\OilService\DBAL\Repository\PriceListItemRepository;
+use App\OilService\Term\TermAvailabilityPolicy;
 
 class ChatPromptBuilder
 {
@@ -16,6 +17,7 @@ class ChatPromptBuilder
     public function __construct(
         private readonly ChatKnowledgeItemRepository $chatKnowledgeItemRepository,
         private readonly PriceListItemRepository $priceListItemRepository,
+        private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
     ) {
     }
 
@@ -70,6 +72,8 @@ class ChatPromptBuilder
         $tomorrow = $today->modify('+1 day');
         $dayAfterTomorrow = $today->modify('+2 day');
         $timezone = date_default_timezone_get();
+        $minimumAvailableDate = $this->termAvailabilityPolicy->getMinimumAvailableDate();
+        $minimumDaysAhead = TermAvailabilityPolicy::MIN_DAYS_AHEAD;
 
         $persona = 'Jsi zkušený automechanik, který v češtině řeší objednávky mobilní výměny oleje a filtrů u zákazníků doma.';
         $languageRule = sprintf('Odpovídej vždy stručně a srozumitelně. Respektuj nastavený jazyk: %s.', $resolvedLanguage);
@@ -83,7 +87,11 @@ class ChatPromptBuilder
         $orderGoal = 'Tvým cílem je vyplnit objednávku: jméno, telefon, e-mail, model auta, SPZ, adresa, preferovaný termín a čas. Dále můžeš nepovinně uložit poznámku.';
         $unknownRule = 'Pokud ti chybí data, ptej se na ně. Když nemůžeš odpovědět, řekni to narovinu a zapiš poznámku pro operátora.';
         $flowRule = 'Když odpovíš na dotaz z doplňujících informací, plynule a profesionálně navazuj na založení objednávky a zeptej se na chybějící údaj.';
-        $termRule = 'Preferovaný termín a čas vybírej pouze z dostupných termínů (aktivní, od zítřka, volná kapacita). Nikdy nenabízej dnešní datum. Pokud navrhuješ termíny, použij nástroj list_available_terms a drž se stejné logiky jako /oil-service/terms/available. Pokud uživatel žádá den nebo slot, který v dostupných termínech neexistuje, jasně řekni, že je termín plný nebo den nedostupný, a nabídni nejbližší dostupné termíny.';
+        $termRule = sprintf(
+            'Preferovaný termín a čas vybírej pouze z dostupných termínů (aktivní, nejdříve za %d dny, volná kapacita). Nikdy nenabízej dnešní nebo zítřejší datum. Nejbližší možný termín je %s. Pokud navrhuješ termíny, použij nástroj list_available_terms a drž se stejné logiky jako /oil-service/terms/available. Pokud uživatel žádá den nebo slot, který v dostupných termínech neexistuje, jasně řekni, že je termín plný nebo den nedostupný, a nabídni nejbližší dostupné termíny.',
+            $minimumDaysAhead,
+            $minimumAvailableDate->format('Y-m-d'),
+        );
         $completionRule = 'Objednávku ukládej až po získání všech povinných údajů včetně data a časového slotu. Po úspěšném uložení objednávky odpověz finálním potvrzením, které musí obsahovat větu „Objednávka byla založena a obsluha vás bude kontaktovat.“ a zavolej complete_session.';
         $finishRule = 'Pokud objednávka ještě není uložená, vždy odpověď zakonči otázkou na chybějící údaje. Pokud je objednávka uložená, odpověz finálně bez další otázky.';
         $defaultServicesBlock = $defaultServiceLines === []

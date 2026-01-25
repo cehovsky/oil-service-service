@@ -8,6 +8,7 @@ use App\Modules\OilService\Validation\Constraint\AvailableTermSlot;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\TermRepository;
+use App\OilService\Term\TermAvailabilityPolicy;
 use DateTimeImmutable;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -21,6 +22,7 @@ class AvailableTermSlotValidator extends ConstraintValidator
     public function __construct(
         private readonly TermRepository $termRepository,
         private readonly OrderRepository $orderRepository,
+        private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
     ) {
     }
 
@@ -45,8 +47,8 @@ class AvailableTermSlotValidator extends ConstraintValidator
             return;
         }
 
-        $tomorrow = new DateTimeImmutable('tomorrow');
-        if ($date < $tomorrow) {
+        $minimumAvailableDate = $this->termAvailabilityPolicy->getMinimumAvailableDate();
+        if ($date < $minimumAvailableDate) {
             $this->context
                 ->buildViolation($constraint->termNotFoundMessage)
                 ->atPath('realizationTimeSlot')

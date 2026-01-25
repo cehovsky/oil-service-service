@@ -11,7 +11,7 @@ use App\OilService\DBAL\Repository\ChatKnowledgeItemRepository;
 use App\OilService\DBAL\Repository\PriceListItemRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\OrderService;
-use DateTimeImmutable;
+use App\OilService\Term\TermAvailabilityPolicy;
 use RuntimeException;
 
 class ChatToolService
@@ -25,6 +25,7 @@ class ChatToolService
         private readonly PriceListItemRepository $priceListItemRepository,
         private readonly TermRepository $termRepository,
         private readonly ChatUserRequestService $chatUserRequestService,
+        private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
     ) {
     }
 
@@ -69,7 +70,7 @@ class ChatToolService
         $isAvailable = $this->termRepository->isAvailableTerm(
             $realizationDate,
             $timeSlot,
-            new DateTimeImmutable('tomorrow'),
+            $this->termAvailabilityPolicy->getMinimumAvailableDate(),
         );
 
         if (!$isAvailable) {
@@ -171,7 +172,9 @@ class ChatToolService
      */
     public function listAvailableTerms(): array
     {
-        $terms = $this->termRepository->findUpcomingAvailableTerms(new DateTimeImmutable('tomorrow'));
+        $terms = $this->termRepository->findUpcomingAvailableTerms(
+            $this->termAvailabilityPolicy->getMinimumAvailableDate()
+        );
 
         return array_map(
             static fn ($term) => [

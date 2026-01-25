@@ -17,6 +17,7 @@ use App\Modules\OilService\Factory\DTOFactory;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\OrderService;
+use App\OilService\Term\TermAvailabilityPolicy;
 use App\OilService\DBAL\Repository\TermRepository;
 use DateTimeImmutable;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -36,6 +37,7 @@ class OrderPublicController extends AbstractController
         private readonly ResponseFactory $responseFactory,
         private readonly OrderService $orderService,
         private readonly TermRepository $termRepository,
+        private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
     ) {
     }
 
@@ -65,7 +67,9 @@ class OrderPublicController extends AbstractController
     public function listAvailableTerms(): JsonResponse
     {
         try {
-            $terms = $this->termRepository->findUpcomingAvailableTerms(new DateTimeImmutable('tomorrow'));
+            $terms = $this->termRepository->findUpcomingAvailableTerms(
+                $this->termAvailabilityPolicy->getMinimumAvailableDate()
+            );
 
             $responseDTO = $this->dtoFactory->createAvailableTermListResponseDTO($terms);
 

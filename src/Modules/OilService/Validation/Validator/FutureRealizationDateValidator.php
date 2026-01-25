@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\Validation\Validator;
 
 use App\Modules\OilService\Validation\Constraint\FutureRealizationDate;
+use App\OilService\Term\TermAvailabilityPolicy;
 use DateTimeImmutable;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -14,6 +15,11 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class FutureRealizationDateValidator extends ConstraintValidator
 {
     private const string ISO8601_WITH_OPTIONAL_TIME_PATTERN = '/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?$/';
+
+    public function __construct(
+        private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
+    ) {
+    }
 
     public function validate(mixed $value, Constraint $constraint): void
     {
@@ -27,9 +33,9 @@ class FutureRealizationDateValidator extends ConstraintValidator
             return;
         }
 
-        $today = new DateTimeImmutable('today');
+        $minimumAvailableDate = $this->termAvailabilityPolicy->getMinimumAvailableDate();
 
-        if ($date <= $today) {
+        if ($date < $minimumAvailableDate) {
             $this->context
                 ->buildViolation($constraint->message)
                 ->addViolation();
