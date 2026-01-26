@@ -32,6 +32,10 @@ security:
             lazy: true
             pattern: ^/oil-service/orders/submit$
             security: false
+        oilServiceTerms:
+            lazy: true
+            pattern: ^/oil-service/terms/available$
+            security: false
         oilServiceChat:
             lazy: true
             pattern: ^/chat/

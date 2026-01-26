@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\DTO;
 
 use App\Domain\Validation\Constraint\Iso8601DateTime;
+use App\Files\Validation\Constraint\FileIdExists;
 use App\Modules\OilService\Validation\Constraint\ExistingPriceListItemIds;
 use App\Modules\OilService\Validation\Constraint\ExistingRoute;
 use App\Modules\OilService\Validation\Constraint\ExistingOilServiceUser;
@@ -84,6 +85,41 @@ class OrderUpdateRequestDTO
     #[OA\Property(example: 'Firemní 123, Praha 5, 150 00', nullable: true)]
     #[Assert\Length(max: 500)]
     private ?string $companyAddress = null;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    #[FileIdExists]
+    private ?string $oilChangeVehiclePhotoId = null;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    #[FileIdExists]
+    private ?string $vinPhotoId = null;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    #[FileIdExists]
+    private ?string $oldOilFilterPhotoId = null;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    #[FileIdExists]
+    private ?string $oldOilPhotoId = null;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    #[FileIdExists]
+    private ?string $odometerPhotoId = null;
+
+    /**
+     * @var string[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string', example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7'))]
+    #[Assert\All([
+        new Assert\Uuid(),
+        new FileIdExists(),
+    ])]
+    private array $otherPhotoIds = [];
 
     #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', description: 'Existing oil-service user id')]
     #[Assert\NotBlank]
@@ -283,6 +319,84 @@ class OrderUpdateRequestDTO
     public function setCompanyAddress(?string $companyAddress): self
     {
         $this->companyAddress = $companyAddress;
+
+        return $this;
+    }
+
+    public function getOilChangeVehiclePhotoId(): ?string
+    {
+        return $this->oilChangeVehiclePhotoId;
+    }
+
+    public function setOilChangeVehiclePhotoId(?string $oilChangeVehiclePhotoId): self
+    {
+        $this->oilChangeVehiclePhotoId = $oilChangeVehiclePhotoId;
+
+        return $this;
+    }
+
+    public function getVinPhotoId(): ?string
+    {
+        return $this->vinPhotoId;
+    }
+
+    public function setVinPhotoId(?string $vinPhotoId): self
+    {
+        $this->vinPhotoId = $vinPhotoId;
+
+        return $this;
+    }
+
+    public function getOldOilFilterPhotoId(): ?string
+    {
+        return $this->oldOilFilterPhotoId;
+    }
+
+    public function setOldOilFilterPhotoId(?string $oldOilFilterPhotoId): self
+    {
+        $this->oldOilFilterPhotoId = $oldOilFilterPhotoId;
+
+        return $this;
+    }
+
+    public function getOldOilPhotoId(): ?string
+    {
+        return $this->oldOilPhotoId;
+    }
+
+    public function setOldOilPhotoId(?string $oldOilPhotoId): self
+    {
+        $this->oldOilPhotoId = $oldOilPhotoId;
+
+        return $this;
+    }
+
+    public function getOdometerPhotoId(): ?string
+    {
+        return $this->odometerPhotoId;
+    }
+
+    public function setOdometerPhotoId(?string $odometerPhotoId): self
+    {
+        $this->odometerPhotoId = $odometerPhotoId;
+
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getOtherPhotoIds(): array
+    {
+        return $this->otherPhotoIds;
+    }
+
+    /**
+     * @param string[] $otherPhotoIds
+     */
+    public function setOtherPhotoIds(array $otherPhotoIds): self
+    {
+        $this->otherPhotoIds = $otherPhotoIds;
 
         return $this;
     }

@@ -107,6 +107,8 @@ use App\OilService\DBAL\Entity\ChatUserRequest;
 use App\OilService\DBAL\Entity\InventoryItem;
 use App\OilService\DBAL\Entity\InventoryItemHistory;
 use App\OilService\DBAL\Entity\Order;
+use App\Files\DBAL\Entity\File as FileEntity;
+use App\Modules\Files\DTO\FileDTO;
 use App\OilService\DBAL\Entity\OrderInventoryItem;
 use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Entity\Route;
@@ -175,6 +177,7 @@ class DTOFactory
         $materials = $this->createOrderStorageContainerMaterialDTOs($order);
         $inventoryItems = $this->createOrderInventoryItemDTOs($order);
         $priceListItems = $this->createPriceListItemDTOs($order->getPriceListItems()->toArray());
+        $otherPhotos = $this->createFileDTOs($order->getOtherPhotos()->toArray());
 
         return new OrderDTO(
             $order->getId()->__toString(),
@@ -191,6 +194,12 @@ class DTOFactory
             $order->getCompanyIdentificationNumber(),
             $order->getCompanyTaxId(),
             $order->getCompanyAddress(),
+            $this->createFileDTO($order->getOilChangeVehiclePhoto()),
+            $this->createFileDTO($order->getVinPhoto()),
+            $this->createFileDTO($order->getOldOilFilterPhoto()),
+            $this->createFileDTO($order->getOldOilPhoto()),
+            $this->createFileDTO($order->getOdometerPhoto()),
+            $otherPhotos,
             $order->getStatus()->value,
             $order->getRealizationTimeSlot()->value,
             $order->getRealizationDate()->format('Y-m-d'),
@@ -588,6 +597,36 @@ class DTOFactory
             $order->getStatus()->value,
             $order->getRealizationDate()->format('Y-m-d'),
         );
+    }
+
+    private function createFileDTO(?FileEntity $file): ?FileDTO
+    {
+        if ($file === null) {
+            return null;
+        }
+
+        return new FileDTO(
+            $file->getId()->__toString(),
+            $file->getFileName(),
+            $file->getSize(),
+            $file->getCreatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param FileEntity[] $files
+     *
+     * @return FileDTO[]
+     */
+    private function createFileDTOs(array $files): array
+    {
+        $items = [];
+
+        foreach ($files as $file) {
+            $items[] = $this->createFileDTO($file);
+        }
+
+        return array_values(array_filter($items));
     }
 
     private function createAuthUserDTO(AuthUser $user): UserDTO

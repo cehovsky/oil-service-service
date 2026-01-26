@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\Files\DTO\FileDTO;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -52,6 +53,27 @@ class OrderDTO
 
     #[OA\Property(example: 'Firemní 123, Praha 5, 150 00', nullable: true)]
     private ?string $companyAddress;
+
+    #[OA\Property(ref: new Model(type: FileDTO::class), nullable: true)]
+    private ?FileDTO $oilChangeVehiclePhoto;
+
+    #[OA\Property(ref: new Model(type: FileDTO::class), nullable: true)]
+    private ?FileDTO $vinPhoto;
+
+    #[OA\Property(ref: new Model(type: FileDTO::class), nullable: true)]
+    private ?FileDTO $oldOilFilterPhoto;
+
+    #[OA\Property(ref: new Model(type: FileDTO::class), nullable: true)]
+    private ?FileDTO $oldOilPhoto;
+
+    #[OA\Property(ref: new Model(type: FileDTO::class), nullable: true)]
+    private ?FileDTO $odometerPhoto;
+
+    /**
+     * @var FileDTO[]
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: FileDTO::class)))]
+    private array $otherPhotos;
 
     #[OA\Property(enum: OrderStatusEnum::VALUES, example: 'new')]
     private string $status;
@@ -107,6 +129,12 @@ class OrderDTO
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        ?FileDTO $oilChangeVehiclePhoto,
+        ?FileDTO $vinPhoto,
+        ?FileDTO $oldOilFilterPhoto,
+        ?FileDTO $oldOilPhoto,
+        ?FileDTO $odometerPhoto,
+        array $otherPhotos,
         string $status,
         string $realizationTimeSlot,
         string $realizationDate,
@@ -131,6 +159,12 @@ class OrderDTO
         $this->companyIdentificationNumber = $companyIdentificationNumber;
         $this->companyTaxId = $companyTaxId;
         $this->companyAddress = $companyAddress;
+        $this->oilChangeVehiclePhoto = $oilChangeVehiclePhoto;
+        $this->vinPhoto = $vinPhoto;
+        $this->oldOilFilterPhoto = $oldOilFilterPhoto;
+        $this->oldOilPhoto = $oldOilPhoto;
+        $this->odometerPhoto = $odometerPhoto;
+        $this->otherPhotos = $otherPhotos;
         $this->status = $status;
         $this->realizationTimeSlot = $realizationTimeSlot;
         $this->realizationDate = $realizationDate;
@@ -210,6 +244,39 @@ class OrderDTO
     public function getCompanyAddress(): ?string
     {
         return $this->companyAddress;
+    }
+
+    public function getOilChangeVehiclePhoto(): ?FileDTO
+    {
+        return $this->oilChangeVehiclePhoto;
+    }
+
+    public function getVinPhoto(): ?FileDTO
+    {
+        return $this->vinPhoto;
+    }
+
+    public function getOldOilFilterPhoto(): ?FileDTO
+    {
+        return $this->oldOilFilterPhoto;
+    }
+
+    public function getOldOilPhoto(): ?FileDTO
+    {
+        return $this->oldOilPhoto;
+    }
+
+    public function getOdometerPhoto(): ?FileDTO
+    {
+        return $this->odometerPhoto;
+    }
+
+    /**
+     * @return FileDTO[]
+     */
+    public function getOtherPhotos(): array
+    {
+        return $this->otherPhotos;
     }
 
     public function getStatus(): string

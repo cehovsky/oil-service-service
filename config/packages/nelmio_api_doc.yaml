@@ -19,3 +19,4 @@ nelmio_api_doc:
             - ^/users
             - ^/oil-service
             - ^/warehouse
+            - ^/chat

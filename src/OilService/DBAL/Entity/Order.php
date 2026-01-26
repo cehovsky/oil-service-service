@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Entity;
 
+use App\Files\DBAL\Entity\File;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Repository\OrderRepository;
@@ -85,6 +86,26 @@ class Order
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $companyAddress = null;
 
+    #[ORM\ManyToOne(targetEntity: File::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?File $oilChangeVehiclePhoto = null;
+
+    #[ORM\ManyToOne(targetEntity: File::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?File $vinPhoto = null;
+
+    #[ORM\ManyToOne(targetEntity: File::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?File $oldOilFilterPhoto = null;
+
+    #[ORM\ManyToOne(targetEntity: File::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?File $oldOilPhoto = null;
+
+    #[ORM\ManyToOne(targetEntity: File::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?File $odometerPhoto = null;
+
     #[Assert\NotNull]
     #[ORM\Column(type: Types::STRING, enumType: OrderStatusEnum::class)]
     private OrderStatusEnum $status;
@@ -121,6 +142,11 @@ class Order
     #[ORM\JoinTable(name: 'oil_service_order_price_list_item')]
     private Collection $priceListItems;
 
+    /** @var Collection<int, File> */
+    #[ORM\ManyToMany(targetEntity: File::class)]
+    #[ORM\JoinTable(name: 'oil_service_order_other_photo')]
+    private Collection $otherPhotos;
+
     public function __construct(
         Uuid $id,
         int $ident,
@@ -136,6 +162,12 @@ class Order
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        ?File $oilChangeVehiclePhoto,
+        ?File $vinPhoto,
+        ?File $oldOilFilterPhoto,
+        ?File $oldOilPhoto,
+        ?File $odometerPhoto,
+        array $otherPhotos,
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
@@ -157,6 +189,11 @@ class Order
         $this->companyIdentificationNumber = $companyIdentificationNumber;
         $this->companyTaxId = $companyTaxId;
         $this->companyAddress = $companyAddress;
+        $this->oilChangeVehiclePhoto = $oilChangeVehiclePhoto;
+        $this->vinPhoto = $vinPhoto;
+        $this->oldOilFilterPhoto = $oldOilFilterPhoto;
+        $this->oldOilPhoto = $oldOilPhoto;
+        $this->odometerPhoto = $odometerPhoto;
         $this->status = $status;
         $this->realizationTimeSlot = $realizationTimeSlot;
         $this->realizationDate = $realizationDate;
@@ -166,6 +203,13 @@ class Order
         $this->storageContainerMaterials = new ArrayCollection();
         $this->orderInventoryItems = new ArrayCollection();
         $this->priceListItems = new ArrayCollection();
+        $this->otherPhotos = new ArrayCollection();
+
+        foreach ($otherPhotos as $otherPhoto) {
+            if ($otherPhoto instanceof File && !$this->otherPhotos->contains($otherPhoto)) {
+                $this->otherPhotos->add($otherPhoto);
+            }
+        }
     }
 
     public function getId(): Uuid
@@ -332,6 +376,66 @@ class Order
         return $this;
     }
 
+    public function getOilChangeVehiclePhoto(): ?File
+    {
+        return $this->oilChangeVehiclePhoto;
+    }
+
+    public function setOilChangeVehiclePhoto(?File $oilChangeVehiclePhoto): self
+    {
+        $this->oilChangeVehiclePhoto = $oilChangeVehiclePhoto;
+
+        return $this;
+    }
+
+    public function getVinPhoto(): ?File
+    {
+        return $this->vinPhoto;
+    }
+
+    public function setVinPhoto(?File $vinPhoto): self
+    {
+        $this->vinPhoto = $vinPhoto;
+
+        return $this;
+    }
+
+    public function getOldOilFilterPhoto(): ?File
+    {
+        return $this->oldOilFilterPhoto;
+    }
+
+    public function setOldOilFilterPhoto(?File $oldOilFilterPhoto): self
+    {
+        $this->oldOilFilterPhoto = $oldOilFilterPhoto;
+
+        return $this;
+    }
+
+    public function getOldOilPhoto(): ?File
+    {
+        return $this->oldOilPhoto;
+    }
+
+    public function setOldOilPhoto(?File $oldOilPhoto): self
+    {
+        $this->oldOilPhoto = $oldOilPhoto;
+
+        return $this;
+    }
+
+    public function getOdometerPhoto(): ?File
+    {
+        return $this->odometerPhoto;
+    }
+
+    public function setOdometerPhoto(?File $odometerPhoto): self
+    {
+        $this->odometerPhoto = $odometerPhoto;
+
+        return $this;
+    }
+
     public function getStatus(): OrderStatusEnum
     {
         return $this->status;
@@ -479,6 +583,30 @@ class Order
     public function removePriceListItem(PriceListItem $priceListItem): self
     {
         $this->priceListItems->removeElement($priceListItem);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, File>
+     */
+    public function getOtherPhotos(): Collection
+    {
+        return $this->otherPhotos;
+    }
+
+    public function addOtherPhoto(File $otherPhoto): self
+    {
+        if (!$this->otherPhotos->contains($otherPhoto)) {
+            $this->otherPhotos->add($otherPhoto);
+        }
+
+        return $this;
+    }
+
+    public function removeOtherPhoto(File $otherPhoto): self
+    {
+        $this->otherPhotos->removeElement($otherPhoto);
 
         return $this;
     }

@@ -19,6 +19,7 @@ use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
+use App\Files\DBAL\Entity\File;
 use App\OilService\DBAL\Enum\ChatKnowledgeItemTypeEnum;
 use App\OilService\DBAL\Enum\ChatMessageRoleEnum;
 use App\OilService\DBAL\Enum\ChatSessionStatusEnum;
@@ -70,6 +71,12 @@ class EntityFactory
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        ?File $oilChangeVehiclePhoto,
+        ?File $vinPhoto,
+        ?File $oldOilFilterPhoto,
+        ?File $oldOilPhoto,
+        ?File $odometerPhoto,
+        array $otherPhotos,
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
@@ -91,6 +98,12 @@ class EntityFactory
             $companyIdentificationNumber,
             $companyTaxId,
             $companyAddress,
+            $oilChangeVehiclePhoto,
+            $vinPhoto,
+            $oldOilFilterPhoto,
+            $oldOilPhoto,
+            $odometerPhoto,
+            $otherPhotos,
             $status,
             $realizationTimeSlot,
             $realizationDate,

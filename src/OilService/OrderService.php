@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\OilService;
 
+use App\Files\DBAL\Entity\File;
+use App\Files\DBAL\Repository\FileRepository;
 use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\User;
@@ -28,6 +30,7 @@ class OrderService
         private readonly UserRepository $userRepository,
         private readonly RouteRepository $routeRepository,
         private readonly PriceListItemRepository $priceListItemRepository,
+        private readonly FileRepository $fileRepository,
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
     ) {
@@ -49,6 +52,12 @@ class OrderService
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        ?string $oilChangeVehiclePhotoId,
+        ?string $vinPhotoId,
+        ?string $oldOilFilterPhotoId,
+        ?string $oldOilPhotoId,
+        ?string $odometerPhotoId,
+        array $otherPhotoIds,
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
@@ -63,6 +72,13 @@ class OrderService
 
         $priceListItems = $this->resolvePublicPriceListItems($priceListItemIds);
 
+        $oilChangeVehiclePhoto = $this->findFile($oilChangeVehiclePhotoId);
+        $vinPhoto = $this->findFile($vinPhotoId);
+        $oldOilFilterPhoto = $this->findFile($oldOilFilterPhotoId);
+        $oldOilPhoto = $this->findFile($oldOilPhotoId);
+        $odometerPhoto = $this->findFile($odometerPhotoId);
+        $otherPhotos = $this->resolveFilesByIds($otherPhotoIds);
+
         $order = $this->entityFactory->createOrder(
             $fullName,
             $phone,
@@ -76,6 +92,12 @@ class OrderService
             $companyIdentificationNumber,
             $companyTaxId,
             $companyAddress,
+            $oilChangeVehiclePhoto,
+            $vinPhoto,
+            $oldOilFilterPhoto,
+            $oldOilPhoto,
+            $odometerPhoto,
+            $otherPhotos,
             $status,
             $realizationTimeSlot,
             $realizationDate,
@@ -107,6 +129,12 @@ class OrderService
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        ?string $oilChangeVehiclePhotoId,
+        ?string $vinPhotoId,
+        ?string $oldOilFilterPhotoId,
+        ?string $oldOilPhotoId,
+        ?string $odometerPhotoId,
+        array $otherPhotoIds,
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
@@ -122,6 +150,13 @@ class OrderService
 
         $priceListItems = $this->resolveAdminPriceListItems($priceListItemIds);
 
+        $oilChangeVehiclePhoto = $this->findFile($oilChangeVehiclePhotoId);
+        $vinPhoto = $this->findFile($vinPhotoId);
+        $oldOilFilterPhoto = $this->findFile($oldOilFilterPhotoId);
+        $oldOilPhoto = $this->findFile($oldOilPhotoId);
+        $odometerPhoto = $this->findFile($odometerPhotoId);
+        $otherPhotos = $this->resolveFilesByIds($otherPhotoIds);
+
         $order = $this->entityFactory->createOrder(
             $fullName,
             $phone,
@@ -135,6 +170,12 @@ class OrderService
             $companyIdentificationNumber,
             $companyTaxId,
             $companyAddress,
+            $oilChangeVehiclePhoto,
+            $vinPhoto,
+            $oldOilFilterPhoto,
+            $oldOilPhoto,
+            $odometerPhoto,
+            $otherPhotos,
             $status,
             $realizationTimeSlot,
             $realizationDate,
@@ -170,6 +211,12 @@ class OrderService
         ?string $companyIdentificationNumber,
         ?string $companyTaxId,
         ?string $companyAddress,
+        ?string $oilChangeVehiclePhotoId,
+        ?string $vinPhotoId,
+        ?string $oldOilFilterPhotoId,
+        ?string $oldOilPhotoId,
+        ?string $odometerPhotoId,
+        array $otherPhotoIds,
         string $userId,
         bool $routeProvided,
         ?string $routeId,
@@ -193,6 +240,11 @@ class OrderService
         $order->setCompanyIdentificationNumber($companyIdentificationNumber);
         $order->setCompanyTaxId($companyTaxId);
         $order->setCompanyAddress($companyAddress);
+        $order->setOilChangeVehiclePhoto($this->findFile($oilChangeVehiclePhotoId));
+        $order->setVinPhoto($this->findFile($vinPhotoId));
+        $order->setOldOilFilterPhoto($this->findFile($oldOilFilterPhotoId));
+        $order->setOldOilPhoto($this->findFile($oldOilPhotoId));
+        $order->setOdometerPhoto($this->findFile($odometerPhotoId));
         $order->setStatus($status);
         $order->setRoute($route);
 
@@ -213,6 +265,7 @@ class OrderService
         $order->setUser($user);
 
         $this->syncPriceListItems($order, $this->resolvePriceListItemsByIds($priceListItemIds));
+        $this->syncOtherPhotos($order, $this->resolveFilesByIds($otherPhotoIds));
 
         $this->entityManager->flush();
 
@@ -319,6 +372,25 @@ class OrderService
     }
 
     /**
+     * @return File[]
+     */
+    private function resolveFilesByIds(array $fileIds): array
+    {
+        if ($fileIds === []) {
+            return [];
+        }
+
+        $normalizedIds = array_values(array_unique($fileIds));
+        $files = $this->fileRepository->findBy(['id' => $normalizedIds]);
+
+        if (count($files) !== count($normalizedIds)) {
+            throw new InvalidDataException('Invalid file id.');
+        }
+
+        return $files;
+    }
+
+    /**
      * @param PriceListItem[] ...$itemsCollections
      *
      * @return PriceListItem[]
@@ -358,6 +430,45 @@ class OrderService
                 $order->addPriceListItem($priceListItem);
             }
         }
+    }
+
+    /**
+     * @param File[] $otherPhotos
+     */
+    private function syncOtherPhotos(Order $order, array $otherPhotos): void
+    {
+        $photosById = [];
+
+        foreach ($otherPhotos as $otherPhoto) {
+            $photosById[$otherPhoto->getId()->__toString()] = $otherPhoto;
+        }
+
+        foreach ($order->getOtherPhotos()->toArray() as $existingPhoto) {
+            if (!isset($photosById[$existingPhoto->getId()->__toString()])) {
+                $order->removeOtherPhoto($existingPhoto);
+            }
+        }
+
+        foreach ($photosById as $otherPhoto) {
+            if (!$order->getOtherPhotos()->contains($otherPhoto)) {
+                $order->addOtherPhoto($otherPhoto);
+            }
+        }
+    }
+
+    private function findFile(?string $fileId): ?File
+    {
+        if ($fileId === null) {
+            return null;
+        }
+
+        $file = $this->fileRepository->find($fileId);
+
+        if ($file === null) {
+            throw new InvalidDataException('Invalid file id.');
+        }
+
+        return $file;
     }
 
     private function createInvalidPriceListItemsException(): ValidationException
