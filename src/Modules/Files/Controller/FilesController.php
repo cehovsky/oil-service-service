@@ -148,7 +148,7 @@ class FilesController extends AbstractController
             return new Response($this->fileManager->downloadFileContents($file), headers: [
                 'Content-Description' => 'File Transfer',
                 'Content-Type' => 'application/octet-stream',
-                'Content-Disposition' => 'attachment; filename="' . $file->getFileName(),
+                'Content-Disposition' => 'attachment; filename*=UTF-8\'\'' . rawurlencode($file->getFileName()),
                 'Connection' => 'Keep-Alive',
                 'Content-Length' => $file->getSize(),
             ]);
