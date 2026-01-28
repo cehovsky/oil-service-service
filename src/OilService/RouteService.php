@@ -240,15 +240,19 @@ class RouteService
             $existingOrdersById[$order->getId()->toRfc4122()] = $order;
         }
 
+        $position = 1;
+
         foreach ($orderIds as $orderId) {
             if (isset($existingOrdersById[$orderId])) {
+                $order = $existingOrdersById[$orderId];
                 unset($existingOrdersById[$orderId]);
-
-                continue;
+            } else {
+                $order = $this->findOrder($orderId);
+                $order->setRoute($route);
             }
 
-            $order = $this->findOrder($orderId);
-            $order->setRoute($route);
+            $order->setRouteOrderPosition($position);
+            $position++;
         }
 
         foreach ($existingOrdersById as $order) {

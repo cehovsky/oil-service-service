@@ -122,6 +122,9 @@ class Order
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Route $route = null;
 
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $routeOrderPosition = null;
+
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
@@ -502,9 +505,25 @@ class Order
 
         $this->route = $route;
 
+        if ($route === null) {
+            $this->routeOrderPosition = null;
+        }
+
         if ($route !== null && !$route->getOrders()->contains($this)) {
             $route->getOrders()->add($this);
         }
+
+        return $this;
+    }
+
+    public function getRouteOrderPosition(): ?int
+    {
+        return $this->routeOrderPosition;
+    }
+
+    public function setRouteOrderPosition(?int $routeOrderPosition): self
+    {
+        $this->routeOrderPosition = $routeOrderPosition;
 
         return $this;
     }

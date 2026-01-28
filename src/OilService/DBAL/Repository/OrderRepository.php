@@ -7,6 +7,7 @@ namespace App\OilService\DBAL\Repository;
 use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use App\OilService\DBAL\Entity\Route;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -108,6 +109,19 @@ class OrderRepository extends ServiceEntityRepository
         $maxIdent = $qb->getQuery()->getSingleScalarResult();
 
         return $maxIdent !== null ? ((int) $maxIdent) + 1 : 1;
+    }
+
+    public function getMaxRouteOrderPosition(Route $route): int
+    {
+        $qb = $this->createQueryBuilder(self::ALIAS);
+
+        $qb->select('MAX(' . self::ALIAS . '.routeOrderPosition)')
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.route', ':route'))
+            ->setParameter('route', $route);
+
+        $maxPosition = $qb->getQuery()->getSingleScalarResult();
+
+        return $maxPosition !== null ? (int) $maxPosition : 0;
     }
 
     /**

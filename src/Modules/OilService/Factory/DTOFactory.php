@@ -514,7 +514,7 @@ class DTOFactory
             $routeUsers[] = $this->createAuthUserDTO($routeUser->getUser());
         }
 
-        foreach ($route->getOrders() as $order) {
+        foreach ($this->sortRouteOrders($route->getOrders()->toArray()) as $order) {
             $orders[] = $this->createOrderSummaryDTO($order);
         }
 
@@ -583,7 +583,7 @@ class DTOFactory
             $routeUsers[] = $this->createAuthUserDTO($routeUser->getUser());
         }
 
-        foreach ($route->getOrders() as $order) {
+        foreach ($this->sortRouteOrders($route->getOrders()->toArray()) as $order) {
             $orders[] = $this->createOrderDTO($order);
         }
 
@@ -657,6 +657,34 @@ class DTOFactory
             $this->createInventoryItemSummaryDTO($inventoryItem),
             $orderInventoryItem->getQuantity(),
         );
+    }
+
+    /**
+     * @param Order[] $orders
+     *
+     * @return Order[]
+     */
+    private function sortRouteOrders(array $orders): array
+    {
+        usort($orders, function (Order $left, Order $right): int {
+            $leftPosition = $left->getRouteOrderPosition() ?? PHP_INT_MAX;
+            $rightPosition = $right->getRouteOrderPosition() ?? PHP_INT_MAX;
+
+            if ($leftPosition !== $rightPosition) {
+                return $leftPosition <=> $rightPosition;
+            }
+
+            $leftCreatedAt = $left->getCreatedAt()->getTimestamp();
+            $rightCreatedAt = $right->getCreatedAt()->getTimestamp();
+
+            if ($leftCreatedAt !== $rightCreatedAt) {
+                return $leftCreatedAt <=> $rightCreatedAt;
+            }
+
+            return $left->getId()->__toString() <=> $right->getId()->__toString();
+        });
+
+        return $orders;
     }
 
     private function createOrderSummaryDTO(Order $order): OrderSummaryDTO

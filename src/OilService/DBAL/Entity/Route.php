@@ -48,6 +48,7 @@ class Route
 
     /** @var Collection<int, Order> */
     #[ORM\OneToMany(mappedBy: 'route', targetEntity: Order::class)]
+    #[ORM\OrderBy(['routeOrderPosition' => 'ASC', 'createdAt' => 'ASC'])]
     private Collection $orders;
 
     /** @var Collection<int, StorageContainerLocation> */

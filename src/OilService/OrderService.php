@@ -17,6 +17,7 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ValidationException;
 use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Repository\RouteRepository;
+use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\DBAL\Repository\PriceListItemRepository;
 use App\OilService\Factory\EntityFactory;
@@ -33,6 +34,7 @@ class OrderService
         private readonly FileRepository $fileRepository,
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
+        private readonly OrderRepository $orderRepository,
     ) {
     }
 
@@ -104,6 +106,12 @@ class OrderService
             $user,
             $route,
         );
+
+        if ($route !== null) {
+            $order->setRouteOrderPosition(
+                $this->orderRepository->getMaxRouteOrderPosition($route) + 1
+            );
+        }
 
         $this->syncPriceListItems($order, $priceListItems);
 
@@ -183,6 +191,12 @@ class OrderService
             $route,
         );
 
+        if ($route !== null) {
+            $order->setRouteOrderPosition(
+                $this->orderRepository->getMaxRouteOrderPosition($route) + 1
+            );
+        }
+
         $this->syncPriceListItems($order, $priceListItems);
 
         $this->entityManager->persist($order);
@@ -222,7 +236,8 @@ class OrderService
         ?string $routeId,
         array $priceListItemIds,
     ): Order {
-        $route = $order->getRoute();
+        $previousRoute = $order->getRoute();
+        $route = $previousRoute;
 
         if ($routeProvided) {
             $route = $this->findRoute($routeId);
@@ -247,6 +262,16 @@ class OrderService
         $order->setOdometerPhoto($this->findFile($odometerPhotoId));
         $order->setStatus($status);
         $order->setRoute($route);
+
+        if ($routeProvided && $route !== $previousRoute) {
+            if ($route === null) {
+                $order->setRouteOrderPosition(null);
+            } else {
+                $order->setRouteOrderPosition(
+                    $this->orderRepository->getMaxRouteOrderPosition($route) + 1
+                );
+            }
+        }
 
         if ($route !== null) {
             $order->setRealizationDate($route->getDate());
