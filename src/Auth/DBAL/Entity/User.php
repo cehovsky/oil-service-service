@@ -41,6 +41,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(options: ['default' => false])]
     private bool $isAdmin = false;
 
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isOffice = false;
+
     /** @var Collection<int, RefreshToken> */
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: RefreshToken::class, cascade: ['persist'])]
     private Collection $refreshTokens;
@@ -55,7 +58,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         string $password,
         string $fullName,
         bool $isActive,
-        bool $isAdmin = false
+        bool $isAdmin = false,
+        bool $isOffice = false
     ) {
         $this->id = $id;
         $this->email = $email;
@@ -63,6 +67,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->fullName = $fullName;
         $this->isActive = $isActive;
         $this->isAdmin = $isAdmin;
+        $this->isOffice = $isOffice;
         $this->refreshTokens = new ArrayCollection();
         $this->files = new ArrayCollection();
     }
@@ -126,6 +131,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $roles[] = 'ROLE_ADMIN';
         }
 
+        if ($this->isOffice) {
+            $roles[] = 'ROLE_OFFICE';
+        }
+
         return $roles;
     }
 
@@ -163,6 +172,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsAdmin(bool $isAdmin): self
     {
         $this->isAdmin = $isAdmin;
+
+        return $this;
+    }
+
+    public function getIsOffice(): bool
+    {
+        return $this->isOffice;
+    }
+
+    public function setIsOffice(bool $isOffice): self
+    {
+        $this->isOffice = $isOffice;
 
         return $this;
     }

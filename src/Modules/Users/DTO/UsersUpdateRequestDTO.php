@@ -33,6 +33,10 @@ class UsersUpdateRequestDTO
     #[Assert\NotNull]
     private bool $isAdmin;
 
+    #[OA\Property(example: false)]
+    #[Assert\NotNull]
+    private bool $isOffice;
+
     public function getEmail(): string
     {
         return $this->email;
@@ -89,6 +93,18 @@ class UsersUpdateRequestDTO
     public function setIsAdmin(bool $isAdmin): self
     {
         $this->isAdmin = $isAdmin;
+
+        return $this;
+    }
+
+    public function getIsOffice(): bool
+    {
+        return $this->isOffice;
+    }
+
+    public function setIsOffice(bool $isOffice): self
+    {
+        $this->isOffice = $isOffice;
 
         return $this;
     }

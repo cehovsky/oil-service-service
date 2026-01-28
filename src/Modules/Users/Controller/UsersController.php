@@ -134,6 +134,7 @@ class UsersController extends AbstractController
                 $usersCreateRequestDTO->getFullName(),
                 $usersCreateRequestDTO->getIsActive(),
                 $usersCreateRequestDTO->getIsAdmin(),
+                $usersCreateRequestDTO->getIsOffice(),
             );
 
             $this->entityManager->persist($user);
@@ -232,6 +233,7 @@ class UsersController extends AbstractController
             $user->setFullName($usersUpdateRequestDTO->getFullName());
             $user->setIsActive($usersUpdateRequestDTO->getIsActive());
             $user->setIsAdmin($usersUpdateRequestDTO->getIsAdmin());
+            $user->setIsOffice($usersUpdateRequestDTO->getIsOffice());
 
             $password = $usersUpdateRequestDTO->getPassword();
 

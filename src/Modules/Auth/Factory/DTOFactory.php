@@ -31,7 +31,8 @@ class DTOFactory
             $user->getId()->__toString(),
             $user->getEmail(),
             $user->getFullName(),
-            $user->getIsAdmin()
+            $user->getIsAdmin(),
+            $user->getIsOffice()
         );
     }
 

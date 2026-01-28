@@ -1003,7 +1003,7 @@ class OrderController extends AbstractController
             throw new ServerErrorHttpException();
         }
 
-        if (!$user->getIsAdmin()) {
+        if (!$user->getIsAdmin() && !$user->getIsOffice()) {
             throw new AccessDeniedHttpException();
         }
 

@@ -25,6 +25,7 @@ class DTOFactory
             $user->getFullName(),
             $user->getIsActive(),
             $user->getIsAdmin(),
+            $user->getIsOffice(),
         );
     }
 

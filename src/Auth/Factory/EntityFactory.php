@@ -98,6 +98,7 @@ class EntityFactory
         string $fullName,
         bool $isActive = true,
         bool $isAdmin = false,
+        bool $isOffice = false,
     ): User {
         return new User(
             $this->uuidFactory->timeBased()->create(),
@@ -106,6 +107,7 @@ class EntityFactory
             $fullName,
             $isActive,
             $isAdmin,
+            $isOffice,
         );
     }
 }

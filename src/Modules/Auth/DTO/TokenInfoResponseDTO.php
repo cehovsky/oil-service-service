@@ -11,6 +11,7 @@ class TokenInfoResponseDTO
         private readonly string $email,
         private readonly string $fullName,
         private readonly bool $isAdmin,
+        private readonly bool $isOffice,
     ) {
     }
 
@@ -32,5 +33,10 @@ class TokenInfoResponseDTO
     public function getIsAdmin(): bool
     {
         return $this->isAdmin;
+    }
+
+    public function getIsOffice(): bool
+    {
+        return $this->isOffice;
     }
 }

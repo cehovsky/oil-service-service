@@ -34,7 +34,8 @@ class CreateUserCommand extends Command
             ->addArgument('email', InputArgument::REQUIRED, 'Email of the user to create')
             ->addArgument('password', InputArgument::REQUIRED, 'Plain password of the user to create')
             ->addArgument('fullName', InputArgument::REQUIRED, 'Full name of the user to create')
-            ->addArgument('isAdmin', InputArgument::OPTIONAL, 'Whether the user should be admin (true/false)', 'false');
+            ->addArgument('isAdmin', InputArgument::OPTIONAL, 'Whether the user should be admin (true/false)', 'false')
+            ->addArgument('isOffice', InputArgument::OPTIONAL, 'Whether the user should be office (true/false)', 'false');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -50,6 +51,9 @@ class CreateUserCommand extends Command
         /** @var string $isAdminArg */
         $isAdminArg = (string) $input->getArgument('isAdmin');
         $isAdmin = filter_var($isAdminArg, FILTER_VALIDATE_BOOLEAN);
+        /** @var string $isOfficeArg */
+        $isOfficeArg = (string) $input->getArgument('isOffice');
+        $isOffice = filter_var($isOfficeArg, FILTER_VALIDATE_BOOLEAN);
 
         $existingUser = $this->userRepository->findByEmail($email);
 
@@ -65,6 +69,7 @@ class CreateUserCommand extends Command
             $fullName,
             true,
             $isAdmin,
+            $isOffice,
         );
 
         $this->entityManager->persist($user);

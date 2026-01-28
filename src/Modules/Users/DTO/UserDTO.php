@@ -23,18 +23,23 @@ class UserDTO
     #[OA\Property(example: true)]
     private bool $isAdmin;
 
+    #[OA\Property(example: false)]
+    private bool $isOffice;
+
     public function __construct(
         string $id,
         string $email,
         string $fullName,
         bool $isActive,
-        bool $isAdmin
+        bool $isAdmin,
+        bool $isOffice
     ) {
         $this->id = $id;
         $this->email = $email;
         $this->fullName = $fullName;
         $this->isActive = $isActive;
         $this->isAdmin = $isAdmin;
+        $this->isOffice = $isOffice;
     }
 
     public function getId(): string
@@ -93,6 +98,18 @@ class UserDTO
     public function setIsAdmin(bool $isAdmin): self
     {
         $this->isAdmin = $isAdmin;
+
+        return $this;
+    }
+
+    public function getIsOffice(): bool
+    {
+        return $this->isOffice;
+    }
+
+    public function setIsOffice(bool $isOffice): self
+    {
+        $this->isOffice = $isOffice;
 
         return $this;
     }
