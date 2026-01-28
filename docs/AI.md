@@ -10,6 +10,7 @@
   - navrhuj změny s ohledem na dlouhodobou údržbu,
   - mysli na testy, okrajové případy, DX (developer experience) a bezpečnost.
 - Upřednostňuj **minimální, cílené změny** před velkými refaktory.
+- Nikdy nedělej migrace, pokud tě o to vyloženě nepožádám. Když už budeš dělat migrace, tak využívej příkazy a nepiš je sám
 
 ## Respektování existujícího projektu
 - **Respektuj strukturu projektu** (adresáře, naming, architekturu, vrstvy, doménové členění).

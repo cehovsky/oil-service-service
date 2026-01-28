@@ -48,6 +48,8 @@ use App\Modules\OilService\DTO\RouteDeleteResponseDTO;
 use App\Modules\OilService\DTO\RouteInfoResponseDTO;
 use App\Modules\OilService\DTO\RouteListResponseDTO;
 use App\Modules\OilService\DTO\RouteTermDTO;
+use App\Modules\CarApp\DTO\CarAppRouteDTO;
+use App\Modules\CarApp\DTO\CarAppRouteListResponseDTO;
 use App\Modules\OilService\DTO\OrderStorageContainerMaterialDTO;
 use App\Modules\OilService\DTO\OrderInventoryItemDTO;
 use App\Modules\OilService\DTO\OrderSummaryDTO;
@@ -517,6 +519,75 @@ class DTOFactory
         }
 
         return new RouteDTO(
+            $route->getId()->__toString(),
+            $car ? $this->createCarDTO($car) : null,
+            $route->getIsActive(),
+            $route->getDate()->format('Y-m-d'),
+            $route->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $routeTerms,
+            array_values($storageContainers),
+            $storageContainerMaterials,
+            $routeUsers,
+            $orders,
+        );
+    }
+
+    /**
+     * @param Route[] $routes
+     */
+    public function createCarAppRouteListResponseDTO(array $routes, int $pageCount): CarAppRouteListResponseDTO
+    {
+        $routeDTOs = [];
+
+        foreach ($routes as $route) {
+            $routeDTOs[] = $this->createCarAppRouteDTO($route);
+        }
+
+        return new CarAppRouteListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $routeDTOs,
+            $pageCount,
+        );
+    }
+
+    public function createCarAppRouteDTO(Route $route): CarAppRouteDTO
+    {
+        $car = $route->getCar();
+        $routeTerms = [];
+        $storageContainers = [];
+        /** @var StorageContainerMaterialDTO[] $storageContainerMaterials */
+        $storageContainerMaterials = [];
+        $routeUsers = [];
+        $orders = [];
+
+        $warehouseDTOFactory = new WarehouseDTOFactory();
+
+        foreach ($route->getTerms() as $term) {
+            $routeTerms[] = $this->createRouteTermDTO($term);
+        }
+
+        foreach ($route->getStorageContainerLocations() as $location) {
+            $storageContainer = $location->getStorageContainer();
+
+            $storageContainers[$storageContainer->getId()->__toString()] = $this->createStorageContainerSummaryDTO(
+                $storageContainer
+            );
+        }
+
+        foreach ($route->getStorageContainerMaterials() as $storageContainerMaterial) {
+            $storageContainerMaterials[] = $warehouseDTOFactory->createStorageContainerMaterialDTO($storageContainerMaterial);
+        }
+
+        foreach ($route->getRouteUsers() as $routeUser) {
+            $routeUsers[] = $this->createAuthUserDTO($routeUser->getUser());
+        }
+
+        foreach ($route->getOrders() as $order) {
+            $orders[] = $this->createOrderDTO($order);
+        }
+
+        return new CarAppRouteDTO(
             $route->getId()->__toString(),
             $car ? $this->createCarDTO($car) : null,
             $route->getIsActive(),

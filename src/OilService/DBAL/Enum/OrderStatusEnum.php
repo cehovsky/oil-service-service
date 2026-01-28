@@ -9,8 +9,7 @@ enum OrderStatusEnum: string
     public const array VALUES = [
         'new',
         'in_preparation',
-        'to_process',
-        'to_complete',
+        'in_process',
         'completed',
         'canceled',
     ];
@@ -19,9 +18,7 @@ enum OrderStatusEnum: string
 
     case IN_PREPARATION = 'in_preparation';
 
-    case TO_PROCESS = 'to_process';
-
-    case TO_COMPLETE = 'to_complete';
+    case IN_PROCESS = 'in_process';
 
     case COMPLETED = 'completed';
 

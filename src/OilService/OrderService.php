@@ -272,6 +272,39 @@ class OrderService
         return $order;
     }
 
+    /**
+     * @param string[] $otherPhotoIds
+     */
+    public function updateOrderPhotos(
+        Order $order,
+        ?string $oilChangeVehiclePhotoId,
+        ?string $vinPhotoId,
+        ?string $oldOilFilterPhotoId,
+        ?string $oldOilPhotoId,
+        ?string $odometerPhotoId,
+        array $otherPhotoIds,
+    ): Order {
+        $order->setOilChangeVehiclePhoto($this->findFile($oilChangeVehiclePhotoId));
+        $order->setVinPhoto($this->findFile($vinPhotoId));
+        $order->setOldOilFilterPhoto($this->findFile($oldOilFilterPhotoId));
+        $order->setOldOilPhoto($this->findFile($oldOilPhotoId));
+        $order->setOdometerPhoto($this->findFile($odometerPhotoId));
+
+        $this->syncOtherPhotos($order, $this->resolveFilesByIds($otherPhotoIds));
+
+        $this->entityManager->flush();
+
+        return $order;
+    }
+
+    public function updateOrderStatus(Order $order, OrderStatusEnum $status): Order
+    {
+        $order->setStatus($status);
+        $this->entityManager->flush();
+
+        return $order;
+    }
+
     public function deleteOrder(Order $order): void
     {
         $this->entityManager->remove($order);

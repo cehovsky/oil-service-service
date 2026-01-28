@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Repository;
 
+use App\Auth\DBAL\Entity\User as AuthUser;
 use App\OilService\DBAL\Entity\Route;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -45,6 +46,25 @@ class RouteRepository extends ServiceEntityRepository
             ->setMaxResults($maxResults)
             ->setParameter('isActive', true)
             ->setParameter('fromDate', $fromDate);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return Route[]
+     */
+    public function findActiveRoutesForUserOnDate(AuthUser $user, DateTimeImmutable $date): array
+    {
+        $qb = $this->createQueryBuilder(self::ALIAS);
+
+        $qb->innerJoin(self::ALIAS . '.routeUsers', 'ru')
+            ->andWhere('ru.user = :user')
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.date', ':date'))
+            ->andWhere($qb->expr()->eq(self::ALIAS . '.isActive', ':isActive'))
+            ->orderBy(self::ALIAS . '.createdAt', 'ASC')
+            ->setParameter('user', $user)
+            ->setParameter('date', $date)
+            ->setParameter('isActive', true);
 
         return $qb->getQuery()->getResult();
     }
