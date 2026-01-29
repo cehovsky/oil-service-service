@@ -14,6 +14,8 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
+use App\Modules\OilService\DTO\OrderCoordinatesResolveResponseDTO;
+use App\Modules\OilService\DTO\OrderCoordinatesUpdateRequestDTO;
 use App\Modules\OilService\DTO\OrderCreateWithTermRequestDTO;
 use App\Modules\OilService\DTO\OrderDeleteResponseDTO;
 use App\Modules\OilService\DTO\OrderInfoResponseDTO;
@@ -292,6 +294,163 @@ class OrderController extends AbstractController
             );
         } catch (InvalidDataException) {
             throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                ref: new Model(
+                    type: OrderCoordinatesUpdateRequestDTO::class
+                ),
+            )
+        ),
+        tags: [
+            'Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: OrderUpdateResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/orders/{orderId}/coordinates',
+        name: 'oil_service_order_coordinates_update',
+        methods: ['PUT']
+    )]
+    public function updateCoordinates(Request $request, string $orderId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        try {
+            $coordinatesUpdateRequestDTO = $this->dtoValueResolver->resolveRequest(
+                $request,
+                OrderCoordinatesUpdateRequestDTO::class
+            );
+
+            $this->dtoValueResolver->validateDTO($coordinatesUpdateRequestDTO);
+
+            $order = $this->orderService->updateOrderCoordinates(
+                $order,
+                $coordinatesUpdateRequestDTO->getLatitude(),
+                $coordinatesUpdateRequestDTO->getLongitude(),
+            );
+
+            $responseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($order);
+
+            return $this->json($responseDTO);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection(
+                $e->getErrorCollection()
+            );
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: OrderCoordinatesResolveResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/orders/{orderId}/coordinates/resolve',
+        name: 'oil_service_order_coordinates_resolve',
+        methods: ['PUT']
+    )]
+    public function resolveCoordinates(string $orderId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        try {
+            $result = $this->orderService->resolveOrderCoordinatesFromAddress($order);
+
+            $responseDTO = $this->dtoFactory->createOrderCoordinatesResolveResponseDTO(
+                $order,
+                $result->isSuccess(),
+                $result->getMessage(),
+            );
+
+            return $this->json($responseDTO);
         } catch (Throwable $e) {
             throw new ServerErrorHttpException($e->getMessage(), $e);
         }

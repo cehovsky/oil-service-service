@@ -8,6 +8,7 @@ use App\Auth\DBAL\Entity\User as AuthUser;
 use App\Domain\DTOValueResolver;
 use App\Domain\Exception\InvalidArgumentException;
 use App\Modules\OilService\DTO\OrderCreateResponseDTO;
+use App\Modules\OilService\DTO\OrderCoordinatesResolveResponseDTO;
 use App\Modules\OilService\DTO\OrderDeleteResponseDTO;
 use App\Modules\OilService\DTO\OrderDTO;
 use App\Modules\OilService\DTO\OrderDTOCollection;
@@ -190,6 +191,8 @@ class DTOFactory
             $order->getCarModel(),
             $order->getLicensePlate(),
             $order->getAddress(),
+            $order->getLatitude(),
+            $order->getLongitude(),
             $order->getNote(),
             $order->getIsCompany(),
             $order->getCompanyName(),
@@ -262,6 +265,21 @@ class DTOFactory
         return new OrderUpdateResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
+            $this->createOrderDTO($order),
+        );
+    }
+
+    public function createOrderCoordinatesResolveResponseDTO(
+        Order $order,
+        bool $success,
+        ?string $message,
+    ): OrderCoordinatesResolveResponseDTO
+    {
+        return new OrderCoordinatesResolveResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $success,
+            $message,
             $this->createOrderDTO($order),
         );
     }
@@ -695,6 +713,8 @@ class DTOFactory
             $order->getFullName(),
             $order->getStatus()->value,
             $order->getRealizationDate()->format('Y-m-d'),
+            $order->getLatitude(),
+            $order->getLongitude(),
         );
     }
 

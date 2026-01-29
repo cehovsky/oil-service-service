@@ -62,6 +62,14 @@ class Order
     #[ORM\Column(length: 500)]
     private string $address;
 
+    #[Assert\Range(min: -90, max: 90)]
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    private ?float $latitude = null;
+
+    #[Assert\Range(min: -180, max: 180)]
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    private ?float $longitude = null;
+
     #[Assert\Length(max: 1000)]
     #[ORM\Column(length: 1000, nullable: true)]
     private ?string $note = null;
@@ -177,6 +185,8 @@ class Order
         User $user,
         DateTimeImmutable $createdAt,
         ?Route $route = null,
+        ?float $latitude = null,
+        ?float $longitude = null,
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -186,6 +196,8 @@ class Order
         $this->carModel = $carModel;
         $this->licensePlate = $licensePlate;
         $this->address = $address;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
         $this->note = $note;
         $this->isCompany = $isCompany;
         $this->companyName = $companyName;
@@ -303,6 +315,30 @@ class Order
     public function setAddress(string $address): self
     {
         $this->address = $address;
+
+        return $this;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): self
+    {
+        $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): self
+    {
+        $this->longitude = $longitude;
 
         return $this;
     }

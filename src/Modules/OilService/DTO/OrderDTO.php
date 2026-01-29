@@ -36,6 +36,12 @@ class OrderDTO
     #[OA\Property(example: 'Václavské náměstí 1, Praha 1, 110 00')]
     private string $address;
 
+    #[OA\Property(example: 50.087, nullable: true)]
+    private ?float $latitude;
+
+    #[OA\Property(example: 14.421, nullable: true)]
+    private ?float $longitude;
+
     #[OA\Property(example: 'Preferuji odpolední termín', nullable: true)]
     private ?string $note;
 
@@ -123,6 +129,8 @@ class OrderDTO
         string $carModel,
         string $licensePlate,
         string $address,
+        ?float $latitude,
+        ?float $longitude,
         ?string $note,
         bool $isCompany,
         ?string $companyName,
@@ -153,6 +161,8 @@ class OrderDTO
         $this->carModel = $carModel;
         $this->licensePlate = $licensePlate;
         $this->address = $address;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
         $this->note = $note;
         $this->isCompany = $isCompany;
         $this->companyName = $companyName;
@@ -214,6 +224,16 @@ class OrderDTO
     public function getAddress(): string
     {
         return $this->address;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
     }
 
     public function getNote(): ?string

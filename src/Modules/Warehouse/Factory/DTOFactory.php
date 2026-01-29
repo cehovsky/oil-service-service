@@ -450,6 +450,8 @@ class DTOFactory
                 $order->getFullName(),
                 $order->getStatus()->value,
                 $order->getRealizationDate()->format('Y-m-d'),
+                $order->getLatitude(),
+                $order->getLongitude(),
             );
         }
 

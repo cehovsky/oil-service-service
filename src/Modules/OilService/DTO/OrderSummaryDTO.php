@@ -24,18 +24,28 @@ class OrderSummaryDTO
     #[OA\Property(example: '2025-01-15')]
     private string $realizationDate;
 
+    #[OA\Property(example: 50.087, nullable: true)]
+    private ?float $latitude;
+
+    #[OA\Property(example: 14.421, nullable: true)]
+    private ?float $longitude;
+
     public function __construct(
         string $id,
         string $ident,
         string $fullName,
         string $status,
         string $realizationDate,
+        ?float $latitude,
+        ?float $longitude,
     ) {
         $this->id = $id;
         $this->ident = $ident;
         $this->fullName = $fullName;
         $this->status = $status;
         $this->realizationDate = $realizationDate;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
     }
 
     public function getId(): string
@@ -61,5 +71,15 @@ class OrderSummaryDTO
     public function getRealizationDate(): string
     {
         return $this->realizationDate;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
     }
 }

@@ -6,6 +6,8 @@ namespace App\OilService;
 
 use App\Files\DBAL\Entity\File;
 use App\Files\DBAL\Repository\FileRepository;
+use App\Geocoding\GeocodingResult;
+use App\Geocoding\GeocodingService;
 use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\User;
@@ -35,6 +37,7 @@ class OrderService
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
         private readonly OrderRepository $orderRepository,
+        private readonly GeocodingService $geocodingService,
     ) {
     }
 
@@ -328,6 +331,32 @@ class OrderService
         $this->entityManager->flush();
 
         return $order;
+    }
+
+    public function updateOrderCoordinates(Order $order, ?float $latitude, ?float $longitude): Order
+    {
+        $order->setLatitude($latitude);
+        $order->setLongitude($longitude);
+
+        $this->entityManager->flush();
+
+        return $order;
+    }
+
+    public function resolveOrderCoordinatesFromAddress(Order $order): GeocodingResult
+    {
+        $result = $this->geocodingService->geocodeAddress($order->getAddress());
+
+        if (!$result->isSuccess()) {
+            return $result;
+        }
+
+        $order->setLatitude($result->getLatitude());
+        $order->setLongitude($result->getLongitude());
+
+        $this->entityManager->flush();
+
+        return $result;
     }
 
     public function deleteOrder(Order $order): void
