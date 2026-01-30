@@ -109,7 +109,7 @@ class ChatToolService
         );
 
         $session->setOrder($order);
-        $this->chatSessionService->completeSession($session);
+        // Removed automatic session completion - allow agent to offer additional services
 
         return [
             'sessionId' => $session->getId()->__toString(),
