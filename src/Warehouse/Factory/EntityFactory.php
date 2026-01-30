@@ -77,6 +77,9 @@ class EntityFactory
         string $shortLabel,
         bool $isActive,
         ?string $address = null,
+        ?float $latitude = null,
+        ?float $longitude = null,
+        bool $isGarage = false,
     ): Warehouse {
         $now = new DateTimeImmutable();
 
@@ -86,6 +89,9 @@ class EntityFactory
             $shortLabel,
             $address,
             $isActive,
+            $latitude,
+            $longitude,
+            $isGarage,
             $now,
             $now,
         );

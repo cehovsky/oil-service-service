@@ -79,7 +79,10 @@ class DTOFactory
             $warehouse->getLabel(),
             $warehouse->getShortLabel(),
             $warehouse->getAddress(),
+            $warehouse->getLatitude(),
+            $warehouse->getLongitude(),
             $warehouse->getIsActive(),
+            $warehouse->getIsGarage(),
             $warehouse->getCreatedAt()->format(DateTimeInterface::ATOM),
             $warehouse->getUpdatedAt()->format(DateTimeInterface::ATOM),
         );
@@ -775,6 +778,9 @@ class DTOFactory
             $warehouse->getId()->__toString(),
             $warehouse->getLabel(),
             $warehouse->getShortLabel(),
+            $warehouse->getLatitude(),
+            $warehouse->getLongitude(),
+            $warehouse->getIsGarage(),
         );
     }
 

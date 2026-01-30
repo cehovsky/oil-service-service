@@ -29,4 +29,19 @@ class WarehouseRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder(self::ALIAS);
     }
+
+    public function findFirstActiveGarageWithCoordinates(): ?Warehouse
+    {
+        return $this->createQueryBuilder(self::ALIAS)
+            ->andWhere(self::ALIAS . '.isActive = :isActive')
+            ->andWhere(self::ALIAS . '.isGarage = :isGarage')
+            ->andWhere(self::ALIAS . '.latitude IS NOT NULL')
+            ->andWhere(self::ALIAS . '.longitude IS NOT NULL')
+            ->setParameter('isActive', true)
+            ->setParameter('isGarage', true)
+            ->orderBy(self::ALIAS . '.createdAt', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

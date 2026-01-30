@@ -816,6 +816,9 @@ class DTOFactory
             $warehouse->getId()->__toString(),
             $warehouse->getLabel(),
             $warehouse->getShortLabel(),
+            $warehouse->getLatitude(),
+            $warehouse->getLongitude(),
+            $warehouse->getIsGarage(),
         );
     }
 

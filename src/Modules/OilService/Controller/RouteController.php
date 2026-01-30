@@ -335,6 +335,80 @@ class RouteController extends AbstractController
         }
     }
 
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'Routes',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: RouteUpdateResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/routes/{routeId}/orders/optimize-by-coordinates',
+        name: 'oil_service_route_orders_optimize_by_coordinates',
+        methods: ['PUT']
+    )]
+    public function optimizeOrdersByCoordinates(string $routeId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $route = $this->routeRepository->find($routeId);
+
+        if ($route === null) {
+            throw new NotFoundHttpException('Route not found');
+        }
+
+        try {
+            $route = $this->routeService->optimizeRouteOrdersByCoordinates($route);
+
+            $routeUpdateResponseDTO = $this->dtoFactory->createRouteUpdateResponseDTO($route);
+
+            return $this->json($routeUpdateResponseDTO);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection(
+                $e->getErrorCollection()
+            );
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
     #[OA\Get(
         security: [
             [

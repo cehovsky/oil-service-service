@@ -39,6 +39,18 @@ class Warehouse
     #[ORM\Column]
     private bool $isActive;
 
+    #[Assert\Range(min: -90, max: 90)]
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $latitude = null;
+
+    #[Assert\Range(min: -180, max: 180)]
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $longitude = null;
+
+    #[Assert\NotNull]
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isGarage;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -55,6 +67,9 @@ class Warehouse
         string $shortLabel,
         ?string $address,
         bool $isActive,
+        ?float $latitude,
+        ?float $longitude,
+        bool $isGarage,
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt,
     ) {
@@ -63,6 +78,9 @@ class Warehouse
         $this->shortLabel = $shortLabel;
         $this->address = $address;
         $this->isActive = $isActive;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
+        $this->isGarage = $isGarage;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
         $this->storageContainerLocations = new ArrayCollection();
@@ -112,6 +130,42 @@ class Warehouse
     public function getIsActive(): bool
     {
         return $this->isActive;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): self
+    {
+        $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): self
+    {
+        $this->longitude = $longitude;
+
+        return $this;
+    }
+
+    public function getIsGarage(): bool
+    {
+        return $this->isGarage;
+    }
+
+    public function setIsGarage(bool $isGarage): self
+    {
+        $this->isGarage = $isGarage;
+
+        return $this;
     }
 
     public function setIsActive(bool $isActive): self

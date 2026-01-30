@@ -20,8 +20,17 @@ class WarehouseDTO
     #[OA\Property(example: '123 Main St, Prague', nullable: true)]
     private ?string $address;
 
+    #[OA\Property(example: 50.087, nullable: true)]
+    private ?float $latitude;
+
+    #[OA\Property(example: 14.421, nullable: true)]
+    private ?float $longitude;
+
     #[OA\Property(example: true)]
     private bool $isActive;
+
+    #[OA\Property(example: false)]
+    private bool $isGarage;
 
     #[OA\Property(example: '2026-01-02T10:00:00+00:00')]
     private string $createdAt;
@@ -34,7 +43,10 @@ class WarehouseDTO
         string $label,
         string $shortLabel,
         ?string $address,
+        ?float $latitude,
+        ?float $longitude,
         bool $isActive,
+        bool $isGarage,
         string $createdAt,
         string $updatedAt,
     ) {
@@ -42,7 +54,10 @@ class WarehouseDTO
         $this->label = $label;
         $this->shortLabel = $shortLabel;
         $this->address = $address;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
         $this->isActive = $isActive;
+        $this->isGarage = $isGarage;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
     }
@@ -67,9 +82,24 @@ class WarehouseDTO
         return $this->address;
     }
 
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
     public function getIsActive(): bool
     {
         return $this->isActive;
+    }
+
+    public function getIsGarage(): bool
+    {
+        return $this->isGarage;
     }
 
     public function getCreatedAt(): string

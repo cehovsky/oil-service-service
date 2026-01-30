@@ -23,9 +23,21 @@ class WarehouseUpdateRequestDTO
     #[Assert\Length(max: 65535)]
     private ?string $address = null;
 
+    #[OA\Property(example: 50.087, nullable: true)]
+    #[Assert\Range(min: -90, max: 90)]
+    private ?float $latitude = null;
+
+    #[OA\Property(example: 14.421, nullable: true)]
+    #[Assert\Range(min: -180, max: 180)]
+    private ?float $longitude = null;
+
     #[OA\Property(example: true)]
     #[Assert\NotNull]
     private bool $isActive;
+
+    #[OA\Property(example: false)]
+    #[Assert\NotNull]
+    private bool $isGarage;
 
     public function getLabel(): string
     {
@@ -63,6 +75,30 @@ class WarehouseUpdateRequestDTO
         return $this;
     }
 
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): self
+    {
+        $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): self
+    {
+        $this->longitude = $longitude;
+
+        return $this;
+    }
+
     public function getIsActive(): bool
     {
         return $this->isActive;
@@ -71,6 +107,18 @@ class WarehouseUpdateRequestDTO
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    public function getIsGarage(): bool
+    {
+        return $this->isGarage;
+    }
+
+    public function setIsGarage(bool $isGarage): self
+    {
+        $this->isGarage = $isGarage;
 
         return $this;
     }

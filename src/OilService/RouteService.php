@@ -10,11 +10,13 @@ use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\Route as RouteEntity;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\Order;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Repository\CarRepository;
 use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\Factory\EntityFactory;
 use App\Warehouse\StorageContainerLocationService;
+use App\Warehouse\DBAL\Repository\WarehouseRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -29,6 +31,7 @@ class RouteService
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
         private readonly StorageContainerLocationService $storageContainerLocationService,
+        private readonly WarehouseRepository $warehouseRepository,
     ) {
     }
 
@@ -106,6 +109,102 @@ class RouteService
         $this->entityManager->flush();
 
         return $route;
+    }
+
+    public function optimizeRouteOrdersByCoordinates(RouteEntity $route): RouteEntity
+    {
+        $garageWarehouse = $this->warehouseRepository->findFirstActiveGarageWithCoordinates();
+
+        if ($garageWarehouse === null) {
+            throw new NotFoundHttpException('Active garage warehouse with coordinates not found');
+        }
+
+        $orders = $route->getOrders()->toArray();
+
+        if ($orders === []) {
+            return $route;
+        }
+
+        $slotOrder = [
+            RealizationTimeSlotEnum::MORNING,
+            RealizationTimeSlotEnum::LUNCH,
+            RealizationTimeSlotEnum::AFTERNOON,
+        ];
+
+        $slotsWithCoordinates = [];
+
+        foreach ($slotOrder as $slot) {
+            foreach ($orders as $order) {
+                if (
+                    $order->getRealizationTimeSlot() === $slot
+                    && $order->getLatitude() !== null
+                    && $order->getLongitude() !== null
+                ) {
+                    $slotsWithCoordinates[] = $slot;
+                    break;
+                }
+            }
+        }
+
+        $finalSlotWithCoordinates = end($slotsWithCoordinates) ?: null;
+
+        $orderedOrders = [];
+        $currentLatitude = $garageWarehouse->getLatitude();
+        $currentLongitude = $garageWarehouse->getLongitude();
+
+        if ($currentLatitude === null || $currentLongitude === null) {
+            throw new NotFoundHttpException('Active garage warehouse with coordinates not found');
+        }
+
+        foreach ($slotOrder as $slot) {
+            $slotOrders = [];
+
+            foreach ($orders as $order) {
+                if ($order->getRealizationTimeSlot() === $slot) {
+                    $slotOrders[] = $order;
+                }
+            }
+
+            if ($slotOrders === []) {
+                continue;
+            }
+
+            $ordersWithCoordinates = [];
+            $ordersWithoutCoordinates = [];
+
+            foreach ($slotOrders as $order) {
+                if ($order->getLatitude() !== null && $order->getLongitude() !== null) {
+                    $ordersWithCoordinates[] = $order;
+                } else {
+                    $ordersWithoutCoordinates[] = $order;
+                }
+            }
+
+            $isFinalSlot = $finalSlotWithCoordinates !== null && $slot === $finalSlotWithCoordinates;
+
+            $orderedSlot = $this->orderOrdersByNearestNeighbor(
+                $ordersWithCoordinates,
+                $currentLatitude,
+                $currentLongitude,
+                $isFinalSlot ? $garageWarehouse->getLatitude() : null,
+                $isFinalSlot ? $garageWarehouse->getLongitude() : null,
+            );
+
+            $orderedOrders = array_merge($orderedOrders, $orderedSlot, $ordersWithoutCoordinates);
+
+            if ($orderedSlot !== []) {
+                $lastOrder = $orderedSlot[array_key_last($orderedSlot)];
+                $currentLatitude = (float) $lastOrder->getLatitude();
+                $currentLongitude = (float) $lastOrder->getLongitude();
+            }
+        }
+
+        $orderIds = array_map(
+            static fn (Order $order): string => $order->getId()->toRfc4122(),
+            $orderedOrders
+        );
+
+        return $this->updateRouteOrders($route, $orderIds);
     }
 
     /**
@@ -258,6 +357,92 @@ class RouteService
         foreach ($existingOrdersById as $order) {
             $order->setRoute(null);
         }
+    }
+
+    /**
+     * @param Order[] $orders
+     *
+     * @return Order[]
+     */
+    private function orderOrdersByNearestNeighbor(
+        array $orders,
+        float $startLatitude,
+        float $startLongitude,
+        ?float $endLatitude,
+        ?float $endLongitude,
+    ): array {
+        if ($orders === []) {
+            return [];
+        }
+
+        $remaining = array_values($orders);
+        $ordered = [];
+        $currentLatitude = $startLatitude;
+        $currentLongitude = $startLongitude;
+
+        while ($remaining !== []) {
+            $closestIndex = null;
+            $closestScore = null;
+
+            foreach ($remaining as $index => $candidate) {
+                $candidateLatitude = (float) $candidate->getLatitude();
+                $candidateLongitude = (float) $candidate->getLongitude();
+
+                $score = $this->calculateDistance(
+                    $currentLatitude,
+                    $currentLongitude,
+                    $candidateLatitude,
+                    $candidateLongitude,
+                );
+
+                if ($endLatitude !== null && $endLongitude !== null) {
+                    $score += $this->calculateDistance(
+                        $candidateLatitude,
+                        $candidateLongitude,
+                        $endLatitude,
+                        $endLongitude,
+                    );
+                }
+
+                if ($closestScore === null || $score < $closestScore) {
+                    $closestScore = $score;
+                    $closestIndex = $index;
+                }
+            }
+
+            $closestOrder = $remaining[$closestIndex];
+            $ordered[] = $closestOrder;
+            array_splice($remaining, $closestIndex, 1);
+
+            $currentLatitude = (float) $closestOrder->getLatitude();
+            $currentLongitude = (float) $closestOrder->getLongitude();
+        }
+
+        return $ordered;
+    }
+
+    private function calculateDistance(
+        float $fromLatitude,
+        float $fromLongitude,
+        float $toLatitude,
+        float $toLongitude,
+    ): float {
+        $earthRadius = 6371.0;
+
+        $latFrom = deg2rad($fromLatitude);
+        $lonFrom = deg2rad($fromLongitude);
+        $latTo = deg2rad($toLatitude);
+        $lonTo = deg2rad($toLongitude);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $angle = 2 * asin(sqrt(
+            pow(sin($latDelta / 2), 2)
+            + cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)
+        ));
+
+        return $earthRadius * $angle;
     }
 
     private function findOrder(string $orderId): Order

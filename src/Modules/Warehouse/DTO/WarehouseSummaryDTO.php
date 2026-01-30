@@ -17,11 +17,30 @@ class WarehouseSummaryDTO
     #[OA\Property(example: 'CW-01')]
     private string $shortLabel;
 
-    public function __construct(string $id, string $label, string $shortLabel)
+    #[OA\Property(example: 50.087, nullable: true)]
+    private ?float $latitude;
+
+    #[OA\Property(example: 14.421, nullable: true)]
+    private ?float $longitude;
+
+    #[OA\Property(example: false)]
+    private bool $isGarage;
+
+    public function __construct(
+        string $id,
+        string $label,
+        string $shortLabel,
+        ?float $latitude,
+        ?float $longitude,
+        bool $isGarage,
+    )
     {
         $this->id = $id;
         $this->label = $label;
         $this->shortLabel = $shortLabel;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
+        $this->isGarage = $isGarage;
     }
 
     public function getId(): string
@@ -37,5 +56,20 @@ class WarehouseSummaryDTO
     public function getShortLabel(): string
     {
         return $this->shortLabel;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function getIsGarage(): bool
+    {
+        return $this->isGarage;
     }
 }

@@ -45,6 +45,7 @@ class WarehouseController extends AbstractController
     private const string FILTER_LABEL_KEY = 'label';
     private const string FILTER_SHORT_LABEL_KEY = 'shortLabel';
     private const string FILTER_IS_ACTIVE_KEY = 'isActive';
+    private const string FILTER_IS_GARAGE_KEY = 'isGarage';
 
     public function __construct(
         private readonly DTOValueResolver $dtoValueResolver,
@@ -126,6 +127,9 @@ class WarehouseController extends AbstractController
                 $warehouseCreateRequestDTO->getShortLabel(),
                 $warehouseCreateRequestDTO->getIsActive(),
                 $warehouseCreateRequestDTO->getAddress(),
+                $warehouseCreateRequestDTO->getLatitude(),
+                $warehouseCreateRequestDTO->getLongitude(),
+                $warehouseCreateRequestDTO->getIsGarage(),
             );
 
             $warehouseCreateResponseDTO = $this->dtoFactory->createWarehouseCreateResponseDTO($warehouse);
@@ -220,6 +224,9 @@ class WarehouseController extends AbstractController
                 $warehouseUpdateRequestDTO->getShortLabel(),
                 $warehouseUpdateRequestDTO->getIsActive(),
                 $warehouseUpdateRequestDTO->getAddress(),
+                $warehouseUpdateRequestDTO->getLatitude(),
+                $warehouseUpdateRequestDTO->getLongitude(),
+                $warehouseUpdateRequestDTO->getIsGarage(),
             );
 
             $warehouseUpdateResponseDTO = $this->dtoFactory->createWarehouseUpdateResponseDTO($warehouse);
@@ -329,6 +336,16 @@ class WarehouseController extends AbstractController
             new OA\Parameter(
                 name: self::FILTER_IS_ACTIVE_KEY,
                 description: 'Filter by activity flag',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'boolean'
+                ),
+                example: true
+            ),
+            new OA\Parameter(
+                name: self::FILTER_IS_GARAGE_KEY,
+                description: 'Filter by garage flag',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(
@@ -460,6 +477,28 @@ class WarehouseController extends AbstractController
                     )
                 );
                 $qb->setParameter('isActive', $isActiveBool);
+            } catch (Throwable) {
+                // pass
+            }
+
+            try {
+                $isGarage = $request->query->get(self::FILTER_IS_GARAGE_KEY);
+
+                if ($isGarage === 'true' || $isGarage === '1') {
+                    $isGarageBool = true;
+                } elseif ($isGarage === 'false' || $isGarage === '0') {
+                    $isGarageBool = false;
+                } else {
+                    throw new InvalidDataException();
+                }
+
+                $qb->andWhere(
+                    $qb->expr()->eq(
+                        WarehouseRepository::ALIAS . '.isGarage',
+                        ':isGarage'
+                    )
+                );
+                $qb->setParameter('isGarage', $isGarageBool);
             } catch (Throwable) {
                 // pass
             }
