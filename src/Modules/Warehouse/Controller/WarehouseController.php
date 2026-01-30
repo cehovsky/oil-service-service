@@ -424,7 +424,11 @@ class WarehouseController extends AbstractController
     )]
     public function list(Request $request): JsonResponse
     {
-        $this->requireAdminUser();
+        $user = $this->security->getUser();
+
+        if (!$user instanceof AuthUser) {
+            throw new AccessDeniedHttpException();
+        }
 
         $queryModifier = function (QueryBuilder $qb) use ($request): void {
             try {
