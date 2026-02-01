@@ -21,6 +21,12 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'warehouse_storage_container_material')]
+#[ORM\Index(name: 'idx_container_recycled', columns: ['storage_container_id', 'is_recycled'])]
+#[ORM\Index(name: 'idx_warehouse', columns: ['warehouse_id'])]
+#[ORM\Index(name: 'idx_route', columns: ['route_id'])]
+#[ORM\Index(name: 'idx_order', columns: ['order_id'])]
+#[ORM\Index(name: 'idx_recycling', columns: ['recycling_id'])]
+#[ORM\Index(name: 'idx_created_at', columns: ['created_at'])]
 #[ORM\Entity(repositoryClass: StorageContainerMaterialRepository::class)]
 class StorageContainerMaterial
 {

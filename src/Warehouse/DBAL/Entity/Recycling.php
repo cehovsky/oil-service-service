@@ -19,6 +19,8 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'warehouse_recycling')]
+#[ORM\Index(name: 'idx_recycled_at', columns: ['recycled_at'])]
+#[ORM\Index(name: 'idx_recycled_by', columns: ['recycled_by_id'])]
 #[ORM\Entity(repositoryClass: RecyclingRepository::class)]
 class Recycling
 {

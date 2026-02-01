@@ -19,6 +19,9 @@ use App\OilService\DBAL\Entity\RouteUser;
 use App\OilService\DBAL\Entity\Order;
 
 #[ORM\Table(name: 'oil_service_route')]
+#[ORM\Index(name: 'idx_active_date', columns: ['is_active', 'date'])]
+#[ORM\Index(name: 'idx_date_created', columns: ['date', 'created_at'])]
+#[ORM\Index(name: 'idx_car', columns: ['car_id'])]
 #[ORM\Entity(repositoryClass: RouteRepository::class)]
 class Route
 {

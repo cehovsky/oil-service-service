@@ -16,6 +16,9 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'oil_service_term')]
+#[ORM\Index(name: 'idx_date_timeslot', columns: ['date', 'time_slot'])]
+#[ORM\Index(name: 'idx_active_date', columns: ['is_active', 'date'])]
+#[ORM\UniqueConstraint(name: 'uniq_date_timeslot', columns: ['date', 'time_slot'])]
 #[ORM\Entity(repositoryClass: TermRepository::class)]
 class Term
 {

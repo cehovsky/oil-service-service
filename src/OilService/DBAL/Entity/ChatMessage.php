@@ -14,6 +14,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'oil_service_chat_message')]
+#[ORM\Index(name: 'idx_session_created', columns: ['session_id', 'created_at'])]
 #[ORM\Entity(repositoryClass: ChatMessageRepository::class)]
 class ChatMessage
 {

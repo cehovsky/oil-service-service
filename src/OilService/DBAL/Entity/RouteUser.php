@@ -13,6 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'oil_service_route_user')]
 #[ORM\UniqueConstraint(name: 'oil_service_route_user_route_user_unique', columns: ['route_id', 'user_id'])]
+#[ORM\Index(name: 'idx_user_route', columns: ['user_id', 'route_id'])]
 #[ORM\Entity]
 class RouteUser
 {

@@ -19,6 +19,10 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'oil_service_order')]
+#[ORM\Index(name: 'idx_realization_date_timeslot_status', columns: ['realization_date', 'realization_time_slot', 'status'])]
+#[ORM\Index(name: 'idx_route_position', columns: ['route_id', 'route_order_position'])]
+#[ORM\Index(name: 'idx_status', columns: ['status'])]
+#[ORM\Index(name: 'idx_user', columns: ['user_id'])]
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 class Order
 {

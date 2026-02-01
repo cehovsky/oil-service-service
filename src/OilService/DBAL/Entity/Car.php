@@ -16,6 +16,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'oil_service_car')]
+#[ORM\Index(name: 'idx_status', columns: ['status'])]
 #[ORM\Entity(repositoryClass: CarRepository::class)]
 class Car
 {
