@@ -119,6 +119,7 @@ class OrderDTO
      * @param OrderStorageContainerMaterialDTO[] $materials
      * @param OrderInventoryItemDTO[] $inventoryItems
      * @param PriceListItemDTO[] $priceListItems
+     * @param FileDTO[] $otherPhotos
      */
     public function __construct(
         string $id,

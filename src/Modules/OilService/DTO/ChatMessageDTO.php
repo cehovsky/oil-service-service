@@ -11,7 +11,7 @@ class ChatMessageDTO
     #[OA\Property(example: 'assistant')]
     private string $role;
 
-    #[OA\Property(example: 'Dobrý den, rád vám pomohu s výměnou oleje.')] 
+    #[OA\Property(example: 'Dobrý den, rád vám pomohu s výměnou oleje.')]
     private string $content;
 
     #[OA\Property(example: '2026-01-20T10:00:00+00:00')]

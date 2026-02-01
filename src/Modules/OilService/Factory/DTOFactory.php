@@ -273,8 +273,7 @@ class DTOFactory
         Order $order,
         bool $success,
         ?string $message,
-    ): OrderCoordinatesResolveResponseDTO
-    {
+    ): OrderCoordinatesResolveResponseDTO {
         return new OrderCoordinatesResolveResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),

@@ -14,7 +14,7 @@ class ChatKnowledgeItemDTO
     #[OA\Property(example: 'Proces výměny oleje')]
     private string $name;
 
-    #[OA\Property(example: 'Mechanik přijede k zákazníkovi, zahřeje motor, vypustí starý olej a nahradí jej novým.')] 
+    #[OA\Property(example: 'Mechanik přijede k zákazníkovi, zahřeje motor, vypustí starý olej a nahradí jej novým.')]
     private string $content;
 
     #[OA\Property(example: 'knowledge')]

@@ -683,15 +683,17 @@ class StorageContainerMaterialController extends AbstractController
             try {
                 $isRecycled = $request->query->get(self::FILTER_IS_RECYCLED);
 
-                $isRecycledBool = QueryParameterParser::parseBoolean($isRecycled);
+                if ($isRecycled !== null) {
+                    $isRecycledBool = QueryParameterParser::parseBoolean($isRecycled);
 
-                $qb->andWhere(
-                    $qb->expr()->eq(
-                        StorageContainerMaterialRepository::ALIAS . '.isRecycled',
-                        ':isRecycled'
-                    )
-                );
-                $qb->setParameter('isRecycled', $isRecycledBool);
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            StorageContainerMaterialRepository::ALIAS . '.isRecycled',
+                            ':isRecycled'
+                        )
+                    );
+                    $qb->setParameter('isRecycled', $isRecycledBool);
+                }
             } catch (Throwable) {
                 // pass
             }

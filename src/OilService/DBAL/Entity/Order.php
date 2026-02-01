@@ -162,6 +162,9 @@ class Order
     #[ORM\JoinTable(name: 'oil_service_order_other_photo')]
     private Collection $otherPhotos;
 
+    /**
+     * @param File[] $otherPhotos
+     */
     public function __construct(
         Uuid $id,
         int $ident,
@@ -222,13 +225,7 @@ class Order
         $this->storageContainerMaterials = new ArrayCollection();
         $this->orderInventoryItems = new ArrayCollection();
         $this->priceListItems = new ArrayCollection();
-        $this->otherPhotos = new ArrayCollection();
-
-        foreach ($otherPhotos as $otherPhoto) {
-            if ($otherPhoto instanceof File && !$this->otherPhotos->contains($otherPhoto)) {
-                $this->otherPhotos->add($otherPhoto);
-            }
-        }
+        $this->otherPhotos = new ArrayCollection($otherPhotos);
     }
 
     public function getId(): Uuid

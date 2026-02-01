@@ -43,6 +43,7 @@ class OrderService
 
     /**
      * @param string[] $priceListItemIds
+     * @param string[] $otherPhotoIds
      */
     public function createOrderWithUser(
         string $fullName,
@@ -126,6 +127,7 @@ class OrderService
 
     /**
      * @param string[] $priceListItemIds
+     * @param string[] $otherPhotoIds
      */
     public function createOrder(
         string $fullName,
@@ -210,6 +212,7 @@ class OrderService
 
     /**
      * @param string[] $priceListItemIds
+     * @param string[] $otherPhotoIds
      */
     public function updateOrder(
         Order $order,
@@ -459,6 +462,7 @@ class OrderService
     }
 
     /**
+     * @param string[] $fileIds
      * @return File[]
      */
     private function resolveFilesByIds(array $fileIds): array

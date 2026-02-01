@@ -518,15 +518,17 @@ class StorageContainerController extends AbstractController
             try {
                 $isActive = $request->query->get(self::FILTER_IS_ACTIVE_KEY);
 
-                $isActiveBool = QueryParameterParser::parseBoolean($isActive);
+                if ($isActive !== null) {
+                    $isActiveBool = QueryParameterParser::parseBoolean($isActive);
 
-                $qb->andWhere(
-                    $qb->expr()->eq(
-                        StorageContainerRepository::ALIAS . '.isActive',
-                        ':isActive'
-                    )
-                );
-                $qb->setParameter('isActive', $isActiveBool);
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            StorageContainerRepository::ALIAS . '.isActive',
+                            ':isActive'
+                        )
+                    );
+                    $qb->setParameter('isActive', $isActiveBool);
+                }
             } catch (Throwable) {
                 // pass
             }

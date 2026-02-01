@@ -598,6 +598,10 @@ class RouteController extends AbstractController
             try {
                 $isActive = $request->query->get(self::FILTER_IS_ACTIVE_KEY);
 
+                if ($isActive === null) {
+                    return;
+                }
+
                 $isActiveBool = QueryParameterParser::parseBoolean($isActive);
 
                 $qb->andWhere(

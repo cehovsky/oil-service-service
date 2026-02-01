@@ -57,8 +57,10 @@ class InventoryItemRepository extends ServiceEntityRepository
             ->setParameter('code', $code)
             ->setMaxResults(1);
 
-        $result = $qb->getQuery()->getResult();
+        $result = $qb->getQuery()->getOneOrNullResult();
 
-        return $result[0] ?? null;
+        assert($result instanceof InventoryItem || $result === null);
+
+        return $result;
     }
 }

@@ -1193,5 +1193,4 @@ class OrderController extends AbstractController
             return false;
         }
     }
-
 }

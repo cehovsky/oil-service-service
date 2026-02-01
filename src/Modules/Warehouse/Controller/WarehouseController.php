@@ -467,15 +467,17 @@ class WarehouseController extends AbstractController
             try {
                 $isActive = $request->query->get(self::FILTER_IS_ACTIVE_KEY);
 
-                $isActiveBool = QueryParameterParser::parseBoolean($isActive);
+                if ($isActive !== null) {
+                    $isActiveBool = QueryParameterParser::parseBoolean($isActive);
 
-                $qb->andWhere(
-                    $qb->expr()->eq(
-                        WarehouseRepository::ALIAS . '.isActive',
-                        ':isActive'
-                    )
-                );
-                $qb->setParameter('isActive', $isActiveBool);
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            WarehouseRepository::ALIAS . '.isActive',
+                            ':isActive'
+                        )
+                    );
+                    $qb->setParameter('isActive', $isActiveBool);
+                }
             } catch (Throwable) {
                 // pass
             }
@@ -483,15 +485,17 @@ class WarehouseController extends AbstractController
             try {
                 $isGarage = $request->query->get(self::FILTER_IS_GARAGE_KEY);
 
-                $isGarageBool = QueryParameterParser::parseBoolean($isGarage);
+                if ($isGarage !== null) {
+                    $isGarageBool = QueryParameterParser::parseBoolean($isGarage);
 
-                $qb->andWhere(
-                    $qb->expr()->eq(
-                        WarehouseRepository::ALIAS . '.isGarage',
-                        ':isGarage'
-                    )
-                );
-                $qb->setParameter('isGarage', $isGarageBool);
+                    $qb->andWhere(
+                        $qb->expr()->eq(
+                            WarehouseRepository::ALIAS . '.isGarage',
+                            ':isGarage'
+                        )
+                    );
+                    $qb->setParameter('isGarage', $isGarageBool);
+                }
             } catch (Throwable) {
                 // pass
             }

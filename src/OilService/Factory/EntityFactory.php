@@ -58,6 +58,9 @@ class EntityFactory
         );
     }
 
+    /**
+     * @param File[] $otherPhotos
+     */
     public function createOrder(
         string $fullName,
         string $phone,

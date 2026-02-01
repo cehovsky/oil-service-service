@@ -33,8 +33,7 @@ class WarehouseSummaryDTO
         ?float $latitude,
         ?float $longitude,
         bool $isGarage,
-    )
-    {
+    ) {
         $this->id = $id;
         $this->label = $label;
         $this->shortLabel = $shortLabel;

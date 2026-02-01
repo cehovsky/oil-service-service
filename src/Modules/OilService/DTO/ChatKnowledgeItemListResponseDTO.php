@@ -21,6 +21,9 @@ class ChatKnowledgeItemListResponseDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: ChatKnowledgeItemDTO::class)))]
     private array $items;
 
+    /**
+     * @param ChatKnowledgeItemDTO[] $items
+     */
     public function __construct(
         string $result,
         int $timestamp,

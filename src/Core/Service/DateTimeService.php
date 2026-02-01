@@ -27,6 +27,9 @@ class DateTimeService
         }
     }
 
+    /**
+     * @return array{start: DateTimeImmutable, end: DateTimeImmutable}
+     */
     public function createMonthRange(int $year, int $month): array
     {
         $this->validateYearMonth($year, $month);

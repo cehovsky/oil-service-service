@@ -53,6 +53,10 @@ class ChatUserRequestRepository extends ServiceEntityRepository
             ->orderBy(self::ALIAS . '.createdAt', 'DESC')
             ->setMaxResults(1);
 
-        return $qb->getQuery()->getOneOrNullResult();
+        $result = $qb->getQuery()->getOneOrNullResult();
+
+        assert($result instanceof ChatUserRequest || $result === null);
+
+        return $result;
     }
 }

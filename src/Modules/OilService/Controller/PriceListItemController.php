@@ -729,6 +729,10 @@ class PriceListItemController extends AbstractController
         try {
             $value = $request->query->get($filterKey);
 
+            if ($value === null) {
+                return;
+            }
+
             $boolValue = QueryParameterParser::parseBoolean($value);
 
             $qb->andWhere(

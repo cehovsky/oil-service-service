@@ -39,6 +39,9 @@ class ChatSessionCreateResponseDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: ChatMessageDTO::class)))]
     private array $messages;
 
+    /**
+     * @param ChatMessageDTO[] $messages
+     */
     public function __construct(
         string $result,
         int $timestamp,

@@ -156,7 +156,7 @@ class OrderInventoryItemService
     }
 
     /**
-     * @param array<int, array{inventoryItemId: string, quantity: int}> $items
+     * @param array<int, mixed> $items
      *
      * @return array<string, int>
      */
@@ -165,6 +165,10 @@ class OrderInventoryItemService
         $normalized = [];
 
         foreach ($items as $item) {
+            if (!is_array($item)) {
+                throw $this->createInvalidInventoryItemsException();
+            }
+
             $inventoryItemId = $item['inventoryItemId'] ?? null;
             $quantity = $item['quantity'] ?? null;
 
@@ -192,6 +196,9 @@ class OrderInventoryItemService
         return $normalized;
     }
 
+    /**
+     * @param array<string, int> $stockLevels
+     */
     private function applyDeltaToStockLevel(array &$stockLevels, string $inventoryItemId, int $delta): void
     {
         $stockLevels[$inventoryItemId] ??= 0;
