@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\IdentParser;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -202,7 +203,7 @@ class ChatSessionController extends AbstractController
 
                 assert(is_string($identRaw));
 
-                $ident = $this->normalizeIdentFilter($identRaw);
+                $ident = IdentParser::normalizeIdentFilter($identRaw);
 
                 if ($ident !== null) {
                     $qb->andWhere(
@@ -434,28 +435,5 @@ class ChatSessionController extends AbstractController
         }
 
         return $user;
-    }
-
-    private function normalizeIdentFilter(?string $ident): ?int
-    {
-        if ($ident === null) {
-            return null;
-        }
-
-        $trimmed = trim($ident);
-
-        if ($trimmed === '') {
-            return null;
-        }
-
-        if (is_numeric($trimmed)) {
-            return (int) $trimmed;
-        }
-
-        if (preg_match('/^[A-Za-z]+(\d{2})(\d+)$/', $trimmed, $matches) === 1) {
-            return (int) $matches[2];
-        }
-
-        return null;
     }
 }

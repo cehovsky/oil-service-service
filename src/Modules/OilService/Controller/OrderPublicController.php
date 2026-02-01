@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\Controller;
 
+use App\Core\Service\DateTimeService;
 use App\Domain\DTOValueResolver;
 use App\Domain\Error\ErrorCollection;
 use App\Domain\Exception\InvalidDataException;
@@ -38,6 +39,7 @@ class OrderPublicController extends AbstractController
         private readonly OrderService $orderService,
         private readonly TermRepository $termRepository,
         private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
+        private readonly DateTimeService $dateTimeService,
     ) {
     }
 
@@ -150,7 +152,7 @@ class OrderPublicController extends AbstractController
                 $orderCreateRequestDTO->getOtherPhotoIds(),
                 OrderStatusEnum::from($orderCreateRequestDTO->getStatus()),
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
-                $this->createRealizationDate($orderCreateRequestDTO->getRealizationDate()),
+                $this->dateTimeService->createDateFromString($orderCreateRequestDTO->getRealizationDate()),
                 $orderCreateRequestDTO->getPriceListItemIds(),
                 null,
             );
@@ -167,16 +169,5 @@ class OrderPublicController extends AbstractController
         } catch (Throwable $e) {
             throw new ServerErrorHttpException($e->getMessage(), $e);
         }
-    }
-
-    private function createRealizationDate(string $realizationDate): DateTimeImmutable
-    {
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $realizationDate);
-
-        if ($date === false) {
-            throw new InvalidDataException('Invalid realization date format.');
-        }
-
-        return $date;
     }
 }

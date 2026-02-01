@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\OilService\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\IdentParser;
+use App\Core\Service\DateTimeService;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -74,6 +76,7 @@ class OrderController extends AbstractController
         private readonly Security $security,
         private readonly OrderService $orderService,
         private readonly OrderInventoryItemService $orderInventoryItemService,
+        private readonly DateTimeService $dateTimeService,
     ) {
     }
 
@@ -162,7 +165,7 @@ class OrderController extends AbstractController
                 $orderCreateRequestDTO->getOtherPhotoIds(),
                 OrderStatusEnum::from($orderCreateRequestDTO->getStatus()),
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
-                $this->createRealizationDate($orderCreateRequestDTO->getRealizationDate()),
+                $this->dateTimeService->createDateFromString($orderCreateRequestDTO->getRealizationDate()),
                 $orderCreateRequestDTO->getUserId(),
                 $orderCreateRequestDTO->getPriceListItemIds(),
                 $route,
@@ -267,7 +270,7 @@ class OrderController extends AbstractController
                 $orderUpdateRequestDTO->getNote(),
                 OrderStatusEnum::from($orderUpdateRequestDTO->getStatus()),
                 RealizationTimeSlotEnum::from($orderUpdateRequestDTO->getRealizationTimeSlot()),
-                $this->createRealizationDate($orderUpdateRequestDTO->getRealizationDate()),
+                $this->dateTimeService->createDateFromString($orderUpdateRequestDTO->getRealizationDate()),
                 $orderUpdateRequestDTO->getIsCompany(),
                 $orderUpdateRequestDTO->getCompanyName(),
                 $orderUpdateRequestDTO->getCompanyIdentificationNumber(),
@@ -531,10 +534,6 @@ class OrderController extends AbstractController
             $items = [];
 
             foreach ($updateRequestDTO->getItems() as $item) {
-                if (!$item instanceof OrderInventoryItemUpdateItemDTO) {
-                    throw new InvalidDataException();
-                }
-
                 $items[] = [
                     'inventoryItemId' => $item->getInventoryItemId(),
                     'quantity' => $item->getQuantity(),
@@ -1195,14 +1194,4 @@ class OrderController extends AbstractController
         }
     }
 
-    private function createRealizationDate(string $realizationDate): DateTimeImmutable
-    {
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $realizationDate);
-
-        if ($date === false) {
-            throw new InvalidDataException('Invalid realization date format.');
-        }
-
-        return $date;
-    }
 }

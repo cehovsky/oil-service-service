@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\QueryParameterParser;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -563,9 +564,7 @@ class PriceListItemController extends AbstractController
 
                 assert(is_string($price));
 
-                if (!is_numeric($price)) {
-                    throw new InvalidDataException();
-                }
+                $priceValue = QueryParameterParser::parseNumeric($price);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -573,7 +572,7 @@ class PriceListItemController extends AbstractController
                         ':price'
                     )
                 );
-                $qb->setParameter('price', $price);
+                $qb->setParameter('price', $priceValue);
             } catch (Throwable) {
                 // pass
             }
@@ -583,9 +582,7 @@ class PriceListItemController extends AbstractController
 
                 assert(is_string($vat));
 
-                if (!is_numeric($vat)) {
-                    throw new InvalidDataException();
-                }
+                $vatValue = QueryParameterParser::parseInteger($vat);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -593,7 +590,7 @@ class PriceListItemController extends AbstractController
                         ':vat'
                     )
                 );
-                $qb->setParameter('vat', (int) $vat);
+                $qb->setParameter('vat', $vatValue);
             } catch (Throwable) {
                 // pass
             }
@@ -603,9 +600,7 @@ class PriceListItemController extends AbstractController
 
                 assert(is_string($priceVat));
 
-                if (!is_numeric($priceVat)) {
-                    throw new InvalidDataException();
-                }
+                $priceVatValue = QueryParameterParser::parseNumeric($priceVat);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -613,7 +608,7 @@ class PriceListItemController extends AbstractController
                         ':priceVat'
                     )
                 );
-                $qb->setParameter('priceVat', $priceVat);
+                $qb->setParameter('priceVat', $priceVatValue);
             } catch (Throwable) {
                 // pass
             }
@@ -734,13 +729,7 @@ class PriceListItemController extends AbstractController
         try {
             $value = $request->query->get($filterKey);
 
-            if ($value === 'true' || $value === '1') {
-                $boolValue = true;
-            } elseif ($value === 'false' || $value === '0') {
-                $boolValue = false;
-            } else {
-                throw new InvalidDataException();
-            }
+            $boolValue = QueryParameterParser::parseBoolean($value);
 
             $qb->andWhere(
                 $qb->expr()->eq(

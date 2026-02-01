@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Warehouse\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\QueryParameterParser;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -682,13 +683,7 @@ class StorageContainerMaterialController extends AbstractController
             try {
                 $isRecycled = $request->query->get(self::FILTER_IS_RECYCLED);
 
-                if ($isRecycled === 'true' || $isRecycled === '1') {
-                    $isRecycledBool = true;
-                } elseif ($isRecycled === 'false' || $isRecycled === '0') {
-                    $isRecycledBool = false;
-                } else {
-                    throw new InvalidDataException();
-                }
+                $isRecycledBool = QueryParameterParser::parseBoolean($isRecycled);
 
                 $qb->andWhere(
                     $qb->expr()->eq(

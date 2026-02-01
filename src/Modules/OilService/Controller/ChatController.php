@@ -34,8 +34,6 @@ use Throwable;
 
 class ChatController extends AbstractController
 {
-    private const string FALLBACK_GREETING = 'Dobrý den, mohu vám pomoci s výměnou oleje a filtrů?';
-
     public function __construct(
         private readonly DTOValueResolver $dtoValueResolver,
         private readonly DTOFactory $dtoFactory,
@@ -81,7 +79,7 @@ class ChatController extends AbstractController
     public function defaultMessage(Request $request): JsonResponse
     {
         $language = $request->query->get('language', '');
-        $message = $this->chatPromptBuilder->resolveGreeting($language) ?? self::FALLBACK_GREETING;
+        $message = $this->chatPromptBuilder->resolveGreeting($language);
 
         $responseDTO = $this->dtoFactory->createChatDefaultMessageResponseDTO(
             $language !== '' ? (string) $language : 'cs-CZ',
@@ -141,7 +139,7 @@ class ChatController extends AbstractController
 
             $session = $this->chatSessionService->createSession($createRequestDTO->getLanguage());
 
-            $greeting = $this->chatPromptBuilder->resolveGreeting($session->getLanguage()) ?? self::FALLBACK_GREETING;
+            $greeting = $this->chatPromptBuilder->resolveGreeting($session->getLanguage());
             $this->chatMessageService->addAssistantMessage($session, $greeting);
 
             $messages = $this->chatMessageService->getMessages($session);

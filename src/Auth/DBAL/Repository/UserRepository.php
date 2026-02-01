@@ -50,4 +50,15 @@ class UserRepository extends ServiceEntityRepository
 
         return $result;
     }
+
+    public function countRouteUsersByUser(User $user): int
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb->select('COUNT(routeUser.id)');
+        $qb->from('App\OilService\DBAL\Entity\RouteUser', 'routeUser');
+        $qb->andWhere('routeUser.user = :user');
+        $qb->setParameter('user', $user);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
 }

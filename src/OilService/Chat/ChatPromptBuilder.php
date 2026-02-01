@@ -13,6 +13,7 @@ use App\OilService\Term\TermAvailabilityPolicy;
 class ChatPromptBuilder
 {
     private const string DEFAULT_LANGUAGE = 'cs-CZ';
+    private const string FALLBACK_GREETING = 'Dobrý den, mohu vám pomoci s výměnou oleje a filtrů?';
 
     public function __construct(
         private readonly ChatKnowledgeItemRepository $chatKnowledgeItemRepository,
@@ -129,7 +130,7 @@ class ChatPromptBuilder
         return implode("\n\n", array_filter($systemPromptParts));
     }
 
-    public function resolveGreeting(string $language): ?string
+    public function resolveGreeting(string $language): string
     {
         $resolvedLanguage = $language !== '' ? $language : self::DEFAULT_LANGUAGE;
         $item = $this->chatKnowledgeItemRepository->findActiveGreetingByLanguage($resolvedLanguage);
@@ -138,6 +139,6 @@ class ChatPromptBuilder
             $item = $this->chatKnowledgeItemRepository->findActiveGreetingByLanguage(self::DEFAULT_LANGUAGE);
         }
 
-        return $item?->getContent();
+        return $item?->getContent() ?? self::FALLBACK_GREETING;
     }
 }

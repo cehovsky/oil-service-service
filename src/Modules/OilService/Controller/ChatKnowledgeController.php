@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\QueryParameterParser;
 use App\Domain\DTOValueResolver;
 use App\Domain\Error\ErrorCollection;
 use App\Domain\Exception\InvalidDataException;
@@ -348,11 +349,7 @@ class ChatKnowledgeController extends AbstractController
         }
 
         if (is_string($type) && $type !== '') {
-            try {
-                $criteria['type'] = ChatKnowledgeItemTypeEnum::from($type);
-            } catch (ValueError) {
-                throw new BadRequestHttpException();
-            }
+            $criteria['type'] = QueryParameterParser::parseEnum($type, ChatKnowledgeItemTypeEnum::class);
         }
 
         $items = $criteria === []

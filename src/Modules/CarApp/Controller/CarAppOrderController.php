@@ -6,6 +6,7 @@ namespace App\Modules\CarApp\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
 use App\Domain\DTOValueResolver;
+use App\OilService\OrderAccessService;
 use App\Domain\Error\ErrorCollection;
 use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
@@ -43,6 +44,7 @@ class CarAppOrderController extends AbstractController
         private readonly OrderInventoryItemService $orderInventoryItemService,
         private readonly OrderService $orderService,
         private readonly Security $security,
+        private readonly OrderAccessService $orderAccessService,
     ) {
     }
 
@@ -110,7 +112,7 @@ class CarAppOrderController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $this->assertOrderAccess($order, $user);
+        $this->orderAccessService->assertUserHasAccessToOrder($order, $user);
 
         try {
             $updateRequestDTO = $this->dtoValueResolver->resolveRequest(
@@ -123,10 +125,6 @@ class CarAppOrderController extends AbstractController
             $items = [];
 
             foreach ($updateRequestDTO->getItems() as $item) {
-                if (!$item instanceof OrderInventoryItemUpdateItemDTO) {
-                    throw new InvalidDataException();
-                }
-
                 $items[] = [
                     'inventoryItemId' => $item->getInventoryItemId(),
                     'quantity' => $item->getQuantity(),
@@ -217,7 +215,7 @@ class CarAppOrderController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $this->assertOrderAccess($order, $user);
+        $this->orderAccessService->assertUserHasAccessToOrder($order, $user);
 
         try {
             $updateRequestDTO = $this->dtoValueResolver->resolveRequest(
@@ -396,7 +394,7 @@ class CarAppOrderController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $this->assertOrderAccess($order, $user);
+        $this->orderAccessService->assertUserHasAccessToOrder($order, $user);
 
         try {
             $order = $this->orderService->updateOrderStatus($order, $status);
@@ -422,22 +420,5 @@ class CarAppOrderController extends AbstractController
         }
 
         return $user;
-    }
-
-    private function assertOrderAccess(Order $order, AuthUser $user): void
-    {
-        $route = $order->getRoute();
-
-        if ($route === null) {
-            throw new AccessDeniedHttpException();
-        }
-
-        foreach ($route->getRouteUsers() as $routeUser) {
-            if ($routeUser->getUser()->getId()->__toString() === $user->getId()->__toString()) {
-                return;
-            }
-        }
-
-        throw new AccessDeniedHttpException();
     }
 }

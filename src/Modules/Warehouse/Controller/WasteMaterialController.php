@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Warehouse\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\QueryParameterParser;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -486,13 +487,7 @@ class WasteMaterialController extends AbstractController
             try {
                 $isActive = $request->query->get(self::FILTER_IS_ACTIVE_KEY);
 
-                if ($isActive === 'true' || $isActive === '1') {
-                    $isActiveBool = true;
-                } elseif ($isActive === 'false' || $isActive === '0') {
-                    $isActiveBool = false;
-                } else {
-                    throw new InvalidDataException();
-                }
+                $isActiveBool = QueryParameterParser::parseBoolean($isActive);
 
                 $qb->andWhere(
                     $qb->expr()->eq(

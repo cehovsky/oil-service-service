@@ -7,6 +7,7 @@ namespace App\Modules\Users\Controller;
 use App\Auth\DBAL\Entity\User;
 use App\Auth\DBAL\Repository\UserRepository;
 use App\Auth\Factory\EntityFactory;
+use App\Auth\UserPasswordService;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -38,7 +39,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
@@ -57,9 +57,9 @@ class UsersController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
-        private readonly PasswordHasherFactoryInterface $passwordHasherFactory,
         private readonly EntityFactory $entityFactory,
         private readonly Security $security,
+        private readonly UserPasswordService $userPasswordService,
     ) {
     }
 
@@ -130,7 +130,7 @@ class UsersController extends AbstractController
 
             $user = $this->entityFactory->createUser(
                 $usersCreateRequestDTO->getEmail(),
-                $this->hashPassword($usersCreateRequestDTO->getPassword()),
+                $this->userPasswordService->hashPassword($usersCreateRequestDTO->getPassword()),
                 $usersCreateRequestDTO->getFullName(),
                 $usersCreateRequestDTO->getIsActive(),
                 $usersCreateRequestDTO->getIsAdmin(),
@@ -238,7 +238,7 @@ class UsersController extends AbstractController
             $password = $usersUpdateRequestDTO->getPassword();
 
             if ($password !== null && $password !== '') {
-                $user->setPassword($this->hashPassword($password));
+                $user->setPassword($this->userPasswordService->hashPassword($password));
             }
 
             $this->entityManager->flush();
@@ -621,12 +621,5 @@ class UsersController extends AbstractController
         }
 
         return $user;
-    }
-
-    private function hashPassword(string $plainPassword): string
-    {
-        return $this->passwordHasherFactory
-            ->getPasswordHasher(User::class)
-            ->hash($plainPassword);
     }
 }

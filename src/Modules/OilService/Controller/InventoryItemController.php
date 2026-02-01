@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\OilService\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\QueryParameterParser;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -492,9 +493,7 @@ class InventoryItemController extends AbstractController
 
                 assert(is_string($price));
 
-                if (!is_numeric($price)) {
-                    throw new InvalidDataException();
-                }
+                $priceValue = QueryParameterParser::parseNumeric($price);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -502,7 +501,7 @@ class InventoryItemController extends AbstractController
                         ':price'
                     )
                 );
-                $qb->setParameter('price', $price);
+                $qb->setParameter('price', $priceValue);
             } catch (Throwable) {
                 // pass
             }
@@ -512,9 +511,7 @@ class InventoryItemController extends AbstractController
 
                 assert(is_string($vat));
 
-                if (!is_numeric($vat)) {
-                    throw new InvalidDataException();
-                }
+                $vatValue = QueryParameterParser::parseInteger($vat);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -522,7 +519,7 @@ class InventoryItemController extends AbstractController
                         ':vat'
                     )
                 );
-                $qb->setParameter('vat', (int) $vat);
+                $qb->setParameter('vat', $vatValue);
             } catch (Throwable) {
                 // pass
             }
@@ -532,9 +529,7 @@ class InventoryItemController extends AbstractController
 
                 assert(is_string($priceVat));
 
-                if (!is_numeric($priceVat)) {
-                    throw new InvalidDataException();
-                }
+                $priceVatValue = QueryParameterParser::parseNumeric($priceVat);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -542,7 +537,7 @@ class InventoryItemController extends AbstractController
                         ':priceVat'
                     )
                 );
-                $qb->setParameter('priceVat', $priceVat);
+                $qb->setParameter('priceVat', $priceVatValue);
             } catch (Throwable) {
                 // pass
             }
@@ -552,9 +547,7 @@ class InventoryItemController extends AbstractController
 
                 assert(is_string($stockCount));
 
-                if (!is_numeric($stockCount)) {
-                    throw new InvalidDataException();
-                }
+                $stockCountValue = QueryParameterParser::parseInteger($stockCount);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -562,7 +555,7 @@ class InventoryItemController extends AbstractController
                         ':stockCount'
                     )
                 );
-                $qb->setParameter('stockCount', (int) $stockCount);
+                $qb->setParameter('stockCount', $stockCountValue);
             } catch (Throwable) {
                 // pass
             }

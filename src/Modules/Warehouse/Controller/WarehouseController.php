@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Warehouse\Controller;
 
 use App\Auth\DBAL\Entity\User as AuthUser;
+use App\Core\Helper\QueryParameterParser;
 use App\Domain\ApiGrid\ApiGridManager;
 use App\Domain\ApiGrid\ApiGridPropertyHelper;
 use App\Domain\ApiGrid\OrderEnum;
@@ -466,13 +467,7 @@ class WarehouseController extends AbstractController
             try {
                 $isActive = $request->query->get(self::FILTER_IS_ACTIVE_KEY);
 
-                if ($isActive === 'true' || $isActive === '1') {
-                    $isActiveBool = true;
-                } elseif ($isActive === 'false' || $isActive === '0') {
-                    $isActiveBool = false;
-                } else {
-                    throw new InvalidDataException();
-                }
+                $isActiveBool = QueryParameterParser::parseBoolean($isActive);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
@@ -488,13 +483,7 @@ class WarehouseController extends AbstractController
             try {
                 $isGarage = $request->query->get(self::FILTER_IS_GARAGE_KEY);
 
-                if ($isGarage === 'true' || $isGarage === '1') {
-                    $isGarageBool = true;
-                } elseif ($isGarage === 'false' || $isGarage === '0') {
-                    $isGarageBool = false;
-                } else {
-                    throw new InvalidDataException();
-                }
+                $isGarageBool = QueryParameterParser::parseBoolean($isGarage);
 
                 $qb->andWhere(
                     $qb->expr()->eq(
