@@ -43,6 +43,10 @@ class OrderCreateRequestDTO
     #[Assert\Length(max: 20)]
     private string $licensePlate;
 
+    #[OA\Property(example: 'TMBEFF654V7529422', nullable: true)]
+    #[Assert\Length(max: 17)]
+    private ?string $vin = null;
+
     #[OA\Property(example: 'Václavské náměstí 1, Praha 1, 110 00')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 500)]
@@ -189,6 +193,18 @@ class OrderCreateRequestDTO
     public function setLicensePlate(string $licensePlate): self
     {
         $this->licensePlate = $licensePlate;
+
+        return $this;
+    }
+
+    public function getVin(): ?string
+    {
+        return $this->vin;
+    }
+
+    public function setVin(?string $vin): self
+    {
+        $this->vin = $vin;
 
         return $this;
     }

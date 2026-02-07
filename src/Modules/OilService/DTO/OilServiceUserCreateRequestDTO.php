@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\OilService\Validation\Constraint\ExistingCustomerCarIds;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -24,6 +25,16 @@ class OilServiceUserCreateRequestDTO
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     private string $fullName;
+
+    /**
+     * @var string[]|null
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string', example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7'), nullable: true)]
+    #[Assert\All([
+        new Assert\Uuid(),
+    ])]
+    #[ExistingCustomerCarIds]
+    private ?array $customerCarIds = null;
 
     public function getEmail(): string
     {
@@ -57,6 +68,24 @@ class OilServiceUserCreateRequestDTO
     public function setFullName(string $fullName): self
     {
         $this->fullName = $fullName;
+
+        return $this;
+    }
+
+    /**
+     * @return string[]|null
+     */
+    public function getCustomerCarIds(): ?array
+    {
+        return $this->customerCarIds;
+    }
+
+    /**
+     * @param string[]|null $customerCarIds
+     */
+    public function setCustomerCarIds(?array $customerCarIds): self
+    {
+        $this->customerCarIds = $customerCarIds;
 
         return $this;
     }

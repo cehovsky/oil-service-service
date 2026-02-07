@@ -44,6 +44,10 @@ class User
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Order::class, cascade: ['persist'])]
     private Collection $orders;
 
+    /** @var Collection<int, CustomerCar> */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: CustomerCar::class)]
+    private Collection $cars;
+
     public function __construct(
         Uuid $id,
         string $email,
@@ -57,6 +61,7 @@ class User
         $this->fullName = $fullName;
         $this->createdAt = $createdAt;
         $this->orders = new ArrayCollection();
+        $this->cars = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -118,6 +123,24 @@ class User
         if (!$this->orders->contains($order)) {
             $this->orders->add($order);
             $order->setUser($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CustomerCar>
+     */
+    public function getCars(): Collection
+    {
+        return $this->cars;
+    }
+
+    public function addCar(CustomerCar $car): self
+    {
+        if (!$this->cars->contains($car)) {
+            $this->cars->add($car);
+            $car->setUser($this);
         }
 
         return $this;

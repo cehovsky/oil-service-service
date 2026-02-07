@@ -9,6 +9,7 @@ use App\Files\Validation\Constraint\FileIdExists;
 use App\Modules\OilService\Validation\Constraint\ExistingPriceListItemIds;
 use App\Modules\OilService\Validation\Constraint\ExistingRoute;
 use App\Modules\OilService\Validation\Constraint\ExistingOilServiceUser;
+use App\Modules\OilService\Validation\Constraint\ExistingCustomerCar;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use OpenApi\Attributes as OA;
@@ -41,6 +42,10 @@ class OrderUpdateRequestDTO
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
     private string $licensePlate;
+
+    #[OA\Property(example: 'TMBEFF654V7529422', nullable: true)]
+    #[Assert\Length(max: 17)]
+    private ?string $vin = null;
 
     #[OA\Property(example: 'Václavské náměstí 1, Praha 1, 110 00')]
     #[Assert\NotBlank]
@@ -132,6 +137,11 @@ class OrderUpdateRequestDTO
     #[ExistingRoute]
     private ?string $routeId = null;
 
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    #[ExistingCustomerCar]
+    private ?string $customerCarId = null;
+
     /**
      * @var string[]
      */
@@ -199,6 +209,18 @@ class OrderUpdateRequestDTO
     public function setLicensePlate(string $licensePlate): self
     {
         $this->licensePlate = $licensePlate;
+
+        return $this;
+    }
+
+    public function getVin(): ?string
+    {
+        return $this->vin;
+    }
+
+    public function setVin(?string $vin): self
+    {
+        $this->vin = $vin;
 
         return $this;
     }
@@ -409,6 +431,18 @@ class OrderUpdateRequestDTO
     public function setRouteId(?string $routeId): self
     {
         $this->routeId = $routeId;
+
+        return $this;
+    }
+
+    public function getCustomerCarId(): ?string
+    {
+        return $this->customerCarId;
+    }
+
+    public function setCustomerCarId(?string $customerCarId): self
+    {
+        $this->customerCarId = $customerCarId;
 
         return $this;
     }

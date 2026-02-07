@@ -22,6 +22,8 @@ use App\Modules\OilService\DTO\OrderCreateWithTermRequestDTO;
 use App\Modules\OilService\DTO\OrderDeleteResponseDTO;
 use App\Modules\OilService\DTO\OrderInfoResponseDTO;
 use App\Modules\OilService\DTO\OrderListResponseDTO;
+use App\Modules\OilService\DTO\OrderCustomerCarResolveResponseDTO;
+use App\Modules\OilService\DTO\OrderCustomerCarConflictResponseDTO;
 use App\Modules\OilService\DTO\OrderInventoryItemUpdateItemDTO;
 use App\Modules\OilService\DTO\OrderUpdateRequestDTO;
 use App\Modules\OilService\DTO\OrderUpdateResponseDTO;
@@ -150,6 +152,7 @@ class OrderController extends AbstractController
                 $orderCreateRequestDTO->getEmail(),
                 $orderCreateRequestDTO->getCarModel(),
                 $orderCreateRequestDTO->getLicensePlate(),
+                $orderCreateRequestDTO->getVin(),
                 $orderCreateRequestDTO->getAddress(),
                 $orderCreateRequestDTO->getNote(),
                 $orderCreateRequestDTO->getIsCompany(),
@@ -168,6 +171,7 @@ class OrderController extends AbstractController
                 $this->dateTimeService->createDateFromString($orderCreateRequestDTO->getRealizationDate()),
                 $orderCreateRequestDTO->getUserId(),
                 $orderCreateRequestDTO->getPriceListItemIds(),
+                $orderCreateRequestDTO->getCustomerCarId(),
                 $route,
             );
 
@@ -266,6 +270,7 @@ class OrderController extends AbstractController
                 $orderUpdateRequestDTO->getEmail(),
                 $orderUpdateRequestDTO->getCarModel(),
                 $orderUpdateRequestDTO->getLicensePlate(),
+                $orderUpdateRequestDTO->getVin(),
                 $orderUpdateRequestDTO->getAddress(),
                 $orderUpdateRequestDTO->getNote(),
                 OrderStatusEnum::from($orderUpdateRequestDTO->getStatus()),
@@ -286,6 +291,7 @@ class OrderController extends AbstractController
                 $routeProvided,
                 $orderUpdateRequestDTO->getRouteId(),
                 $orderUpdateRequestDTO->getPriceListItemIds(),
+                $orderUpdateRequestDTO->getCustomerCarId(),
             );
 
             $orderUpdateResponseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($order);
@@ -300,6 +306,136 @@ class OrderController extends AbstractController
         } catch (Throwable $e) {
             throw new ServerErrorHttpException($e->getMessage(), $e);
         }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: OrderCustomerCarResolveResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/orders/{orderId}/customer-car/resolve',
+        name: 'oil_service_order_customer_car_resolve',
+        methods: ['PUT']
+    )]
+    public function resolveCustomerCar(string $orderId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        try {
+            $car = $this->orderService->resolveCustomerCarFromOrder($order);
+
+            $responseDTO = $this->dtoFactory->createOrderCustomerCarResolveResponseDTO($car);
+
+            return $this->json($responseDTO);
+        } catch (ValidationException $exception) {
+            return $this->responseFactory->createResponseErrorCollection(
+                $exception->getErrorCollection()
+            );
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $exception) {
+            throw new ServerErrorHttpException($exception->getMessage(), $exception);
+        }
+    }
+
+    #[OA\Get(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Success',
+                content: new Model(
+                    type: OrderCustomerCarConflictResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/orders/{orderId}/customer-car/conflict',
+        name: 'oil_service_order_customer_car_conflict',
+        methods: ['GET']
+    )]
+    public function checkCustomerCarConflict(string $orderId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        $car = $this->orderService->findCustomerCarConflict($order);
+        $responseDTO = $this->dtoFactory->createOrderCustomerCarConflictResponseDTO($car);
+
+        return $this->json($responseDTO);
     }
 
     #[OA\Put(

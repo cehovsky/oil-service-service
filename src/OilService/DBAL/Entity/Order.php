@@ -23,6 +23,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_route_position', columns: ['route_id', 'route_order_position'])]
 #[ORM\Index(name: 'idx_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_user', columns: ['user_id'])]
+#[ORM\Index(name: 'idx_customer_car', columns: ['customer_car_id'])]
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 class Order
 {
@@ -60,6 +61,10 @@ class Order
     #[Assert\Length(max: 20)]
     #[ORM\Column(length: 20)]
     private string $licensePlate;
+
+    #[Assert\Length(max: 17)]
+    #[ORM\Column(length: 17, nullable: true)]
+    private ?string $vin = null;
 
     #[Assert\NotBlank]
     #[Assert\Length(max: 500)]
@@ -141,6 +146,10 @@ class Order
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
+    #[ORM\ManyToOne(targetEntity: CustomerCar::class, inversedBy: 'orders')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?CustomerCar $customerCar = null;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -173,6 +182,7 @@ class Order
         string $email,
         string $carModel,
         string $licensePlate,
+        ?string $vin,
         string $address,
         ?string $note,
         bool $isCompany,
@@ -194,6 +204,7 @@ class Order
         ?Route $route = null,
         ?float $latitude = null,
         ?float $longitude = null,
+        ?CustomerCar $customerCar = null,
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -202,6 +213,7 @@ class Order
         $this->email = $email;
         $this->carModel = $carModel;
         $this->licensePlate = $licensePlate;
+        $this->vin = $vin;
         $this->address = $address;
         $this->latitude = $latitude;
         $this->longitude = $longitude;
@@ -222,6 +234,7 @@ class Order
         $this->user = $user;
         $this->createdAt = $createdAt;
         $this->route = $route;
+        $this->customerCar = $customerCar;
         $this->storageContainerMaterials = new ArrayCollection();
         $this->orderInventoryItems = new ArrayCollection();
         $this->priceListItems = new ArrayCollection();
@@ -304,6 +317,18 @@ class Order
     public function setLicensePlate(string $licensePlate): self
     {
         $this->licensePlate = $licensePlate;
+
+        return $this;
+    }
+
+    public function getVin(): ?string
+    {
+        return $this->vin;
+    }
+
+    public function setVin(?string $vin): self
+    {
+        $this->vin = $vin;
 
         return $this;
     }
@@ -520,6 +545,18 @@ class Order
     public function setUser(User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getCustomerCar(): ?CustomerCar
+    {
+        return $this->customerCar;
+    }
+
+    public function setCustomerCar(?CustomerCar $customerCar): self
+    {
+        $this->customerCar = $customerCar;
 
         return $this;
     }

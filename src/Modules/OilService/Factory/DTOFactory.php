@@ -101,6 +101,17 @@ use App\Modules\OilService\DTO\CarUpdateResponseDTO;
 use App\Modules\OilService\DTO\CarDeleteResponseDTO;
 use App\Modules\OilService\DTO\CarInfoResponseDTO;
 use App\Modules\OilService\DTO\CarListResponseDTO;
+use App\Modules\OilService\DTO\CustomerCarDTO;
+use App\Modules\OilService\DTO\CustomerCarDetailDTO;
+use App\Modules\OilService\DTO\CustomerCarCreateResponseDTO;
+use App\Modules\OilService\DTO\CustomerCarUpdateResponseDTO;
+use App\Modules\OilService\DTO\CustomerCarDeleteResponseDTO;
+use App\Modules\OilService\DTO\CustomerCarInfoResponseDTO;
+use App\Modules\OilService\DTO\CustomerCarListResponseDTO;
+use App\Modules\OilService\DTO\CustomerCarHistoryDTO;
+use App\Modules\OilService\DTO\CustomerCarHistoryDeleteResponseDTO;
+use App\Modules\OilService\DTO\OrderCustomerCarResolveResponseDTO;
+use App\Modules\OilService\DTO\OrderCustomerCarConflictResponseDTO;
 use App\Modules\Users\DTO\UserDTO;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\ChatKnowledgeItem;
@@ -117,6 +128,8 @@ use App\OilService\DBAL\Entity\PriceListItem;
 use App\OilService\DBAL\Entity\Route;
 use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
+use App\OilService\DBAL\Entity\CustomerCar;
+use App\OilService\DBAL\Entity\CustomerCarHistory;
 use App\OilService\DBAL\Enum\ChatMessageRoleEnum;
 use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\DBAL\Entity\StorageContainerMaterial;
@@ -138,17 +151,34 @@ class DTOFactory
 
     public function createOilServiceUserDTO(User $user): OilServiceUserDTO
     {
+        $cars = $this->createCustomerCarDTOs($user->getCars()->toArray());
+
         return new OilServiceUserDTO(
             $user->getId()->__toString(),
             $user->getEmail(),
             $user->getPhone(),
             $user->getFullName(),
             $user->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $cars,
+        );
+    }
+
+    private function createOilServiceUserDTOWithoutCars(User $user): OilServiceUserDTO
+    {
+        return new OilServiceUserDTO(
+            $user->getId()->__toString(),
+            $user->getEmail(),
+            $user->getPhone(),
+            $user->getFullName(),
+            $user->getCreatedAt()->format(DateTimeInterface::ATOM),
+            [],
         );
     }
 
     public function createOilServiceUserListDTO(User $user): OilServiceUserListDTO
     {
+        $cars = $this->createCustomerCarDTOs($user->getCars()->toArray());
+
         return new OilServiceUserListDTO(
             $user->getId()->__toString(),
             $user->getEmail(),
@@ -156,6 +186,7 @@ class DTOFactory
             $user->getFullName(),
             $user->getCreatedAt()->format(DateTimeInterface::ATOM),
             $user->getOrders()->count(),
+            $cars,
         );
     }
 
@@ -163,6 +194,7 @@ class DTOFactory
     {
         /** @var OrderDTO[] $orders */
         $orders = $this->createOrderDTOCollection($user->getOrders()->toArray())->toArray();
+        $cars = $this->createCustomerCarDTOs($user->getCars()->toArray());
 
         return new OilServiceUserWithOrdersDTO(
             $user->getId()->__toString(),
@@ -171,6 +203,7 @@ class DTOFactory
             $user->getFullName(),
             $user->getCreatedAt()->format(DateTimeInterface::ATOM),
             $orders,
+            $cars,
         );
     }
 
@@ -181,6 +214,7 @@ class DTOFactory
         $inventoryItems = $this->createOrderInventoryItemDTOs($order);
         $priceListItems = $this->createPriceListItemDTOs($order->getPriceListItems()->toArray());
         $otherPhotos = $this->createFileDTOs($order->getOtherPhotos()->toArray());
+        $customerCar = $order->getCustomerCar();
 
         return new OrderDTO(
             $order->getId()->__toString(),
@@ -190,6 +224,7 @@ class DTOFactory
             $order->getEmail(),
             $order->getCarModel(),
             $order->getLicensePlate(),
+            $order->getVin(),
             $order->getAddress(),
             $order->getLatitude(),
             $order->getLongitude(),
@@ -214,6 +249,7 @@ class DTOFactory
             $materials,
             $inventoryItems,
             $priceListItems,
+            $customerCar ? $this->createCustomerCarDTO($customerCar) : null,
         );
     }
 
@@ -1181,6 +1217,226 @@ class DTOFactory
             $car->getLicensePlate(),
             $car->getStatus()->value,
             $car->getCreatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    public function createCustomerCarDTO(CustomerCar $car): CustomerCarDTO
+    {
+        return new CustomerCarDTO(
+            $car->getId()->__toString(),
+            $car->getLicensePlate(),
+            $car->getBrand()?->value,
+            $car->getModel(),
+            $car->getVin(),
+            $car->getUser() ? $this->createOilServiceUserDTOWithoutCars($car->getUser()) : null,
+            $car->getCreatedAt()->format(DateTimeInterface::ATOM),
+            $car->getDkDatumPrvniRegistrace(),
+            $car->getDkDatumPrvniRegistraceVCr(),
+            $car->getDkCisloTypovehoSchvaleni(),
+            $car->getDkHomologaceEs(),
+            $car->getDkVozidloDruh(),
+            $car->getDkVozidloDruh2(),
+            $car->getDkKategorie(),
+            $car->getDkTovarniZnacka(),
+            $car->getDkTyp(),
+            $car->getDkVarianta(),
+            $car->getDkVerze(),
+            $car->getDkVin(),
+            $car->getDkObchodniOznaceni(),
+            $car->getDkVozidloVyrobce(),
+            $car->getDkMotorVyrobce(),
+            $car->getDkMotorTyp(),
+            $car->getDkMotorMaxVykon(),
+            $car->getDkPalivo(),
+            $car->getDkMotorZdvihObjem(),
+            $car->getDkVozidloElektricke(),
+            $car->getDkVozidloHybridni(),
+            $car->getDkVozidloHybridniTrida(),
+            $car->getDkEmiseEHKOSNEHSES(),
+            $car->getDkEmisniUroven(),
+            $car->getDkEmiseKSA(),
+            $car->getDkEmiseCO2(),
+            $car->getDkEmiseCO2Specificke(),
+            $car->getDkEmiseSnizeniNedc(),
+            $car->getDkEmiseSnizeniWltp(),
+            $car->getDkSpotrebaMetodika(),
+            $car->getDkSpotrebaNa100Km(),
+            $car->getDkSpotreba(),
+            $car->getDkSpotrebaEl(),
+            $car->getDkDojezdZR(),
+            $car->getDkVyrobceKaroserie(),
+            $car->getDkKaroserieDruh(),
+            $car->getDkKaroserieVyrobniCislo(),
+            $car->getDkVozidloKaroserieBarva(),
+            $car->getDkVozidloKaroserieBarvaDoplnkova(),
+            $car->getDkVozidloKaroserieMist(),
+            $car->getDkRozmery(),
+            $car->getDkRozmeryRozvor(),
+            $car->getDkRozchod(),
+            $car->getDkHmotnostiProvozni(),
+            $car->getDkHmotnostiPripPov(),
+            $car->getDkHmotnostiPripPovN(),
+            $car->getDkHmotnostiPripPovBrzdenePV(),
+            $car->getDkHmotnostiPripPovNebrzdenePV(),
+            $car->getDkHmotnostiPripPovJS(),
+            $car->getDkHmotnostiTestWltp(),
+            $car->getDkHmotnostUzitecneZatizeniPrumer(),
+            $car->getDkVozidloSpojZarizNazev(),
+            $car->getDkNapravyPocetDruh(),
+            $car->getDkNapravyPneuRafky(),
+            $car->getDkHlukStojiciOtacky(),
+            $car->getDkHlukJizda(),
+            $car->getDkNejvyssiRychlost(),
+            $car->getDkPomerVykonHmotnost(),
+            $car->getDkInovativniTechnologie(),
+            $car->getDkStupenDokonceni(),
+            $car->getDkFaktorOdchylkyDe(),
+            $car->getDkFaktorVerifikaceVf(),
+            $car->getDkVozidloUcel(),
+            $car->getDkDalsiZaznamy(),
+            $car->getDkAlternativniProvedeni(),
+            $car->getDkCisloTp(),
+            $car->getDkCisloOrv(),
+            $car->getDkOrvZadrzeno(),
+            $car->getDkOrvKeSkartaci(),
+            $car->getDkOrvOdevzdano(),
+            $car->getDkRzDruh(),
+            $car->getDkRzJkVydana(),
+            $car->getDkRzKeSkartaci(),
+            $car->getDkRzOdevzdano(),
+            $car->getDkRzZadrzena(),
+            $car->getDkZarazeniVozidla(),
+            $car->getDkPravidelnaTechnickaProhlidkaDo(),
+            $car->getDkPredRegistraciProhlidkaDne(),
+            $car->getDkPredSchvalenimProhlidkaDne(),
+            $car->getDkEvidencniProhlidkaDne(),
+            $car->getDkHistorickeVozidloProhlidkaDne(),
+            $car->getDkStatusNazev(),
+            $car->getDkPocetVlastniku(),
+            $car->getDkPocetProvozovatelu(),
+        );
+    }
+
+    /**
+     * @param CustomerCar[] $cars
+     *
+     * @return CustomerCarDTO[]
+     */
+    public function createCustomerCarDTOs(array $cars): array
+    {
+        $items = [];
+
+        foreach ($cars as $car) {
+            $items[] = $this->createCustomerCarDTO($car);
+        }
+
+        return $items;
+    }
+
+    public function createCustomerCarHistoryDTO(CustomerCarHistory $history): CustomerCarHistoryDTO
+    {
+        return new CustomerCarHistoryDTO(
+            $history->getId()->__toString(),
+            $this->createOilServiceUserDTOWithoutCars($history->getUser()),
+            $history->getAssignedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    /**
+     * @param CustomerCarHistory[] $history
+     *
+     * @return CustomerCarHistoryDTO[]
+     */
+    public function createCustomerCarHistoryDTOs(array $history): array
+    {
+        $items = [];
+
+        foreach ($history as $item) {
+            $items[] = $this->createCustomerCarHistoryDTO($item);
+        }
+
+        return $items;
+    }
+
+    public function createCustomerCarDetailDTO(CustomerCar $car): CustomerCarDetailDTO
+    {
+        $history = $this->createCustomerCarHistoryDTOs($car->getHistory()->toArray());
+
+        return new CustomerCarDetailDTO(
+            $this->createCustomerCarDTO($car),
+            $history,
+        );
+    }
+
+    public function createCustomerCarListResponseDTO(array $cars, int $pageCount): CustomerCarListResponseDTO
+    {
+        return new CustomerCarListResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCustomerCarDTOs($cars),
+            $pageCount,
+        );
+    }
+
+    public function createCustomerCarInfoResponseDTO(CustomerCar $car): CustomerCarInfoResponseDTO
+    {
+        return new CustomerCarInfoResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCustomerCarDetailDTO($car),
+        );
+    }
+
+    public function createCustomerCarCreateResponseDTO(CustomerCar $car): CustomerCarCreateResponseDTO
+    {
+        return new CustomerCarCreateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCustomerCarDTO($car),
+        );
+    }
+
+    public function createCustomerCarUpdateResponseDTO(CustomerCar $car): CustomerCarUpdateResponseDTO
+    {
+        return new CustomerCarUpdateResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCustomerCarDTO($car),
+        );
+    }
+
+    public function createCustomerCarDeleteResponseDTO(): CustomerCarDeleteResponseDTO
+    {
+        return new CustomerCarDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createCustomerCarHistoryDeleteResponseDTO(): CustomerCarHistoryDeleteResponseDTO
+    {
+        return new CustomerCarHistoryDeleteResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+        );
+    }
+
+    public function createOrderCustomerCarResolveResponseDTO(CustomerCar $car): OrderCustomerCarResolveResponseDTO
+    {
+        return new OrderCustomerCarResolveResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $this->createCustomerCarDTO($car),
+        );
+    }
+
+    public function createOrderCustomerCarConflictResponseDTO(?CustomerCar $car): OrderCustomerCarConflictResponseDTO
+    {
+        return new OrderCustomerCarConflictResponseDTO(
+            DTOValueResolver::RESULT_SUCCESS,
+            time(),
+            $car !== null,
+            $car !== null ? $this->createCustomerCarDTO($car) : null,
         );
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
 class OilServiceUserDTO
@@ -23,18 +24,24 @@ class OilServiceUserDTO
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
 
+    /** @var CustomerCarDTO[] */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: CustomerCarDTO::class)))]
+    private array $cars;
+
     public function __construct(
         string $id,
         string $email,
         string $phone,
         string $fullName,
         string $createdAt,
+        array $cars = [],
     ) {
         $this->id = $id;
         $this->email = $email;
         $this->phone = $phone;
         $this->fullName = $fullName;
         $this->createdAt = $createdAt;
+        $this->cars = $cars;
     }
 
     public function getId(): string
@@ -60,5 +67,13 @@ class OilServiceUserDTO
     public function getCreatedAt(): string
     {
         return $this->createdAt;
+    }
+
+    /**
+     * @return CustomerCarDTO[]
+     */
+    public function getCars(): array
+    {
+        return $this->cars;
     }
 }

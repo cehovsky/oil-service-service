@@ -137,6 +137,7 @@ class OrderPublicController extends AbstractController
                 $orderCreateRequestDTO->getEmail(),
                 $orderCreateRequestDTO->getCarModel(),
                 $orderCreateRequestDTO->getLicensePlate(),
+                $orderCreateRequestDTO->getVin(),
                 $orderCreateRequestDTO->getAddress(),
                 $orderCreateRequestDTO->getNote(),
                 $orderCreateRequestDTO->getIsCompany(),
@@ -154,6 +155,7 @@ class OrderPublicController extends AbstractController
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
                 $this->dateTimeService->createDateFromString($orderCreateRequestDTO->getRealizationDate()),
                 $orderCreateRequestDTO->getPriceListItemIds(),
+                null,
                 null,
             );
 

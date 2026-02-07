@@ -88,6 +88,7 @@ class ChatToolService
             $email,
             $carModel,
             $licensePlate,
+            null,
             $address,
             $note,
             $isCompany,
@@ -105,6 +106,7 @@ class ChatToolService
             $timeSlot,
             $realizationDate,
             $priceListItemIds,
+            null,
             null,
         );
 

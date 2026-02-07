@@ -33,6 +33,9 @@ class OrderDTO
     #[OA\Property(example: '1A2 3456')]
     private string $licensePlate;
 
+    #[OA\Property(example: 'TMBEFF654V7529422', nullable: true)]
+    private ?string $vin;
+
     #[OA\Property(example: 'Václavské náměstí 1, Praha 1, 110 00')]
     private string $address;
 
@@ -95,6 +98,9 @@ class OrderDTO
 
     private OilServiceUserDTO $user;
 
+    #[OA\Property(ref: new Model(type: CustomerCarDTO::class), nullable: true)]
+    private ?CustomerCarDTO $customerCar;
+
     private ?RouteDTO $route;
 
     /**
@@ -129,6 +135,7 @@ class OrderDTO
         string $email,
         string $carModel,
         string $licensePlate,
+        ?string $vin,
         string $address,
         ?float $latitude,
         ?float $longitude,
@@ -153,6 +160,7 @@ class OrderDTO
         array $materials = [],
         array $inventoryItems = [],
         array $priceListItems = [],
+        ?CustomerCarDTO $customerCar = null,
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -161,6 +169,7 @@ class OrderDTO
         $this->email = $email;
         $this->carModel = $carModel;
         $this->licensePlate = $licensePlate;
+        $this->vin = $vin;
         $this->address = $address;
         $this->latitude = $latitude;
         $this->longitude = $longitude;
@@ -185,6 +194,7 @@ class OrderDTO
         $this->materials = $materials;
         $this->inventoryItems = $inventoryItems;
         $this->priceListItems = $priceListItems;
+        $this->customerCar = $customerCar;
     }
 
     public function getId(): string
@@ -220,6 +230,11 @@ class OrderDTO
     public function getLicensePlate(): string
     {
         return $this->licensePlate;
+    }
+
+    public function getVin(): ?string
+    {
+        return $this->vin;
     }
 
     public function getAddress(): string
@@ -323,6 +338,11 @@ class OrderDTO
     public function getUser(): OilServiceUserDTO
     {
         return $this->user;
+    }
+
+    public function getCustomerCar(): ?CustomerCarDTO
+    {
+        return $this->customerCar;
     }
 
     public function getRoute(): ?RouteDTO

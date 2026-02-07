@@ -127,6 +127,7 @@ class OilServiceUserController extends AbstractController
                 $userCreateRequestDTO->getEmail(),
                 $userCreateRequestDTO->getPhone(),
                 $userCreateRequestDTO->getFullName(),
+                $userCreateRequestDTO->getCustomerCarIds(),
             );
 
             $userCreateResponseDTO = $this->dtoFactory->createOilServiceUserCreateResponseDTO($user);
@@ -223,6 +224,7 @@ class OilServiceUserController extends AbstractController
                 $userUpdateRequestDTO->getEmail(),
                 $userUpdateRequestDTO->getPhone(),
                 $userUpdateRequestDTO->getFullName(),
+                $userUpdateRequestDTO->getCustomerCarIds(),
             );
 
             $userUpdateResponseDTO = $this->dtoFactory->createOilServiceUserUpdateResponseDTO($user);

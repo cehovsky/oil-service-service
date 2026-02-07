@@ -10,6 +10,8 @@ use App\OilService\DBAL\Entity\ChatKnowledgeItem;
 use App\OilService\DBAL\Entity\ChatMessage;
 use App\OilService\DBAL\Entity\ChatSession;
 use App\OilService\DBAL\Entity\ChatUserRequest;
+use App\OilService\DBAL\Entity\CustomerCar;
+use App\OilService\DBAL\Entity\CustomerCarHistory;
 use App\OilService\DBAL\Entity\InventoryItem;
 use App\OilService\DBAL\Entity\InventoryItemHistory;
 use App\OilService\DBAL\Entity\Order;
@@ -25,6 +27,7 @@ use App\OilService\DBAL\Enum\ChatMessageRoleEnum;
 use App\OilService\DBAL\Enum\ChatSessionStatusEnum;
 use App\OilService\DBAL\Enum\ChatUserRequestStatusEnum;
 use App\OilService\DBAL\Enum\CarStatusEnum;
+use App\OilService\DBAL\Enum\CustomerCarBrandEnum;
 use App\OilService\DBAL\Enum\InventoryMovementTypeEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
@@ -67,6 +70,7 @@ class EntityFactory
         string $email,
         string $carModel,
         string $licensePlate,
+        ?string $vin,
         string $address,
         ?string $note,
         bool $isCompany,
@@ -85,6 +89,7 @@ class EntityFactory
         DateTimeImmutable $realizationDate,
         User $user,
         ?Route $route = null,
+        ?CustomerCar $customerCar = null,
     ): Order {
         return new Order(
             $this->uuidFactory->timeBased()->create(),
@@ -94,6 +99,7 @@ class EntityFactory
             $email,
             $carModel,
             $licensePlate,
+            $vin,
             $address,
             $note,
             $isCompany,
@@ -113,6 +119,9 @@ class EntityFactory
             $user,
             new DateTimeImmutable(),
             $route,
+            null,
+            null,
+            $customerCar,
         );
     }
 
@@ -168,6 +177,34 @@ class EntityFactory
             $ident,
             $licensePlate,
             $status,
+            new DateTimeImmutable(),
+        );
+    }
+
+    public function createCustomerCar(
+        string $licensePlate,
+        ?CustomerCarBrandEnum $brand = null,
+        ?string $model = null,
+        ?string $vin = null,
+        ?User $user = null,
+    ): CustomerCar {
+        return new CustomerCar(
+            $this->uuidFactory->timeBased()->create(),
+            $licensePlate,
+            new DateTimeImmutable(),
+            $brand,
+            $model,
+            $vin,
+            $user,
+        );
+    }
+
+    public function createCustomerCarHistory(CustomerCar $car, User $user): CustomerCarHistory
+    {
+        return new CustomerCarHistory(
+            $this->uuidFactory->timeBased()->create(),
+            $car,
+            $user,
             new DateTimeImmutable(),
         );
     }

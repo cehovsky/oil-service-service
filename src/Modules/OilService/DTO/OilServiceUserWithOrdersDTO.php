@@ -28,6 +28,10 @@ class OilServiceUserWithOrdersDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: OrderDTO::class)))]
     private array $orders;
 
+    /** @var CustomerCarDTO[] */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: CustomerCarDTO::class)))]
+    private array $cars;
+
     /**
      * @param OrderDTO[] $orders
      */
@@ -38,6 +42,7 @@ class OilServiceUserWithOrdersDTO
         string $fullName,
         string $createdAt,
         array $orders,
+        array $cars = [],
     ) {
         $this->id = $id;
         $this->email = $email;
@@ -45,6 +50,7 @@ class OilServiceUserWithOrdersDTO
         $this->fullName = $fullName;
         $this->createdAt = $createdAt;
         $this->orders = $orders;
+        $this->cars = $cars;
     }
 
     public function getId(): string
@@ -78,5 +84,13 @@ class OilServiceUserWithOrdersDTO
     public function getOrders(): array
     {
         return $this->orders;
+    }
+
+    /**
+     * @return CustomerCarDTO[]
+     */
+    public function getCars(): array
+    {
+        return $this->cars;
     }
 }

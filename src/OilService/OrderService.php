@@ -4,24 +4,26 @@ declare(strict_types=1);
 
 namespace App\OilService;
 
-use App\Files\DBAL\Entity\File;
-use App\Files\DBAL\Repository\FileRepository;
-use App\Geocoding\GeocodingResult;
-use App\Geocoding\GeocodingService;
-use App\OilService\DBAL\Entity\Order;
-use App\OilService\DBAL\Entity\Route;
-use App\OilService\DBAL\Entity\User;
-use App\OilService\DBAL\Enum\OrderStatusEnum;
-use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\Domain\Error\ErrorCollection;
 use App\Domain\Error\ErrorItem;
 use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ValidationException;
+use App\Files\DBAL\Entity\File;
+use App\Files\DBAL\Repository\FileRepository;
+use App\Geocoding\GeocodingResult;
+use App\Geocoding\GeocodingService;
+use App\OilService\DBAL\Entity\CustomerCar;
+use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\PriceListItem;
-use App\OilService\DBAL\Repository\RouteRepository;
+use App\OilService\DBAL\Entity\Route;
+use App\OilService\DBAL\Entity\User;
+use App\OilService\DBAL\Enum\OrderStatusEnum;
+use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
+use App\OilService\DBAL\Repository\CustomerCarRepository;
 use App\OilService\DBAL\Repository\OrderRepository;
-use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\DBAL\Repository\PriceListItemRepository;
+use App\OilService\DBAL\Repository\RouteRepository;
+use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\Factory\EntityFactory;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,6 +39,8 @@ class OrderService
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
         private readonly OrderRepository $orderRepository,
+        private readonly CustomerCarRepository $customerCarRepository,
+        private readonly CustomerCarService $customerCarService,
         private readonly GeocodingService $geocodingService,
     ) {
     }
@@ -51,6 +55,7 @@ class OrderService
         string $email,
         string $carModel,
         string $licensePlate,
+        ?string $vin,
         string $address,
         ?string $note,
         bool $isCompany,
@@ -68,6 +73,7 @@ class OrderService
         RealizationTimeSlotEnum $realizationTimeSlot,
         DateTimeImmutable $realizationDate,
         array $priceListItemIds,
+        ?string $customerCarId = null,
         ?Route $route = null,
     ): Order {
         if ($route !== null) {
@@ -85,12 +91,18 @@ class OrderService
         $odometerPhoto = $this->findFile($odometerPhotoId);
         $otherPhotos = $this->resolveFilesByIds($otherPhotoIds);
 
+        $customerCar = $this->findCustomerCar($customerCarId);
+        if ($customerCar !== null) {
+            $this->customerCarService->assignUser($customerCar, $user);
+        }
+
         $order = $this->entityFactory->createOrder(
             $fullName,
             $phone,
             $email,
             $carModel,
             $licensePlate,
+            $vin,
             $address,
             $note,
             $isCompany,
@@ -109,6 +121,7 @@ class OrderService
             $realizationDate,
             $user,
             $route,
+            $customerCar,
         );
 
         if ($route !== null) {
@@ -135,6 +148,7 @@ class OrderService
         string $email,
         string $carModel,
         string $licensePlate,
+        ?string $vin,
         string $address,
         ?string $note,
         bool $isCompany,
@@ -153,6 +167,7 @@ class OrderService
         DateTimeImmutable $realizationDate,
         string $userId,
         array $priceListItemIds,
+        ?string $customerCarId = null,
         ?Route $route = null,
     ): Order {
         if ($route !== null) {
@@ -170,12 +185,18 @@ class OrderService
         $odometerPhoto = $this->findFile($odometerPhotoId);
         $otherPhotos = $this->resolveFilesByIds($otherPhotoIds);
 
+        $customerCar = $this->findCustomerCar($customerCarId);
+        if ($customerCar !== null) {
+            $this->customerCarService->assignUser($customerCar, $user);
+        }
+
         $order = $this->entityFactory->createOrder(
             $fullName,
             $phone,
             $email,
             $carModel,
             $licensePlate,
+            $vin,
             $address,
             $note,
             $isCompany,
@@ -194,6 +215,7 @@ class OrderService
             $realizationDate,
             $user,
             $route,
+            $customerCar,
         );
 
         if ($route !== null) {
@@ -221,6 +243,7 @@ class OrderService
         string $email,
         string $carModel,
         string $licensePlate,
+        ?string $vin,
         string $address,
         ?string $note,
         OrderStatusEnum $status,
@@ -241,6 +264,7 @@ class OrderService
         bool $routeProvided,
         ?string $routeId,
         array $priceListItemIds,
+        ?string $customerCarId,
     ): Order {
         $previousRoute = $order->getRoute();
         $route = $previousRoute;
@@ -254,6 +278,7 @@ class OrderService
         $order->setEmail($email);
         $order->setCarModel($carModel);
         $order->setLicensePlate($licensePlate);
+        $order->setVin($vin);
         $order->setAddress($address);
         $order->setNote($note);
         $order->setIsCompany($isCompany);
@@ -297,6 +322,12 @@ class OrderService
 
         $this->syncPriceListItems($order, $this->resolvePriceListItemsByIds($priceListItemIds));
         $this->syncOtherPhotos($order, $this->resolveFilesByIds($otherPhotoIds));
+
+        $customerCar = $this->findCustomerCar($customerCarId);
+        $order->setCustomerCar($customerCar);
+        if ($customerCar !== null) {
+            $this->customerCarService->assignUser($customerCar, $order->getUser());
+        }
 
         $this->entityManager->flush();
 
@@ -344,6 +375,84 @@ class OrderService
         $this->entityManager->flush();
 
         return $order;
+    }
+
+    public function resolveCustomerCarFromOrder(Order $order): CustomerCar
+    {
+        $existingCar = $order->getCustomerCar();
+
+        if ($existingCar !== null) {
+            return $existingCar;
+        }
+
+        $vin = $order->getVin();
+        $licensePlate = $order->getLicensePlate();
+
+        $car = null;
+
+        if ($vin !== null && $vin !== '') {
+            $car = $this->customerCarRepository->findOneByVin($vin);
+        }
+
+        if ($car === null) {
+            $car = $this->customerCarRepository->findOneByLicensePlate($licensePlate);
+        }
+
+        if ($car === null) {
+            $car = $this->customerCarService->createCustomerCar(
+                $licensePlate,
+                null,
+                $order->getCarModel(),
+                $vin,
+                $order->getUser(),
+            );
+
+            if ($vin !== null && $vin !== '') {
+                $this->customerCarService->updateFromDataCube($car, $vin);
+            }
+        } else {
+            if ($vin !== null && $vin !== '' && $car->getVin() === null) {
+                $car->setVin($vin);
+            }
+
+            $this->customerCarService->assignUser($car, $order->getUser());
+        }
+
+        $order->setCustomerCar($car);
+        $this->entityManager->flush();
+
+        return $car;
+    }
+
+    public function findCustomerCarConflict(Order $order): ?CustomerCar
+    {
+        $vin = $order->getVin();
+        $licensePlate = $order->getLicensePlate();
+
+        $car = null;
+
+        if ($vin !== null && $vin !== '') {
+            $car = $this->customerCarRepository->findOneByVin($vin);
+        }
+
+        if ($car === null) {
+            $car = $this->customerCarRepository->findOneByLicensePlate($licensePlate);
+        }
+
+        if ($car === null) {
+            return null;
+        }
+
+        $assignedUser = $car->getUser();
+        if ($assignedUser === null) {
+            return null;
+        }
+
+        if ($assignedUser->getId()->__toString() === $order->getUser()->getId()->__toString()) {
+            return null;
+        }
+
+        return $car;
     }
 
     public function resolveOrderCoordinatesFromAddress(Order $order): GeocodingResult
@@ -417,6 +526,21 @@ class OrderService
         }
 
         return $user;
+    }
+
+    private function findCustomerCar(?string $customerCarId): ?CustomerCar
+    {
+        if ($customerCarId === null) {
+            return null;
+        }
+
+        $car = $this->customerCarRepository->find($customerCarId);
+
+        if ($car === null) {
+            throw new NotFoundHttpException();
+        }
+
+        return $car;
     }
 
     /**
