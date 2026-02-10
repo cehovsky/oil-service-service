@@ -151,33 +151,40 @@ class CustomerCarService
 
     public function resolveEngineByCode(CustomerCar $car, string $engineCode): ?Engine
     {
-        $engineCodeValue = trim($engineCode);
+        $engineCodeValue = $this->normalizeEngineCode($engineCode);
 
         if ($engineCodeValue === '') {
             return null;
         }
 
-        $manufacturer = $car->getBrand()?->value;
+        $engineCodeCandidates = $this->buildEngineCodeCandidates($engineCodeValue);
+        $manufacturer = $this->resolveManufacturerForMatching($car);
 
         if ($manufacturer !== null) {
-            $engine = $this->engineRepository->findOneByEngineCodeAndManufacturer($engineCodeValue, $manufacturer);
+            foreach ($engineCodeCandidates as $candidate) {
+                $engine = $this->engineRepository->findOneByEngineCodeAndManufacturerCaseInsensitive($candidate, $manufacturer);
 
-            if ($engine !== null) {
-                $car->setEngine($engine);
-                $this->entityManager->flush();
-
-                return $engine;
+                if ($engine !== null) {
+                    return $this->assignEngine($car, $engine);
+                }
             }
         }
 
-        $engine = $this->engineRepository->findOneByEngineCode($engineCodeValue);
+        foreach ($engineCodeCandidates as $candidate) {
+            $engine = $this->engineRepository->findOneByEngineCode($candidate);
 
-        if ($engine !== null) {
-            $car->setEngine($engine);
-            $this->entityManager->flush();
+            if ($engine !== null) {
+                return $this->assignEngine($car, $engine);
+            }
         }
 
-        return $engine;
+        $engine = $this->resolveEngineByCarData($car);
+
+        if ($engine !== null) {
+            return $this->assignEngine($car, $engine);
+        }
+
+        return null;
     }
 
     public function tryAssignEngineFromCarData(CustomerCar $car): void
@@ -245,6 +252,224 @@ class CustomerCarService
         $normalized = preg_replace('/[^A-Z0-9]+/', '', $normalized) ?? $normalized;
 
         return $normalized;
+    }
+
+    private function normalizeComparableText(string $value): string
+    {
+        $normalized = trim($value);
+        $normalized = mb_strtoupper($normalized);
+        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT', $normalized) ?: $normalized;
+        $normalized = preg_replace('/[^A-Z0-9]+/', '', $normalized) ?? $normalized;
+
+        return $normalized;
+    }
+
+    private function normalizeEngineCode(string $value): string
+    {
+        $normalized = trim($value);
+        $normalized = mb_strtoupper($normalized);
+
+        return $normalized;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function buildEngineCodeCandidates(string $engineCode): array
+    {
+        $candidates = [$engineCode];
+        $normalized = preg_replace('/[^A-Z0-9]+/', '', $engineCode) ?? $engineCode;
+
+        if ($normalized !== '' && $normalized !== $engineCode) {
+            $candidates[] = $normalized;
+        }
+
+        return array_values(array_unique($candidates));
+    }
+
+    private function resolveManufacturerForMatching(CustomerCar $car): ?string
+    {
+        $brand = $car->getBrand()?->value;
+        if (is_string($brand) && trim($brand) !== '') {
+            return $brand;
+        }
+
+        $dataCubeBrand = $car->getDkTovarniZnacka();
+        if (is_string($dataCubeBrand) && trim($dataCubeBrand) !== '') {
+            return $dataCubeBrand;
+        }
+
+        $engineManufacturer = $car->getDkMotorVyrobce();
+        if (is_string($engineManufacturer) && trim($engineManufacturer) !== '') {
+            return $engineManufacturer;
+        }
+
+        return null;
+    }
+
+    private function resolveEngineByCarData(CustomerCar $car): ?Engine
+    {
+        $manufacturer = $this->resolveManufacturerForMatching($car);
+        $displacementCc = $this->parseIntFromString($car->getDkMotorZdvihObjem());
+        $powerKw = $this->parsePowerKw($car->getDkMotorMaxVykon());
+        $fuel = $this->normalizeFuel($car->getDkPalivo());
+
+        $candidates = $this->engineRepository->findMatchingCandidates(
+            $manufacturer,
+            $displacementCc,
+            $powerKw,
+            $fuel,
+        );
+
+        if (count($candidates) === 1) {
+            return $candidates[0];
+        }
+
+        if ($candidates === []) {
+            return null;
+        }
+
+        $modelTokens = $this->buildModelTokens($car);
+
+        $best = null;
+        $bestScore = 0;
+        $isTie = false;
+
+        foreach ($candidates as $candidate) {
+            $score = 0;
+
+            if ($manufacturer !== null && strcasecmp($candidate->getManufacturer(), $manufacturer) === 0) {
+                $score += 2;
+            }
+
+            if ($displacementCc !== null && $candidate->getDisplacementCc() === $displacementCc) {
+                $score += 2;
+            }
+
+            if ($powerKw !== null && $candidate->getPowerKw() !== null && abs($candidate->getPowerKw() - $powerKw) <= 5) {
+                $score += 2;
+            }
+
+            if ($fuel !== null && $candidate->getFuel() === $fuel) {
+                $score += 1;
+            }
+
+            if ($modelTokens !== []) {
+                $modelNormalized = $this->normalizeComparableText($candidate->getModel());
+                foreach ($modelTokens as $token) {
+                    if (str_contains($modelNormalized, $token)) {
+                        $score += 1;
+                    }
+                }
+            }
+
+            if ($score > $bestScore) {
+                $best = $candidate;
+                $bestScore = $score;
+                $isTie = false;
+            } elseif ($score === $bestScore && $score > 0) {
+                $isTie = true;
+            }
+        }
+
+        if ($best !== null && $bestScore >= 5 && !$isTie) {
+            return $best;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function buildModelTokens(CustomerCar $car): array
+    {
+        $tokens = [];
+
+        foreach ([$car->getModel(), $car->getDkObchodniOznaceni(), $car->getDkTyp()] as $value) {
+            foreach ($this->extractModelTokens($value) as $token) {
+                $tokens[] = $token;
+            }
+        }
+
+        return array_values(array_unique($tokens));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function extractModelTokens(?string $value): array
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        $normalized = mb_strtoupper($value);
+        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT', $normalized) ?: $normalized;
+
+        $parts = preg_split('/[^A-Z0-9]+/', $normalized, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return array_values(array_filter(
+            $parts,
+            static fn (string $part): bool => strlen($part) >= 3
+        ));
+    }
+
+    private function parseIntFromString(?string $value): ?int
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        if (preg_match('/(\d{2,})/', $value, $matches) !== 1) {
+            return null;
+        }
+
+        return (int) $matches[1];
+    }
+
+    private function parsePowerKw(?string $value): ?int
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        if (preg_match('/(\d{2,})\s*(?:kW|\/|$)/i', $value, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        if (preg_match('/(\d{2,})/', $value, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
+    private function normalizeFuel(?string $value): ?string
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        $normalized = mb_strtoupper(trim($value));
+
+        if (str_contains($normalized, 'NAFTA') || str_contains($normalized, 'DIESEL')) {
+            return 'diesel';
+        }
+
+        if (str_contains($normalized, 'BA') || str_contains($normalized, 'BENZ') || str_contains($normalized, 'PETROL') || str_contains($normalized, 'GASOLINE')) {
+            return 'petrol';
+        }
+
+        return null;
+    }
+
+    private function assignEngine(CustomerCar $car, Engine $engine): Engine
+    {
+        $car->setEngine($engine);
+        $this->entityManager->flush();
+
+        return $engine;
     }
 
     private function createCarAssignedException(string $message): ValidationException

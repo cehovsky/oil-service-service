@@ -61,4 +61,59 @@ class EngineRepository extends ServiceEntityRepository
 
         return $result;
     }
+
+    public function findOneByEngineCodeAndManufacturerCaseInsensitive(string $engineCode, string $manufacturer): ?Engine
+    {
+        $qb = $this->getQueryBuilderWithAlias();
+
+        $qb->andWhere($qb->expr()->eq('LOWER(' . self::ALIAS . '.engineCode)', 'LOWER(:engineCode)'))
+            ->andWhere($qb->expr()->eq('LOWER(' . self::ALIAS . '.manufacturer)', 'LOWER(:manufacturer)'))
+            ->setParameter('engineCode', $engineCode)
+            ->setParameter('manufacturer', $manufacturer)
+            ->setMaxResults(1);
+
+        $result = $qb->getQuery()->getOneOrNullResult();
+
+        assert($result instanceof Engine || $result === null);
+
+        return $result;
+    }
+
+    /**
+     * @return Engine[]
+     */
+    public function findMatchingCandidates(
+        ?string $manufacturer,
+        ?int $displacementCc,
+        ?int $powerKw,
+        ?string $fuel,
+        int $powerToleranceKw = 5,
+    ): array {
+        $qb = $this->getQueryBuilderWithAlias();
+
+        if ($manufacturer !== null && trim($manufacturer) !== '') {
+            $qb->andWhere($qb->expr()->eq('LOWER(' . self::ALIAS . '.manufacturer)', 'LOWER(:manufacturer)'))
+                ->setParameter('manufacturer', $manufacturer);
+        }
+
+        if ($displacementCc !== null) {
+            $qb->andWhere($qb->expr()->eq(self::ALIAS . '.displacementCc', ':displacementCc'))
+                ->setParameter('displacementCc', $displacementCc);
+        }
+
+        if ($powerKw !== null) {
+            $qb->andWhere($qb->expr()->between(self::ALIAS . '.powerKw', ':powerMin', ':powerMax'))
+                ->setParameter('powerMin', $powerKw - $powerToleranceKw)
+                ->setParameter('powerMax', $powerKw + $powerToleranceKw);
+        }
+
+        if ($fuel !== null && trim($fuel) !== '') {
+            $qb->andWhere($qb->expr()->eq(self::ALIAS . '.fuel', ':fuel'))
+                ->setParameter('fuel', $fuel);
+        }
+
+        $result = $qb->getQuery()->getResult();
+
+        return array_values(array_filter($result, static fn (mixed $item): bool => $item instanceof Engine));
+    }
 }

@@ -42,6 +42,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
@@ -165,6 +166,8 @@ class CustomerCarController extends AbstractController
             );
         } catch (InvalidDataException) {
             throw new BadRequestHttpException();
+        } catch (HttpExceptionInterface $exception) {
+            throw $exception;
         } catch (Throwable $exception) {
             throw new ServerErrorHttpException($exception->getMessage(), $exception);
         }
