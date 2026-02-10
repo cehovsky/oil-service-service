@@ -21,3 +21,4 @@ nelmio_api_doc:
             - ^/warehouse
             - ^/chat
             - ^/car-app
+            - ^/car-database
