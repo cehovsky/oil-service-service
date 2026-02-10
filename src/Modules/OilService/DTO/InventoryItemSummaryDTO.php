@@ -17,18 +17,18 @@ class InventoryItemSummaryDTO
     #[OA\Property(example: '1001')]
     private string $code;
 
-    #[OA\Property(example: 'EXT-001', nullable: true)]
-    private ?string $externalCode;
+    #[OA\Property(example: 'OEM-001', nullable: true)]
+    private ?string $oemCode;
 
     #[OA\Property(example: 12)]
     private int $stockCount;
 
-    public function __construct(string $id, string $label, string $code, ?string $externalCode, int $stockCount)
+    public function __construct(string $id, string $label, string $code, ?string $oemCode, int $stockCount)
     {
         $this->id = $id;
         $this->label = $label;
         $this->code = $code;
-        $this->externalCode = $externalCode;
+        $this->oemCode = $oemCode;
         $this->stockCount = $stockCount;
     }
 
@@ -47,9 +47,9 @@ class InventoryItemSummaryDTO
         return $this->code;
     }
 
-    public function getExternalCode(): ?string
+    public function getOemCode(): ?string
     {
-        return $this->externalCode;
+        return $this->oemCode;
     }
 
     public function getStockCount(): int

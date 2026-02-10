@@ -11,6 +11,7 @@ use App\OilService\DBAL\Entity\ChatMessage;
 use App\OilService\DBAL\Entity\ChatSession;
 use App\OilService\DBAL\Entity\ChatUserRequest;
 use App\OilService\DBAL\Entity\CustomerCar;
+use App\CarDatabase\DBAL\Entity\Engine as CarDatabaseEngine;
 use App\OilService\DBAL\Entity\CustomerCarHistory;
 use App\OilService\DBAL\Entity\InventoryItem;
 use App\OilService\DBAL\Entity\InventoryItemHistory;
@@ -27,7 +28,7 @@ use App\OilService\DBAL\Enum\ChatMessageRoleEnum;
 use App\OilService\DBAL\Enum\ChatSessionStatusEnum;
 use App\OilService\DBAL\Enum\ChatUserRequestStatusEnum;
 use App\OilService\DBAL\Enum\CarStatusEnum;
-use App\OilService\DBAL\Enum\CustomerCarBrandEnum;
+use App\CarDatabase\DBAL\Enum\CustomerCarBrandEnum;
 use App\OilService\DBAL\Enum\InventoryMovementTypeEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
@@ -187,6 +188,7 @@ class EntityFactory
         ?string $model = null,
         ?string $vin = null,
         ?User $user = null,
+        ?CarDatabaseEngine $engine = null,
     ): CustomerCar {
         return new CustomerCar(
             $this->uuidFactory->timeBased()->create(),
@@ -196,6 +198,7 @@ class EntityFactory
             $model,
             $vin,
             $user,
+            $engine,
         );
     }
 
@@ -247,7 +250,7 @@ class EntityFactory
         string $label,
         ?string $description,
         string $code,
-        ?string $externalCode,
+        ?string $oemCode,
         ?string $price,
         ?int $vat,
         ?string $priceVat,
@@ -262,7 +265,7 @@ class EntityFactory
             $label,
             $description,
             $code,
-            $externalCode,
+            $oemCode,
             $price,
             $vat,
             $priceVat,

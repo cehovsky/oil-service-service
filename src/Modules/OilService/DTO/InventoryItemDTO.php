@@ -23,7 +23,7 @@ class InventoryItemDTO
     private string $code;
 
     #[OA\Property(example: 'EXT-001', nullable: true)]
-    private ?string $externalCode;
+    private ?string $oemCode;
 
     #[OA\Property(example: '1200.00', nullable: true)]
     private ?string $price;
@@ -63,7 +63,7 @@ class InventoryItemDTO
         string $label,
         ?string $description,
         string $code,
-        ?string $externalCode,
+        ?string $oemCode,
         ?string $price,
         ?int $vat,
         ?string $priceVat,
@@ -78,7 +78,7 @@ class InventoryItemDTO
         $this->label = $label;
         $this->description = $description;
         $this->code = $code;
-        $this->externalCode = $externalCode;
+        $this->oemCode = $oemCode;
         $this->price = $price;
         $this->vat = $vat;
         $this->priceVat = $priceVat;
@@ -110,9 +110,9 @@ class InventoryItemDTO
         return $this->code;
     }
 
-    public function getExternalCode(): ?string
+    public function getOemCode(): ?string
     {
-        return $this->externalCode;
+        return $this->oemCode;
     }
 
     public function getPrice(): ?string

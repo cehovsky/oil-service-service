@@ -6,7 +6,7 @@ namespace App\Modules\OilService\DTO;
 
 use App\Modules\OilService\Validation\Constraint\ExistingOilServiceUser;
 use App\Modules\OilService\Validation\Constraint\UniqueCustomerCarVin;
-use App\OilService\DBAL\Enum\CustomerCarBrandEnum;
+use App\CarDatabase\DBAL\Enum\CustomerCarBrandEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -34,6 +34,10 @@ class CustomerCarCreateRequestDTO
     #[Assert\Uuid]
     #[ExistingOilServiceUser]
     private ?string $userId = null;
+
+    #[OA\Property(example: 'b7ed468c-d590-4e19-a06c-deec3b2ff6b7', nullable: true)]
+    #[Assert\Uuid]
+    private ?string $engineId = null;
 
     public function getLicensePlate(): string
     {
@@ -91,6 +95,18 @@ class CustomerCarCreateRequestDTO
     public function setUserId(?string $userId): self
     {
         $this->userId = $userId;
+
+        return $this;
+    }
+
+    public function getEngineId(): ?string
+    {
+        return $this->engineId;
+    }
+
+    public function setEngineId(?string $engineId): self
+    {
+        $this->engineId = $engineId;
 
         return $this;
     }

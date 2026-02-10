@@ -16,13 +16,19 @@ class CustomerCarDetailDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: CustomerCarHistoryDTO::class)))]
     private array $history;
 
+    /** @var CustomerCarEngineFilterDTO[] */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: CustomerCarEngineFilterDTO::class)))]
+    private array $engineFilters;
+
     /**
      * @param CustomerCarHistoryDTO[] $history
+     * @param CustomerCarEngineFilterDTO[] $engineFilters
      */
-    public function __construct(CustomerCarDTO $car, array $history)
+    public function __construct(CustomerCarDTO $car, array $history, array $engineFilters)
     {
         $this->car = $car;
         $this->history = $history;
+        $this->engineFilters = $engineFilters;
     }
 
     public function getCar(): CustomerCarDTO
@@ -36,5 +42,13 @@ class CustomerCarDetailDTO
     public function getHistory(): array
     {
         return $this->history;
+    }
+
+    /**
+     * @return CustomerCarEngineFilterDTO[]
+     */
+    public function getEngineFilters(): array
+    {
+        return $this->engineFilters;
     }
 }

@@ -17,6 +17,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'oil_service_inventory_item')]
+#[ORM\Index(name: 'idx_oem_code', columns: ['oem_code'])]
 #[ORM\Entity(repositoryClass: InventoryItemRepository::class)]
 class InventoryItem
 {
@@ -39,8 +40,8 @@ class InventoryItem
     private string $code;
 
     #[Assert\Length(max: 255)]
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $externalCode = null;
+    #[ORM\Column(name: 'oem_code', length: 255, nullable: true)]
+    private ?string $oemCode = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 16, scale: 2, nullable: true)]
     private ?string $price;
@@ -85,7 +86,7 @@ class InventoryItem
         string $label,
         ?string $description,
         string $code,
-        ?string $externalCode,
+        ?string $oemCode,
         ?string $price,
         ?int $vat,
         ?string $priceVat,
@@ -99,7 +100,7 @@ class InventoryItem
         $this->label = $label;
         $this->description = $description;
         $this->code = $code;
-        $this->externalCode = $externalCode;
+        $this->oemCode = $oemCode;
         $this->price = $price;
         $this->vat = $vat;
         $this->priceVat = $priceVat;
@@ -124,14 +125,14 @@ class InventoryItem
         return $this;
     }
 
-    public function getExternalCode(): ?string
+    public function getOemCode(): ?string
     {
-        return $this->externalCode;
+        return $this->oemCode;
     }
 
-    public function setExternalCode(?string $externalCode): self
+    public function setOemCode(?string $oemCode): self
     {
-        $this->externalCode = $externalCode;
+        $this->oemCode = $oemCode;
 
         return $this;
     }

@@ -11,7 +11,7 @@ enum InventoryItemGridSortEnum: string implements OrderEnumInterface
 {
     case LABEL = 'label';
     case CODE = 'code';
-    case EXTERNAL_CODE = 'externalCode';
+    case OEM_CODE = 'oemCode';
     case PRICE = 'price';
     case VAT = 'vat';
     case PRICE_VAT = 'priceVat';

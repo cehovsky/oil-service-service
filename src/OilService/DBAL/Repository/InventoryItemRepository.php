@@ -63,4 +63,21 @@ class InventoryItemRepository extends ServiceEntityRepository
 
         return $result;
     }
+
+    public function findInStockByOemCode(string $oemCode): ?InventoryItem
+    {
+        $qb = $this->getQueryBuilderWithAlias();
+
+        $qb->andWhere($qb->expr()->eq(self::ALIAS . '.oemCode', ':oemCode'))
+            ->andWhere($qb->expr()->gt(self::ALIAS . '.stockCount', ':stockCount'))
+            ->setParameter('oemCode', $oemCode)
+            ->setParameter('stockCount', 0)
+            ->setMaxResults(1);
+
+        $result = $qb->getQuery()->getOneOrNullResult();
+
+        assert($result instanceof InventoryItem || $result === null);
+
+        return $result;
+    }
 }

@@ -32,7 +32,7 @@ class InventoryItemService
         string $label,
         ?string $description,
         string $code,
-        ?string $externalCode,
+        ?string $oemCode,
         ?string $price,
         ?int $vat,
         AuthUser $actor,
@@ -56,7 +56,7 @@ class InventoryItemService
             $label,
             $description,
             $code,
-            $externalCode,
+            $oemCode,
             $priceValue,
             $vatValue,
             $priceVatValue,
@@ -76,7 +76,7 @@ class InventoryItemService
         string $label,
         ?string $description,
         string $code,
-        ?string $externalCode,
+        ?string $oemCode,
         ?string $price,
         ?int $vat,
         AuthUser $actor,
@@ -97,7 +97,7 @@ class InventoryItemService
         $inventoryItem->setLabel($label);
         $inventoryItem->setDescription($description);
         $inventoryItem->setCode($code);
-        $inventoryItem->setExternalCode($externalCode);
+        $inventoryItem->setOemCode($oemCode);
         $inventoryItem->setPrice($priceValue);
         $inventoryItem->setVat($vatValue);
         $inventoryItem->setPriceVat($priceVatValue);

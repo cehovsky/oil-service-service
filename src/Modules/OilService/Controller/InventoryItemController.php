@@ -49,7 +49,7 @@ class InventoryItemController extends AbstractController
     private const string FILTER_LABEL_KEY = 'label';
     private const string FILTER_DESCRIPTION_KEY = 'description';
     private const string FILTER_CODE_KEY = 'code';
-    private const string FILTER_EXTERNAL_CODE_KEY = 'externalCode';
+    private const string FILTER_OEM_CODE_KEY = 'oemCode';
     private const string FILTER_PRICE_KEY = 'price';
     private const string FILTER_VAT_KEY = 'vat';
     private const string FILTER_PRICE_VAT_KEY = 'priceVat';
@@ -127,7 +127,7 @@ class InventoryItemController extends AbstractController
                 $createRequestDTO->getLabel(),
                 $createRequestDTO->getDescription(),
                 $createRequestDTO->getCode(),
-                $createRequestDTO->getExternalCode(),
+                $createRequestDTO->getOemCode(),
                 $createRequestDTO->getPrice(),
                 $createRequestDTO->getVat(),
                 $user,
@@ -216,7 +216,7 @@ class InventoryItemController extends AbstractController
                 $updateRequestDTO->getLabel(),
                 $updateRequestDTO->getDescription(),
                 $updateRequestDTO->getCode(),
-                $updateRequestDTO->getExternalCode(),
+                $updateRequestDTO->getOemCode(),
                 $updateRequestDTO->getPrice(),
                 $updateRequestDTO->getVat(),
                 $user,
@@ -322,12 +322,12 @@ class InventoryItemController extends AbstractController
                 example: '1001'
             ),
             new OA\Parameter(
-                name: self::FILTER_EXTERNAL_CODE_KEY,
-                description: 'non-strict filtering',
+                name: self::FILTER_OEM_CODE_KEY,
+                description: 'Filter by OEM code (contains)',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(type: 'string'),
-                example: 'EXT-001'
+                example: 'OEM-001'
             ),
             new OA\Parameter(
                 name: self::FILTER_PRICE_KEY,
@@ -473,17 +473,17 @@ class InventoryItemController extends AbstractController
             }
 
             try {
-                $externalCode = $request->query->get(self::FILTER_EXTERNAL_CODE_KEY);
+                $oemCode = $request->query->get(self::FILTER_OEM_CODE_KEY);
 
-                assert(is_string($externalCode));
+                assert(is_string($oemCode));
 
                 $qb->andWhere(
                     $qb->expr()->like(
-                        InventoryItemRepository::ALIAS . '.externalCode',
-                        ':externalCode'
+                        InventoryItemRepository::ALIAS . '.oemCode',
+                        ':oemCode'
                     )
                 );
-                $qb->setParameter('externalCode', '%' . $externalCode . '%');
+                $qb->setParameter('oemCode', '%' . $oemCode . '%');
             } catch (Throwable) {
                 // pass
             }

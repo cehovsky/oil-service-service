@@ -24,9 +24,11 @@ use App\Modules\OilService\DTO\CustomerCarUpdateRequestDTO;
 use App\Modules\OilService\DTO\CustomerCarUpdateResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
 use App\Modules\OilService\Grid\Enum\CustomerCarGridSortEnum;
+use App\OilService\DBAL\Repository\InventoryItemRepository;
+use App\CarDatabase\DBAL\Enum\CustomerCarBrandEnum;
+use App\CarDatabase\DBAL\Repository\EngineRepository;
 use App\OilService\CustomerCarService;
 use App\OilService\DBAL\Entity\CustomerCar;
-use App\OilService\DBAL\Enum\CustomerCarBrandEnum;
 use App\OilService\DBAL\Repository\CustomerCarHistoryRepository;
 use App\OilService\DBAL\Repository\CustomerCarRepository;
 use App\OilService\DBAL\Repository\UserRepository;
@@ -59,6 +61,8 @@ class CustomerCarController extends AbstractController
         private readonly CustomerCarRepository $customerCarRepository,
         private readonly CustomerCarHistoryRepository $customerCarHistoryRepository,
         private readonly UserRepository $userRepository,
+        private readonly EngineRepository $engineRepository,
+        private readonly InventoryItemRepository $inventoryItemRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ApiGridPropertyHelper $apiGridPropertyHelper,
         private readonly ApiGridManager $apiGridManager,
@@ -134,12 +138,22 @@ class CustomerCarController extends AbstractController
                 $user = $this->userRepository->find($createRequestDTO->getUserId());
             }
 
+            $engine = null;
+            if ($createRequestDTO->getEngineId() !== null) {
+                $engine = $this->engineRepository->find($createRequestDTO->getEngineId());
+
+                if ($engine === null) {
+                    throw new BadRequestHttpException('Engine not found.');
+                }
+            }
+
             $car = $this->customerCarService->createCustomerCar(
                 $createRequestDTO->getLicensePlate(),
                 $createRequestDTO->getBrand() !== null ? CustomerCarBrandEnum::from($createRequestDTO->getBrand()) : null,
                 $createRequestDTO->getModel(),
                 $createRequestDTO->getVin(),
                 $user,
+                $engine,
             );
 
             $responseDTO = $this->dtoFactory->createCustomerCarCreateResponseDTO($car);
@@ -234,6 +248,15 @@ class CustomerCarController extends AbstractController
                 $user = $this->userRepository->find($updateRequestDTO->getUserId());
             }
 
+            $engine = null;
+            if ($updateRequestDTO->getEngineId() !== null) {
+                $engine = $this->engineRepository->find($updateRequestDTO->getEngineId());
+
+                if ($engine === null) {
+                    throw new BadRequestHttpException('Engine not found.');
+                }
+            }
+
             $this->customerCarService->updateCustomerCar(
                 $car,
                 $updateRequestDTO->getLicensePlate(),
@@ -241,6 +264,7 @@ class CustomerCarController extends AbstractController
                 $updateRequestDTO->getModel(),
                 $updateRequestDTO->getVin(),
                 $user,
+                $engine,
             );
 
             $responseDTO = $this->dtoFactory->createCustomerCarUpdateResponseDTO($car);
@@ -307,7 +331,26 @@ class CustomerCarController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $responseDTO = $this->dtoFactory->createCustomerCarInfoResponseDTO($car);
+        $engineFilters = [];
+        $engine = $car->getEngine();
+
+        if ($engine !== null) {
+            foreach ($engine->getEngineFilters()->toArray() as $engineFilter) {
+                $oemCode = $engineFilter->getFilter()->getOemCode();
+                $inventoryItem = null;
+
+                if (is_string($oemCode) && trim($oemCode) !== '') {
+                    $inventoryItem = $this->inventoryItemRepository->findInStockByOemCode($oemCode);
+                }
+
+                $engineFilters[] = $this->dtoFactory->createCustomerCarEngineFilterDTO(
+                    $engineFilter,
+                    $inventoryItem,
+                );
+            }
+        }
+
+        $responseDTO = $this->dtoFactory->createCustomerCarInfoResponseDTO($car, $engineFilters);
 
         return $this->json($responseDTO);
     }
@@ -677,6 +720,78 @@ class CustomerCarController extends AbstractController
         } catch (Throwable $exception) {
             throw new ServerErrorHttpException($exception->getMessage(), $exception);
         }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'Customer Cars',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: CustomerCarUpdateResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(type: ErrorCollection::class)
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/customer-cars/{carId}/engine/resolve',
+        name: 'oil_service_customer_car_resolve_engine',
+        methods: ['PUT']
+    )]
+    public function resolveEngine(string $carId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $car = $this->customerCarRepository->find($carId);
+
+        if ($car === null) {
+            throw new NotFoundHttpException();
+        }
+
+        $engineCode = $car->getDkMotorTyp();
+
+        if ($engineCode === null || trim($engineCode) === '') {
+            throw new BadRequestHttpException('Engine code is missing.');
+        }
+
+        $engine = $this->customerCarService->resolveEngineByCode($car, $engineCode);
+
+        if ($engine === null) {
+            throw new BadRequestHttpException('Engine not found.');
+        }
+
+        $responseDTO = $this->dtoFactory->createCustomerCarUpdateResponseDTO($car);
+
+        return $this->json($responseDTO);
     }
 
     #[OA\Delete(

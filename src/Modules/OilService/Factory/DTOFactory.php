@@ -110,9 +110,12 @@ use App\Modules\OilService\DTO\CustomerCarInfoResponseDTO;
 use App\Modules\OilService\DTO\CustomerCarListResponseDTO;
 use App\Modules\OilService\DTO\CustomerCarHistoryDTO;
 use App\Modules\OilService\DTO\CustomerCarHistoryDeleteResponseDTO;
+use App\Modules\OilService\DTO\CustomerCarEngineFilterDTO;
 use App\Modules\OilService\DTO\OrderCustomerCarResolveResponseDTO;
 use App\Modules\OilService\DTO\OrderCustomerCarConflictResponseDTO;
 use App\Modules\Users\DTO\UserDTO;
+use App\Modules\CarDatabase\DTO\EngineSummaryDTO;
+use App\Modules\CarDatabase\DTO\FilterSummaryDTO;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\ChatKnowledgeItem;
 use App\OilService\DBAL\Entity\ChatMessage;
@@ -130,6 +133,9 @@ use App\OilService\DBAL\Entity\Term;
 use App\OilService\DBAL\Entity\User;
 use App\OilService\DBAL\Entity\CustomerCar;
 use App\OilService\DBAL\Entity\CustomerCarHistory;
+use App\CarDatabase\DBAL\Entity\Engine as CarDatabaseEngine;
+use App\CarDatabase\DBAL\Entity\Filter as CarDatabaseFilter;
+use App\CarDatabase\DBAL\Entity\EngineFilter as CarDatabaseEngineFilter;
 use App\OilService\DBAL\Enum\ChatMessageRoleEnum;
 use App\Warehouse\DBAL\Entity\StorageContainer;
 use App\Warehouse\DBAL\Entity\StorageContainerMaterial;
@@ -1032,7 +1038,7 @@ class DTOFactory
             $inventoryItem->getId()->__toString(),
             $inventoryItem->getLabel(),
             $inventoryItem->getCode(),
-            $inventoryItem->getExternalCode(),
+            $inventoryItem->getOemCode(),
             $inventoryItem->getStockCount(),
         );
     }
@@ -1082,7 +1088,7 @@ class DTOFactory
             $inventoryItem->getLabel(),
             $inventoryItem->getDescription(),
             $inventoryItem->getCode(),
-            $inventoryItem->getExternalCode(),
+            $inventoryItem->getOemCode(),
             $inventoryItem->getPrice(),
             $inventoryItem->getVat(),
             $inventoryItem->getPriceVat(),
@@ -1229,6 +1235,7 @@ class DTOFactory
             $car->getModel(),
             $car->getVin(),
             $car->getUser() ? $this->createOilServiceUserDTOWithoutCars($car->getUser()) : null,
+            $car->getEngine() ? $this->createEngineSummaryDTO($car->getEngine()) : null,
             $car->getCreatedAt()->format(DateTimeInterface::ATOM),
             $car->getDkDatumPrvniRegistrace(),
             $car->getDkDatumPrvniRegistraceVCr(),
@@ -1317,6 +1324,41 @@ class DTOFactory
         );
     }
 
+    public function createEngineSummaryDTO(CarDatabaseEngine $engine): EngineSummaryDTO
+    {
+        return new EngineSummaryDTO(
+            $engine->getId()->__toString(),
+            $engine->getManufacturer(),
+            $engine->getModel(),
+            $engine->getEngineCode(),
+        );
+    }
+
+    public function createFilterSummaryDTO(CarDatabaseFilter $filter): FilterSummaryDTO
+    {
+        return new FilterSummaryDTO(
+            $filter->getId()->__toString(),
+            $filter->getFilterType()->value,
+            $filter->getManufacturer(),
+            $filter->getCode(),
+            $filter->getOemCode(),
+        );
+    }
+
+    public function createCustomerCarEngineFilterDTO(
+        CarDatabaseEngineFilter $engineFilter,
+        ?InventoryItem $inventoryItem,
+    ): CustomerCarEngineFilterDTO {
+        $inventoryItemDTO = $inventoryItem !== null ? $this->createInventoryItemSummaryDTO($inventoryItem) : null;
+
+        return new CustomerCarEngineFilterDTO(
+            $this->createFilterSummaryDTO($engineFilter->getFilter()),
+            $inventoryItemDTO,
+            $engineFilter->isPrimary(),
+            $engineFilter->getSource(),
+        );
+    }
+
     /**
      * @param CustomerCar[] $cars
      *
@@ -1358,13 +1400,17 @@ class DTOFactory
         return $items;
     }
 
-    public function createCustomerCarDetailDTO(CustomerCar $car): CustomerCarDetailDTO
+    /**
+     * @param CustomerCarEngineFilterDTO[] $engineFilters
+     */
+    public function createCustomerCarDetailDTO(CustomerCar $car, array $engineFilters): CustomerCarDetailDTO
     {
         $history = $this->createCustomerCarHistoryDTOs($car->getHistory()->toArray());
 
         return new CustomerCarDetailDTO(
             $this->createCustomerCarDTO($car),
             $history,
+            $engineFilters,
         );
     }
 
@@ -1378,12 +1424,15 @@ class DTOFactory
         );
     }
 
-    public function createCustomerCarInfoResponseDTO(CustomerCar $car): CustomerCarInfoResponseDTO
+    /**
+     * @param CustomerCarEngineFilterDTO[] $engineFilters
+     */
+    public function createCustomerCarInfoResponseDTO(CustomerCar $car, array $engineFilters): CustomerCarInfoResponseDTO
     {
         return new CustomerCarInfoResponseDTO(
             DTOValueResolver::RESULT_SUCCESS,
             time(),
-            $this->createCustomerCarDetailDTO($car),
+            $this->createCustomerCarDetailDTO($car, $engineFilters),
         );
     }
 

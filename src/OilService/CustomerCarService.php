@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\OilService;
 
+use App\CarDatabase\DBAL\Entity\Engine;
+use App\CarDatabase\DBAL\Enum\CustomerCarBrandEnum;
+use App\CarDatabase\DBAL\Repository\EngineRepository;
 use App\Domain\Error\ErrorCollection;
 use App\Domain\Error\ErrorItem;
 use App\Domain\Exception\ValidationException;
 use App\OilService\DBAL\Entity\CustomerCar;
 use App\OilService\DBAL\Entity\CustomerCarHistory;
 use App\OilService\DBAL\Entity\User;
-use App\OilService\DBAL\Enum\CustomerCarBrandEnum;
 use App\OilService\Factory\EntityFactory;
 use App\VehicleDataCube\VehicleDataCubeService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,6 +23,7 @@ class CustomerCarService
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
         private readonly VehicleDataCubeService $vehicleDataCubeService,
+        private readonly EngineRepository $engineRepository,
     ) {
     }
 
@@ -30,6 +33,7 @@ class CustomerCarService
         ?string $model,
         ?string $vin,
         ?User $user,
+        ?Engine $engine = null,
     ): CustomerCar {
         $car = $this->entityFactory->createCustomerCar(
             $licensePlate,
@@ -37,6 +41,7 @@ class CustomerCarService
             $model,
             $vin,
             $user,
+            $engine,
         );
 
         if ($user !== null) {
@@ -56,11 +61,13 @@ class CustomerCarService
         ?string $model,
         ?string $vin,
         ?User $user,
+        ?Engine $engine,
     ): CustomerCar {
         $car->setLicensePlate($licensePlate);
         $car->setBrand($brand);
         $car->setModel($model);
         $car->setVin($vin);
+        $car->setEngine($engine);
 
         $this->assignUser($car, $user);
 
@@ -135,9 +142,53 @@ class CustomerCarService
             $car->setVin($data['VIN']);
         }
 
+        $this->tryAssignEngineFromCarData($car);
+
         $this->entityManager->flush();
 
         return true;
+    }
+
+    public function resolveEngineByCode(CustomerCar $car, string $engineCode): ?Engine
+    {
+        $engineCodeValue = trim($engineCode);
+
+        if ($engineCodeValue === '') {
+            return null;
+        }
+
+        $manufacturer = $car->getBrand()?->value;
+
+        if ($manufacturer !== null) {
+            $engine = $this->engineRepository->findOneByEngineCodeAndManufacturer($engineCodeValue, $manufacturer);
+
+            if ($engine !== null) {
+                $car->setEngine($engine);
+                $this->entityManager->flush();
+
+                return $engine;
+            }
+        }
+
+        $engine = $this->engineRepository->findOneByEngineCode($engineCodeValue);
+
+        if ($engine !== null) {
+            $car->setEngine($engine);
+            $this->entityManager->flush();
+        }
+
+        return $engine;
+    }
+
+    public function tryAssignEngineFromCarData(CustomerCar $car): void
+    {
+        $engineCode = $car->getDkMotorTyp();
+
+        if (!is_string($engineCode) || trim($engineCode) === '') {
+            return;
+        }
+
+        $this->resolveEngineByCode($car, $engineCode);
     }
 
     private function resolveBrandFromDataCube(mixed $brandName): ?CustomerCarBrandEnum

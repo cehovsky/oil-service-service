@@ -26,7 +26,7 @@ class InventoryItemUpdateRequestDTO
 
     #[OA\Property(example: 'EXT-001', nullable: true)]
     #[Assert\Length(max: 255)]
-    private ?string $externalCode = null;
+    private ?string $oemCode = null;
 
     #[OA\Property(example: '1200.00', nullable: true)]
     #[Assert\Regex(pattern: '/^\d+(?:\.\d{1,2})?$/')]
@@ -97,14 +97,14 @@ class InventoryItemUpdateRequestDTO
         return $this;
     }
 
-    public function getExternalCode(): ?string
+    public function getOemCode(): ?string
     {
-        return $this->externalCode;
+        return $this->oemCode;
     }
 
-    public function setExternalCode(?string $externalCode): self
+    public function setOemCode(?string $oemCode): self
     {
-        $this->externalCode = $externalCode;
+        $this->oemCode = $oemCode;
 
         return $this;
     }

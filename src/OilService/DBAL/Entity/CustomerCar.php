@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Entity;
 
-use App\OilService\DBAL\Enum\CustomerCarBrandEnum;
 use App\OilService\DBAL\Repository\CustomerCarRepository;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\CarDatabase\DBAL\Entity\Engine;
+use App\CarDatabase\DBAL\Enum\CustomerCarBrandEnum;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -19,6 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_license_plate', columns: ['license_plate'])]
 #[ORM\Index(name: 'idx_vin', columns: ['vin'])]
 #[ORM\Index(name: 'idx_brand', columns: ['brand'])]
+#[ORM\Index(name: 'idx_engine_id', columns: ['engine_id'])]
 #[ORM\Entity(repositoryClass: CustomerCarRepository::class)]
 class CustomerCar
 {
@@ -45,6 +47,9 @@ class CustomerCar
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'cars')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $user = null;
+    #[ORM\ManyToOne(targetEntity: Engine::class, fetch: 'LAZY')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Engine $engine = null;
 
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
@@ -317,6 +322,7 @@ class CustomerCar
         ?string $model = null,
         ?string $vin = null,
         ?User $user = null,
+        ?Engine $engine = null,
     ) {
         $this->id = $id;
         $this->licensePlate = $licensePlate;
@@ -324,6 +330,7 @@ class CustomerCar
         $this->model = $model;
         $this->vin = $vin;
         $this->user = $user;
+        $this->engine = $engine;
         $this->createdAt = $createdAt;
         $this->history = new ArrayCollection();
         $this->orders = new ArrayCollection();
@@ -390,6 +397,17 @@ class CustomerCar
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+    public function getEngine(): ?Engine
+    {
+        return $this->engine;
+    }
+
+    public function setEngine(?Engine $engine): self
+    {
+        $this->engine = $engine;
 
         return $this;
     }

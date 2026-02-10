@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\OilService\DTO;
 
+use App\Modules\CarDatabase\DTO\EngineSummaryDTO;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 
@@ -26,6 +27,9 @@ class CustomerCarDTO
 
     #[OA\Property(ref: new Model(type: OilServiceUserDTO::class), nullable: true)]
     private ?OilServiceUserDTO $user;
+
+    #[OA\Property(ref: new Model(type: EngineSummaryDTO::class), nullable: true)]
+    private ?EngineSummaryDTO $engine;
 
     #[OA\Property(example: '2025-12-30T10:00:00+00:00')]
     private string $createdAt;
@@ -289,6 +293,7 @@ class CustomerCarDTO
         ?string $model,
         ?string $vin,
         ?OilServiceUserDTO $user,
+        ?EngineSummaryDTO $engine,
         string $createdAt,
         ?string $dkDatumPrvniRegistrace,
         ?string $dkDatumPrvniRegistraceVCr,
@@ -381,6 +386,7 @@ class CustomerCarDTO
         $this->model = $model;
         $this->vin = $vin;
         $this->user = $user;
+        $this->engine = $engine;
         $this->createdAt = $createdAt;
         $this->dkDatumPrvniRegistrace = $dkDatumPrvniRegistrace;
         $this->dkDatumPrvniRegistraceVCr = $dkDatumPrvniRegistraceVCr;
@@ -496,6 +502,11 @@ class CustomerCarDTO
     public function getUser(): ?OilServiceUserDTO
     {
         return $this->user;
+    }
+
+    public function getEngine(): ?EngineSummaryDTO
+    {
+        return $this->engine;
     }
 
     public function getCreatedAt(): string
