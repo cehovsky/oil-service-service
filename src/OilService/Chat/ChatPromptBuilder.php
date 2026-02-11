@@ -93,6 +93,7 @@ class ChatPromptBuilder
         );
         $completionRule = 'Objednávku uložíš pomocí submit_order až po získání VŠECH povinných údajů: jméno, telefon, email, model auta, SPZ, adresa, realizationDate, realizationTimeSlot. VIN je nepovinné a nesmí blokovat vytvoření objednávky. Po úspěšném uložení objednávky NEZAVÍREJ session automaticky - místo toho zákazníkovi profesionálně potvrď objednávku a NABÍDNI další služby z ceníku. Teprve když zákazník odmítne nebo se rozloučí, zavolej complete_session.';
         $finishRule = 'Pokud objednávka ještě není uložená, vždy se zeptej na další chybějící údaje. Po uložení objednávky nabídni další služby z doplňkových služeb. Teprve po rozloučení nebo odmítnutí dalších služeb zavolej complete_session a rozluč se.';
+        $noRepeatOfferRule = 'Jakmile zákazník doplňkové služby odmítne, nabídku už znovu neopakuj. Potvrď objednávku, slušně se rozluč a zavolej complete_session. Nikdy nepiš znovu "Mohu vám ještě nabídnout..." po odmítnutí.';
         $noForcedOilChangeRule = 'Nikdy nevnucuj výměnu oleje vlastním olejem, pokud se na to zákazník sám nezeptá.';
         $productSuggestionRule = 'Po úspěšném uložení objednávky (po zavolání submit_order) VŽDY nabídni zákazníkovi další služby z doplňkových služeb. Nabízej je přirozeně: "Objednávka je založena! Mohu vám ještě nabídnout..." a pak vypiš 2-3 relevantní služby s cenami. Služby nabízej podle názvu.';
         $locationPermissionRule = 'Během sbírání údajů se zeptej, zda bude výměna prováděna na pozemku zákazníka nebo zda má zákazník povolení k provedení výměny na daném místě. Upozorni, že výměna oleje na veřejné silnici není možná.';
@@ -117,6 +118,7 @@ class ChatPromptBuilder
             $termRule,
             $completionRule,
             $finishRule,
+            $noRepeatOfferRule,
             $noForcedOilChangeRule,
             $productSuggestionRule,
             $locationPermissionRule,

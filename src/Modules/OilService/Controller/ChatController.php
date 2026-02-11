@@ -281,6 +281,8 @@ class ChatController extends AbstractController
             );
 
             return $this->json($responseDTO);
+        } catch (BadRequestHttpException $e) {
+            throw $e;
         } catch (NotFoundHttpException $e) {
             throw $e;
         } catch (ValidationException $e) {

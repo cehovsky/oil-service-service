@@ -21,6 +21,9 @@ class ChatMessageResponseDTO
     #[OA\Property(example: 'S2600001')]
     private string $sessionIdent;
 
+    #[OA\Property(example: 'active')]
+    private string $sessionStatus;
+
     #[OA\Property(example: 'c4d5e6f7-8901-2345-6789-abcdefabcdef', nullable: true)]
     private ?string $orderId;
 
@@ -44,6 +47,7 @@ class ChatMessageResponseDTO
         int $timestamp,
         string $sessionId,
         string $sessionIdent,
+        string $sessionStatus,
         ?string $orderId,
         ?string $orderIdent,
         string $assistantMessage,
@@ -53,6 +57,7 @@ class ChatMessageResponseDTO
         $this->timestamp = $timestamp;
         $this->sessionId = $sessionId;
         $this->sessionIdent = $sessionIdent;
+        $this->sessionStatus = $sessionStatus;
         $this->orderId = $orderId;
         $this->orderIdent = $orderIdent;
         $this->assistantMessage = $assistantMessage;
@@ -77,6 +82,11 @@ class ChatMessageResponseDTO
     public function getSessionIdent(): string
     {
         return $this->sessionIdent;
+    }
+
+    public function getSessionStatus(): string
+    {
+        return $this->sessionStatus;
     }
 
     public function getOrderId(): ?string

@@ -21,6 +21,9 @@ class ChatMessageListResponseDTO
     #[OA\Property(example: 'S2600001')]
     private string $sessionIdent;
 
+    #[OA\Property(example: 'active')]
+    private string $sessionStatus;
+
     #[OA\Property(example: 'cs-CZ')]
     private string $language;
 
@@ -44,6 +47,7 @@ class ChatMessageListResponseDTO
         int $timestamp,
         string $sessionId,
         string $sessionIdent,
+        string $sessionStatus,
         string $language,
         ?string $orderId,
         ?string $orderIdent,
@@ -53,6 +57,7 @@ class ChatMessageListResponseDTO
         $this->timestamp = $timestamp;
         $this->sessionId = $sessionId;
         $this->sessionIdent = $sessionIdent;
+        $this->sessionStatus = $sessionStatus;
         $this->language = $language;
         $this->orderId = $orderId;
         $this->orderIdent = $orderIdent;
@@ -77,6 +82,11 @@ class ChatMessageListResponseDTO
     public function getSessionIdent(): string
     {
         return $this->sessionIdent;
+    }
+
+    public function getSessionStatus(): string
+    {
+        return $this->sessionStatus;
     }
 
     public function getLanguage(): string
