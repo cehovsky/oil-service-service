@@ -11,7 +11,7 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
-use App\Modules\OilService\DTO\OrderCreateRequestDTO;
+use App\Modules\OilService\DTO\OrderPublicCreateRequestDTO;
 use App\Modules\OilService\DTO\OrderCreateResponseDTO;
 use App\Modules\OilService\DTO\AvailableTermListResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
@@ -88,7 +88,7 @@ class OrderPublicController extends AbstractController
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 ref: new Model(
-                    type: OrderCreateRequestDTO::class
+                    type: OrderPublicCreateRequestDTO::class
                 ),
             )
         ),
@@ -126,7 +126,7 @@ class OrderPublicController extends AbstractController
         try {
             $orderCreateRequestDTO = $this->dtoValueResolver->resolveRequest(
                 $request,
-                OrderCreateRequestDTO::class
+                OrderPublicCreateRequestDTO::class
             );
 
             $this->dtoValueResolver->validateDTO($orderCreateRequestDTO);
@@ -145,13 +145,13 @@ class OrderPublicController extends AbstractController
                 $orderCreateRequestDTO->getCompanyIdentificationNumber(),
                 $orderCreateRequestDTO->getCompanyTaxId(),
                 $orderCreateRequestDTO->getCompanyAddress(),
-                $orderCreateRequestDTO->getOilChangeVehiclePhotoId(),
-                $orderCreateRequestDTO->getVinPhotoId(),
-                $orderCreateRequestDTO->getOldOilFilterPhotoId(),
-                $orderCreateRequestDTO->getOldOilPhotoId(),
-                $orderCreateRequestDTO->getOdometerPhotoId(),
-                $orderCreateRequestDTO->getOtherPhotoIds(),
-                OrderStatusEnum::from($orderCreateRequestDTO->getStatus()),
+                null,
+                null,
+                null,
+                null,
+                null,
+                [],
+                OrderStatusEnum::NEW,
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),
                 $this->dateTimeService->createDateFromString($orderCreateRequestDTO->getRealizationDate()),
                 $orderCreateRequestDTO->getPriceListItemIds(),

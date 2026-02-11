@@ -119,6 +119,7 @@ class ChatAssistantService
                     'email' => ['type' => 'string'],
                     'carModel' => ['type' => 'string'],
                     'licensePlate' => ['type' => 'string'],
+                    'vin' => ['type' => 'string', 'description' => 'Optional VIN'],
                     'address' => ['type' => 'string'],
                     'note' => ['type' => 'string'],
                     'isCompany' => ['type' => 'boolean'],

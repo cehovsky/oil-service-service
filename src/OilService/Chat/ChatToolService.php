@@ -41,6 +41,8 @@ class ChatToolService
         $email = (string) ($payload['email'] ?? '');
         $carModel = (string) ($payload['carModel'] ?? '');
         $licensePlate = (string) ($payload['licensePlate'] ?? '');
+        $vinRaw = isset($payload['vin']) ? trim((string) $payload['vin']) : '';
+        $vin = $vinRaw !== '' ? $vinRaw : null;
         $address = (string) ($payload['address'] ?? '');
 
         if ($fullName === '' || $phone === '' || $email === '' || $carModel === '' || $licensePlate === '' || $address === '') {
@@ -88,7 +90,7 @@ class ChatToolService
             $email,
             $carModel,
             $licensePlate,
-            null,
+            $vin,
             $address,
             $note,
             $isCompany,

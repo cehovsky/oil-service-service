@@ -83,15 +83,15 @@ class ChatPromptBuilder
             $tomorrow->format('Y-m-d'),
             $dayAfterTomorrow->format('Y-m-d'),
         );
-        $orderGoal = 'Tvým cílem je postupně získat údaje pro objednávku: jméno, telefon, email, model auta, SPZ, adresa, preferovaný termín a časový slot. Ptej se přirozeně a postupně, ne všechno najednou.';
+        $orderGoal = 'Tvým cílem je postupně získat údaje pro objednávku: jméno, telefon, email, model auta, SPZ, adresa, preferovaný termín a časový slot. VIN je nepovinné. Ptej se přirozeně a postupně, ne všechno najednou.';
         $unknownRule = 'Pokud ti chybí data, zeptej se postupně na 1-2 věci najednou, ne na všechno. Když nemůžeš odpovědět, řekni to narovinu a zapiš poznámku pro operátora.';
-        $flowRule = 'Komunikuj přirozeně a plynule. Nejprve se zeptej na základní kontakt (jméno, telefon, email), pak na auto (model, SPZ), pak na adresu a nakonec na termín. Nepiš dlouhé seznamy všech požadovaných údajů najednou.';
+        $flowRule = 'Komunikuj přirozeně a plynule. Nejprve se zeptej na základní kontakt (jméno, telefon, email), pak na auto (model, SPZ; VIN je nepovinný), pak na adresu a nakonec na termín. Nepiš dlouhé seznamy všech požadovaných údajů najednou.';
         $termRule = sprintf(
             'Preferovaný termín a čas vybírej pouze z dostupných termínů (aktivní, nejdříve za %d dny, volná kapacita). Nikdy nenabízej dnešní nebo zítřejší datum. Nejbližší možný termín je %s. Při navrhování termínů zavolej list_available_terms a uveď 2-3 nejbližší volné dny s časovými sloty. Pokud uživatel žádá obsazený termín, řekni mu to a nabídni nejbližší dostupné alternativy.',
             $minimumDaysAhead,
             $minimumAvailableDate->format('Y-m-d'),
         );
-        $completionRule = 'Objednávku uložíš pomocí submit_order až po získání VŠECH povinných údajů: jméno, telefon, email, model auta, SPZ, adresa, realizationDate, realizationTimeSlot. Po úspěšném uložení objednávky NEZAVÍREJ session automaticky - místo toho zákazníkovi profesionálně potvrď objednávku a NABÍDNI další služby z ceníku. Teprve když zákazník odmítne nebo se rozloučí, zavolej complete_session.';
+        $completionRule = 'Objednávku uložíš pomocí submit_order až po získání VŠECH povinných údajů: jméno, telefon, email, model auta, SPZ, adresa, realizationDate, realizationTimeSlot. VIN je nepovinné a nesmí blokovat vytvoření objednávky. Po úspěšném uložení objednávky NEZAVÍREJ session automaticky - místo toho zákazníkovi profesionálně potvrď objednávku a NABÍDNI další služby z ceníku. Teprve když zákazník odmítne nebo se rozloučí, zavolej complete_session.';
         $finishRule = 'Pokud objednávka ještě není uložená, vždy se zeptej na další chybějící údaje. Po uložení objednávky nabídni další služby z doplňkových služeb. Teprve po rozloučení nebo odmítnutí dalších služeb zavolej complete_session a rozluč se.';
         $noForcedOilChangeRule = 'Nikdy nevnucuj výměnu oleje vlastním olejem, pokud se na to zákazník sám nezeptá.';
         $productSuggestionRule = 'Po úspěšném uložení objednávky (po zavolání submit_order) VŽDY nabídni zákazníkovi další služby z doplňkových služeb. Nabízej je přirozeně: "Objednávka je založena! Mohu vám ještě nabídnout..." a pak vypiš 2-3 relevantní služby s cenami. Služby nabízej podle názvu.';
