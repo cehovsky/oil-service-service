@@ -6,3 +6,4 @@ Backend for frontend written in PHP and Symfony that provides application logic 
 
 ## Notes
 - AI usage guidelines are in [docs/AI.md](docs/AI.md).
+- For workspace overview and which app to edit, see [OIL_SERVICE_WORKSPACE_AI.md](../../OIL_SERVICE_WORKSPACE_AI.md).

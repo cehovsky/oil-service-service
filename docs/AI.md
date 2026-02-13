@@ -1,59 +1,32 @@
-# Instrukce pro AI agenta (projekt)
+# Oil Service Service — AI kontext
 
-## Jazyk a komunikace
-- Vždy komunikuj **česky**, ale jen v chatu. Kód, komentáře, commity, názvy a vše v projektu musí být **anglicky**
-- Buď věcný, stručný a praktický. Když si nejsi jistý, polož doplňující otázky dřív, než začneš měnit věci.
+## Co je tato aplikace
+Backend (PHP 8.5 + Symfony 7.4) pro celý ekosystém Oil Service. Poskytuje API a aplikační logiku pro administraci, webový prodej i mobilní appku techniků.
 
-## Role a úroveň práce
-- Chovej se jako **seniorní vývojář**:
-  - preferuj stabilní, udržitelné a čitelné řešení,
-  - navrhuj změny s ohledem na dlouhodobou údržbu,
-  - mysli na testy, okrajové případy, DX (developer experience) a bezpečnost.
-- Upřednostňuj **minimální, cílené změny** před velkými refaktory.
-- Pokud musíš udělat migraci, tak ji udělej pomocí příkazu `php85 bin/console doctrine:migrations:diff` a nesmíš si ten kod vymyslet sám.
+Doména řeší mobilní výměnu oleje, objednávky, plánování tras, evidenci skladu a bezpečné zpracování odpadu (vyjetý olej a související materiály).
 
-## Respektování existujícího projektu
-- **Respektuj strukturu projektu** (adresáře, naming, architekturu, vrstvy, doménové členění).
-- **Pokračuj v existujících postupech a mechanismech**:
-  - používej zavedené patterny (např. způsob validace, logování, DI, error handling),
-  - drž se existujících konvencí (kód styl, pojmenování tříd/metod, formát konfigurací),
-  - nepřidávej nové knihovny/frameworky ani nové „moderní“ postupy, pokud už projekt má své.
-- Nezaváděj paralelní řešení toho, co už v projektu existuje (např. druhý logger, druhý HTTP klient, jiné testovací nástroje, alternativní router, nové ORM, jiné config schéma).
-- Když je potřeba změnit zaběhnutý postup, nejdřív:
-  1) vysvětli proč,
-  2) navrhni nejmenší možnou změnu,
-  3) popiš dopady a migrační kroky.
+## Kdy sahat do tohoto projektu
+- Když se mění business logika, workflow objednávek nebo validace dat.
+- Když se přidávají/upravují API endpointy pro frontend, web nebo mobilní appku.
+- Když se řeší autentizace, práva uživatelů, soubory, geokódování nebo integrace.
+- Když se mění schéma databáze a migrace.
 
-## Jak postupovat při úpravách
-- Než začneš:
-  - zjisti existující podobné řešení v projektu (najdi analogické třídy/soubory),
-  - drž se stejného stylu a struktury.
-- Při návrhu řešení:
-  - popiš stručně plán kroků,
-  - u každé změny uveď „proč“ (1–2 věty),
-  - hlídej kompatibilitu a regresní rizika.
-- Po změnách:
-  - doporuč, co spustit (lint, testy, build) a na co si dát pozor.
+## Základní struktura projektu
+- `src/Modules/` — aplikační moduly podle domény (`Auth`, `CarApp`, `CarDatabase`, `Files`, `OilService`, `Users`, `Warehouse`).
+- `src/Domain/` — sdílené doménové stavební bloky (validace, typy, výjimky, HTTP, Doctrine helpery).
+- `src/Auth`, `src/OilService`, `src/Warehouse`, ... — doménové oblasti s konkrétní implementací.
+- `config/` — Symfony konfigurace, služby, routy, balíčky.
+- `migrations/` — Doctrine migrace schématu databáze.
+- `tests/` — testy backendu.
+- `public/` — veřejný vstup (`index.php`) a statické soubory.
 
-## PHP runtime a příkazy
-- Respektuj, že projekt cílí na **PHP 8.5**: používej běžné **best practices** a přiměřená moderní vylepšení dostupná v PHP 8.5, ale **nepřepisuj** kvůli tomu zavedené projektové postupy ani architekturu.
-- Pokud je potřeba použít PHP, **vždy používej `php85` místo `php`**.
-- Platí to i pro Composer:
-  - místo `composer ...` používej `php85 composer ...`
-  - místo `php composer.phar ...` používej `php85 composer.phar ...`
-- Příklady:
-  - `php85 -v`
-  - `php85 composer install`
-  - `php85 composer test`
+## Technologický kontext
+- Runtime: PHP `>=8.5`
+- Framework: Symfony `7.4.*`
+- Data: Doctrine ORM + Doctrine Migrations
+- API dokumentace: Nelmio (OpenAPI)
 
-## Výstupy (kód a návody)
-- V ukázkách preferuj změny „diff style“, pokud je to užitečné.
-- Drž se existujících toolingů (formatter, linter, test runner).
-- Neuváděj žádná citlivá data (přihlašovací údaje, klíče). Používej placeholdery typu:
-  - `<API_KEY>`, `<DB_PASSWORD>`, `<TOKEN>`.
-
-## Když chybí kontext
-- Pokud nemáš dost informací (např. neznáš konvenci projektu), **nejdřív se zeptej**:
-  - kde je relevantní část kódu,
-  - jaké jsou existující patterny,
-  - jaké jsou požadované okrajové případy a očekávané chování.
+## Praktické poznámky pro AI
+- Tento projekt ber jako source of truth pro doménová pravidla.
+- API kontrakty ověřuj proti `api.doc.swagger.yaml` v klientech.
+- Migrace negeneruj ručně; používej `php85 bin/console doctrine:migrations:diff`.
