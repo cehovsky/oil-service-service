@@ -68,6 +68,7 @@ class OrderService
         ?string $oldOilFilterPhotoId,
         ?string $oldOilPhotoId,
         ?string $odometerPhotoId,
+        ?int $mileage,
         array $otherPhotoIds,
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
@@ -115,6 +116,7 @@ class OrderService
             $oldOilFilterPhoto,
             $oldOilPhoto,
             $odometerPhoto,
+            $mileage,
             $otherPhotos,
             $status,
             $realizationTimeSlot,
@@ -161,6 +163,7 @@ class OrderService
         ?string $oldOilFilterPhotoId,
         ?string $oldOilPhotoId,
         ?string $odometerPhotoId,
+        ?int $mileage,
         array $otherPhotoIds,
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
@@ -209,6 +212,7 @@ class OrderService
             $oldOilFilterPhoto,
             $oldOilPhoto,
             $odometerPhoto,
+            $mileage,
             $otherPhotos,
             $status,
             $realizationTimeSlot,
@@ -259,6 +263,7 @@ class OrderService
         ?string $oldOilFilterPhotoId,
         ?string $oldOilPhotoId,
         ?string $odometerPhotoId,
+        ?int $mileage,
         array $otherPhotoIds,
         string $userId,
         bool $routeProvided,
@@ -291,6 +296,7 @@ class OrderService
         $order->setOldOilFilterPhoto($this->findFile($oldOilFilterPhotoId));
         $order->setOldOilPhoto($this->findFile($oldOilPhotoId));
         $order->setOdometerPhoto($this->findFile($odometerPhotoId));
+        $order->setMileage($mileage);
         $order->setStatus($status);
         $order->setRoute($route);
 
@@ -344,6 +350,7 @@ class OrderService
         ?string $oldOilFilterPhotoId,
         ?string $oldOilPhotoId,
         ?string $odometerPhotoId,
+        ?int $mileage,
         array $otherPhotoIds,
     ): Order {
         $order->setOilChangeVehiclePhoto($this->findFile($oilChangeVehiclePhotoId));
@@ -351,6 +358,7 @@ class OrderService
         $order->setOldOilFilterPhoto($this->findFile($oldOilFilterPhotoId));
         $order->setOldOilPhoto($this->findFile($oldOilPhotoId));
         $order->setOdometerPhoto($this->findFile($odometerPhotoId));
+        $order->setMileage($mileage);
 
         $this->syncOtherPhotos($order, $this->resolveFilesByIds($otherPhotoIds));
 

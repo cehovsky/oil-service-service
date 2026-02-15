@@ -35,6 +35,10 @@ class OrderPhotosUpdateRequestDTO
     #[FileIdExists]
     private ?string $odometerPhotoId = null;
 
+    #[OA\Property(example: 123456, nullable: true)]
+    #[Assert\PositiveOrZero]
+    private ?int $mileage = null;
+
     /**
      * @var string[]
      */
@@ -51,9 +55,23 @@ class OrderPhotosUpdateRequestDTO
         return $this->oilChangeVehiclePhotoId;
     }
 
+    public function setOilChangeVehiclePhotoId(?string $oilChangeVehiclePhotoId): self
+    {
+        $this->oilChangeVehiclePhotoId = $oilChangeVehiclePhotoId;
+
+        return $this;
+    }
+
     public function getVinPhotoId(): ?string
     {
         return $this->vinPhotoId;
+    }
+
+    public function setVinPhotoId(?string $vinPhotoId): self
+    {
+        $this->vinPhotoId = $vinPhotoId;
+
+        return $this;
     }
 
     public function getOldOilFilterPhotoId(): ?string
@@ -61,14 +79,47 @@ class OrderPhotosUpdateRequestDTO
         return $this->oldOilFilterPhotoId;
     }
 
+    public function setOldOilFilterPhotoId(?string $oldOilFilterPhotoId): self
+    {
+        $this->oldOilFilterPhotoId = $oldOilFilterPhotoId;
+
+        return $this;
+    }
+
     public function getOldOilPhotoId(): ?string
     {
         return $this->oldOilPhotoId;
     }
 
+    public function setOldOilPhotoId(?string $oldOilPhotoId): self
+    {
+        $this->oldOilPhotoId = $oldOilPhotoId;
+
+        return $this;
+    }
+
     public function getOdometerPhotoId(): ?string
     {
         return $this->odometerPhotoId;
+    }
+
+    public function setOdometerPhotoId(?string $odometerPhotoId): self
+    {
+        $this->odometerPhotoId = $odometerPhotoId;
+
+        return $this;
+    }
+
+    public function getMileage(): ?int
+    {
+        return $this->mileage;
+    }
+
+    public function setMileage(?int $mileage): self
+    {
+        $this->mileage = $mileage;
+
+        return $this;
     }
 
     /**
@@ -77,5 +128,15 @@ class OrderPhotosUpdateRequestDTO
     public function getOtherPhotoIds(): array
     {
         return $this->otherPhotoIds;
+    }
+
+    /**
+     * @param string[] $otherPhotoIds
+     */
+    public function setOtherPhotoIds(array $otherPhotoIds): self
+    {
+        $this->otherPhotoIds = $otherPhotoIds;
+
+        return $this;
     }
 }

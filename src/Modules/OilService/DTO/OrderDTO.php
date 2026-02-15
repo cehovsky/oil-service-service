@@ -78,6 +78,9 @@ class OrderDTO
     #[OA\Property(ref: new Model(type: FileDTO::class), nullable: true)]
     private ?FileDTO $odometerPhoto;
 
+    #[OA\Property(example: 123456, nullable: true)]
+    private ?int $mileage;
+
     /**
      * @var FileDTO[]
      */
@@ -150,6 +153,7 @@ class OrderDTO
         ?FileDTO $oldOilFilterPhoto,
         ?FileDTO $oldOilPhoto,
         ?FileDTO $odometerPhoto,
+        ?int $mileage,
         array $otherPhotos,
         string $status,
         string $realizationTimeSlot,
@@ -184,6 +188,7 @@ class OrderDTO
         $this->oldOilFilterPhoto = $oldOilFilterPhoto;
         $this->oldOilPhoto = $oldOilPhoto;
         $this->odometerPhoto = $odometerPhoto;
+        $this->mileage = $mileage;
         $this->otherPhotos = $otherPhotos;
         $this->status = $status;
         $this->realizationTimeSlot = $realizationTimeSlot;
@@ -305,6 +310,11 @@ class OrderDTO
     public function getOdometerPhoto(): ?FileDTO
     {
         return $this->odometerPhoto;
+    }
+
+    public function getMileage(): ?int
+    {
+        return $this->mileage;
     }
 
     /**

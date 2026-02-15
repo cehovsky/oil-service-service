@@ -150,6 +150,7 @@ class OrderPublicController extends AbstractController
                 null,
                 null,
                 null,
+                $orderCreateRequestDTO->getMileage(),
                 [],
                 OrderStatusEnum::NEW,
                 RealizationTimeSlotEnum::from($orderCreateRequestDTO->getRealizationTimeSlot()),

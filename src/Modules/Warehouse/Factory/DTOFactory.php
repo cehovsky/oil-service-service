@@ -455,6 +455,7 @@ class DTOFactory
                 $order->getRealizationDate()->format('Y-m-d'),
                 $order->getLatitude(),
                 $order->getLongitude(),
+                $order->getMileage(),
             );
         }
 

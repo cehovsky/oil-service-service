@@ -232,6 +232,7 @@ class CarAppOrderController extends AbstractController
                 $updateRequestDTO->getOldOilFilterPhotoId(),
                 $updateRequestDTO->getOldOilPhotoId(),
                 $updateRequestDTO->getOdometerPhotoId(),
+                $updateRequestDTO->getMileage(),
                 $updateRequestDTO->getOtherPhotoIds(),
             );
 

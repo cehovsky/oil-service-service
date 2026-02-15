@@ -54,6 +54,10 @@ class OrderPublicCreateRequestDTO
     #[Assert\Length(max: 1000)]
     private ?string $note = null;
 
+    #[OA\Property(example: 123456, nullable: true)]
+    #[Assert\PositiveOrZero]
+    private ?int $mileage = null;
+
     #[OA\Property(enum: RealizationTimeSlotEnum::VALUES, example: 'morning')]
     #[Assert\NotBlank]
     #[Assert\Choice(callback: [RealizationTimeSlotEnum::class, 'values'])]
@@ -187,6 +191,18 @@ class OrderPublicCreateRequestDTO
     public function setNote(?string $note): self
     {
         $this->note = $note;
+
+        return $this;
+    }
+
+    public function getMileage(): ?int
+    {
+        return $this->mileage;
+    }
+
+    public function setMileage(?int $mileage): self
+    {
+        $this->mileage = $mileage;
 
         return $this;
     }

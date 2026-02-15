@@ -123,6 +123,10 @@ class Order
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?File $odometerPhoto = null;
 
+    #[Assert\PositiveOrZero]
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $mileage = null;
+
     #[Assert\NotNull]
     #[ORM\Column(type: Types::STRING, enumType: OrderStatusEnum::class)]
     private OrderStatusEnum $status;
@@ -195,6 +199,7 @@ class Order
         ?File $oldOilFilterPhoto,
         ?File $oldOilPhoto,
         ?File $odometerPhoto,
+        ?int $mileage,
         array $otherPhotos,
         OrderStatusEnum $status,
         RealizationTimeSlotEnum $realizationTimeSlot,
@@ -228,6 +233,7 @@ class Order
         $this->oldOilFilterPhoto = $oldOilFilterPhoto;
         $this->oldOilPhoto = $oldOilPhoto;
         $this->odometerPhoto = $odometerPhoto;
+        $this->mileage = $mileage;
         $this->status = $status;
         $this->realizationTimeSlot = $realizationTimeSlot;
         $this->realizationDate = $realizationDate;
@@ -497,6 +503,18 @@ class Order
     public function setOdometerPhoto(?File $odometerPhoto): self
     {
         $this->odometerPhoto = $odometerPhoto;
+
+        return $this;
+    }
+
+    public function getMileage(): ?int
+    {
+        return $this->mileage;
+    }
+
+    public function setMileage(?int $mileage): self
+    {
+        $this->mileage = $mileage;
 
         return $this;
     }

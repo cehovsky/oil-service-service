@@ -30,6 +30,9 @@ class OrderSummaryDTO
     #[OA\Property(example: 14.421, nullable: true)]
     private ?float $longitude;
 
+    #[OA\Property(example: 123456, nullable: true)]
+    private ?int $mileage;
+
     public function __construct(
         string $id,
         string $ident,
@@ -38,6 +41,7 @@ class OrderSummaryDTO
         string $realizationDate,
         ?float $latitude,
         ?float $longitude,
+        ?int $mileage,
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -46,6 +50,7 @@ class OrderSummaryDTO
         $this->realizationDate = $realizationDate;
         $this->latitude = $latitude;
         $this->longitude = $longitude;
+        $this->mileage = $mileage;
     }
 
     public function getId(): string
@@ -81,5 +86,10 @@ class OrderSummaryDTO
     public function getLongitude(): ?float
     {
         return $this->longitude;
+    }
+
+    public function getMileage(): ?int
+    {
+        return $this->mileage;
     }
 }

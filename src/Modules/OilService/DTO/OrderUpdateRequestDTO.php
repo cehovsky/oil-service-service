@@ -56,6 +56,10 @@ class OrderUpdateRequestDTO
     #[Assert\Length(max: 1000)]
     private ?string $note = null;
 
+    #[OA\Property(example: 123456, nullable: true)]
+    #[Assert\PositiveOrZero]
+    private ?int $mileage = null;
+
     #[OA\Property(enum: OrderStatusEnum::VALUES, example: 'new')]
     #[Assert\NotBlank]
     #[Assert\Choice(callback: [OrderStatusEnum::class, 'values'])]
@@ -245,6 +249,18 @@ class OrderUpdateRequestDTO
     public function setNote(?string $note): self
     {
         $this->note = $note;
+
+        return $this;
+    }
+
+    public function getMileage(): ?int
+    {
+        return $this->mileage;
+    }
+
+    public function setMileage(?int $mileage): self
+    {
+        $this->mileage = $mileage;
 
         return $this;
     }

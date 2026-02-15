@@ -245,6 +245,7 @@ class DTOFactory
             $this->createFileDTO($order->getOldOilFilterPhoto()),
             $this->createFileDTO($order->getOldOilPhoto()),
             $this->createFileDTO($order->getOdometerPhoto()),
+            $order->getMileage(),
             $otherPhotos,
             $order->getStatus()->value,
             $order->getRealizationTimeSlot()->value,
@@ -756,6 +757,7 @@ class DTOFactory
             $order->getRealizationDate()->format('Y-m-d'),
             $order->getLatitude(),
             $order->getLongitude(),
+            $order->getMileage(),
         );
     }
 
