@@ -12,6 +12,7 @@ use App\Domain\Exception\InvalidDataException;
 use App\Domain\Exception\ServerErrorHttpException;
 use App\Domain\Exception\ValidationException;
 use App\Domain\Http\ResponseFactory;
+use App\Modules\CarApp\DTO\OrderMaterialsUpdateRequestDTO;
 use App\Modules\CarApp\DTO\OrderPhotosUpdateRequestDTO;
 use App\Modules\OilService\DTO\OrderInventoryItemUpdateItemDTO;
 use App\Modules\OilService\DTO\OrderInventoryItemsUpdateRequestDTO;
@@ -22,6 +23,9 @@ use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\OrderInventoryItemService;
 use App\OilService\OrderService;
+use App\Warehouse\DBAL\Entity\StorageContainerLocation;
+use App\Warehouse\DBAL\Repository\StorageContainerMaterialRepository;
+use App\Warehouse\StorageContainerMaterialService;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -45,6 +49,8 @@ class CarAppOrderController extends AbstractController
         private readonly OrderService $orderService,
         private readonly Security $security,
         private readonly OrderAccessService $orderAccessService,
+        private readonly StorageContainerMaterialRepository $storageContainerMaterialRepository,
+        private readonly StorageContainerMaterialService $storageContainerMaterialService,
     ) {
     }
 
@@ -256,6 +262,160 @@ class CarAppOrderController extends AbstractController
                 'Bearer' => []
             ],
         ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                ref: new Model(
+                    type: OrderMaterialsUpdateRequestDTO::class
+                ),
+            )
+        ),
+        tags: [
+            'Car App Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
+                    type: OrderUpdateResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request',
+                content: new Model(
+                    type: ErrorCollection::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/car-app/orders/{orderId}/materials',
+        name: 'oil_service_car_app_order_materials_update',
+        methods: ['PUT']
+    )]
+    public function updateMaterials(Request $request, string $orderId): JsonResponse
+    {
+        $user = $this->requireActiveUser();
+
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        $this->orderAccessService->assertUserHasAccessToOrder($order, $user);
+
+        $route = $order->getRoute();
+
+        if ($route === null) {
+            throw new AccessDeniedHttpException('Order has no assigned route.');
+        }
+
+        $routeId = $route->getId()->__toString();
+
+        try {
+            $updateRequestDTO = $this->dtoValueResolver->resolveRequest(
+                $request,
+                OrderMaterialsUpdateRequestDTO::class
+            );
+
+            $this->dtoValueResolver->validateDTO($updateRequestDTO);
+
+            foreach ($updateRequestDTO->getItems() as $item) {
+                $materialId = $item->getMaterialId();
+                $volume = $item->getVolume();
+
+                if ($materialId !== null) {
+                    $existingMaterial = $this->storageContainerMaterialRepository->find($materialId);
+
+                    if ($existingMaterial === null) {
+                        throw new NotFoundHttpException('Storage container material not found.');
+                    }
+
+                    if ($existingMaterial->getOrder()?->getId()->__toString() !== $order->getId()->__toString()) {
+                        throw new AccessDeniedHttpException('Material does not belong to this order.');
+                    }
+
+                    if ($volume === 0.0) {
+                        $this->storageContainerMaterialService->deleteStorageContainerMaterial($existingMaterial);
+                        continue;
+                    }
+
+                    $this->assertStorageContainerAllowedForRoute($order, $item->getStorageContainerId());
+
+                    $this->storageContainerMaterialService->updateStorageContainerMaterial(
+                        $existingMaterial,
+                        $item->getStorageContainerId(),
+                        $item->getWasteMaterialId(),
+                        $volume,
+                        $existingMaterial->getIsRecycled(),
+                        $user,
+                        null,
+                        $routeId,
+                        $existingMaterial->getRecycling()?->getId()->__toString(),
+                        $order->getId()->__toString(),
+                    );
+
+                    continue;
+                }
+
+                if ($volume <= 0.0) {
+                    continue;
+                }
+
+                $this->assertStorageContainerAllowedForRoute($order, $item->getStorageContainerId());
+
+                $this->storageContainerMaterialService->createStorageContainerMaterial(
+                    $item->getStorageContainerId(),
+                    $item->getWasteMaterialId(),
+                    $volume,
+                    false,
+                    $user,
+                    null,
+                    $routeId,
+                    null,
+                    $order->getId()->__toString(),
+                );
+            }
+
+            $updatedOrder = $this->orderRepository->find($orderId) ?? $order;
+            $responseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($updatedOrder);
+
+            return $this->json($responseDTO);
+        } catch (ValidationException $e) {
+            return $this->responseFactory->createResponseErrorCollection(
+                $e->getErrorCollection()
+            );
+        } catch (InvalidDataException) {
+            throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
         tags: [
             'Car App Orders',
         ],
@@ -421,5 +581,23 @@ class CarAppOrderController extends AbstractController
         }
 
         return $user;
+    }
+
+    private function assertStorageContainerAllowedForRoute(Order $order, string $storageContainerId): void
+    {
+        $route = $order->getRoute();
+
+        if ($route === null) {
+            throw new AccessDeniedHttpException('Order has no assigned route.');
+        }
+
+        /** @var StorageContainerLocation $location */
+        foreach ($route->getStorageContainerLocations() as $location) {
+            if ($location->getStorageContainer()->getId()->__toString() === $storageContainerId) {
+                return;
+            }
+        }
+
+        throw new AccessDeniedHttpException('Storage container is not assigned to route.');
     }
 }
