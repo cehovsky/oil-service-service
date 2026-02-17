@@ -12,6 +12,7 @@ use App\Files\DBAL\Entity\File;
 use App\Files\DBAL\Repository\FileRepository;
 use App\Geocoding\GeocodingResult;
 use App\Geocoding\GeocodingService;
+use App\Geocoding\ServiceAreaPolygonChecker;
 use App\OilService\DBAL\Entity\CustomerCar;
 use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\PriceListItem;
@@ -42,6 +43,8 @@ class OrderService
         private readonly CustomerCarRepository $customerCarRepository,
         private readonly CustomerCarService $customerCarService,
         private readonly GeocodingService $geocodingService,
+        private readonly ServiceAreaPolygonChecker $serviceAreaPolygonChecker,
+        private readonly string $publicOrderServiceAreaPolygon = '',
     ) {
     }
 
@@ -79,6 +82,21 @@ class OrderService
     ): Order {
         if ($route !== null) {
             $realizationDate = $route->getDate();
+        }
+
+        $geocodingResult = $this->geocodingService->geocodeAddress($address);
+        if (!$geocodingResult->isSuccess()) {
+            throw $this->createAddressValidationException('Adresa neexistuje.', 'invalidAddress');
+        }
+
+        if (
+            !$this->serviceAreaPolygonChecker->isPointInsidePolygon(
+                $geocodingResult->getLatitude(),
+                $geocodingResult->getLongitude(),
+                $this->publicOrderServiceAreaPolygon,
+            )
+        ) {
+            throw $this->createAddressValidationException('Adresa je mimo povolenou oblast.', 'addressOutsideServiceArea');
         }
 
         $user = $this->findOrCreateUser($email, $phone, $fullName);
@@ -123,6 +141,8 @@ class OrderService
             $realizationDate,
             $user,
             $route,
+            $geocodingResult->getLatitude(),
+            $geocodingResult->getLongitude(),
             $customerCar,
         );
 
@@ -702,6 +722,20 @@ class OrderService
                 'Selected price list items are not available for public orders.',
                 'invalidPriceListItems',
                 null,
+            )
+        );
+
+        return new ValidationException(errorCollection: $errorCollection);
+    }
+
+    private function createAddressValidationException(string $message, string $code): ValidationException
+    {
+        $errorCollection = new ErrorCollection();
+        $errorCollection->add(
+            new ErrorItem(
+                $message,
+                $code,
+                'address',
             )
         );
 

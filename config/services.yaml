@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Format: "lat1,lon1;lat2,lon2;lat3,lon3"
+    oil_service.public_order_service_area_polygon: '%env(default::PUBLIC_ORDER_SERVICE_AREA_POLYGON)%'
 
 services:
     # default configuration for services in *this* file
@@ -46,3 +48,7 @@ services:
     App\Files\FileManager:
         arguments:
             $blobFileSystem: '@azureBlobStorageAdapter'
+
+    App\OilService\OrderService:
+        arguments:
+            $publicOrderServiceAreaPolygon: '%oil_service.public_order_service_area_polygon%'

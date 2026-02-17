@@ -91,6 +91,8 @@ class EntityFactory
         DateTimeImmutable $realizationDate,
         User $user,
         ?Route $route = null,
+        ?float $latitude = null,
+        ?float $longitude = null,
         ?CustomerCar $customerCar = null,
     ): Order {
         return new Order(
@@ -122,8 +124,8 @@ class EntityFactory
             $user,
             new DateTimeImmutable(),
             $route,
-            null,
-            null,
+            $latitude,
+            $longitude,
             $customerCar,
         );
     }
