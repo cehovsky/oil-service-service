@@ -13,6 +13,9 @@ final class ServiceAreaPolygonChecker
         }
 
         $points = $this->parsePolygon($polygon);
+        if ($points === null) {
+            return false;
+        }
 
         if ($points === []) {
             return true;
@@ -29,8 +32,14 @@ final class ServiceAreaPolygonChecker
             [$latI, $lonI] = $points[$i];
             [$latJ, $lonJ] = $points[$j];
 
+            $latitudeDiff = $latJ - $latI;
+            if (abs($latitudeDiff) < PHP_FLOAT_EPSILON) {
+                $j = $i;
+                continue;
+            }
+
             $intersects = (($latI > $latitude) !== ($latJ > $latitude))
-                && ($longitude < ($lonJ - $lonI) * ($latitude - $latI) / ($latJ - $latI) + $lonI);
+                && ($longitude < ($lonJ - $lonI) * ($latitude - $latI) / $latitudeDiff + $lonI);
 
             if ($intersects) {
                 $inside = !$inside;
@@ -43,9 +52,9 @@ final class ServiceAreaPolygonChecker
     }
 
     /**
-     * @return array<int, array{0: float, 1: float}>
+     * @return array<int, array{0: float, 1: float}>|null
      */
-    private function parsePolygon(string $polygon): array
+    private function parsePolygon(string $polygon): ?array
     {
         $trimmedPolygon = trim($polygon);
         if ($trimmedPolygon === '') {
@@ -56,7 +65,7 @@ final class ServiceAreaPolygonChecker
         foreach (explode(';', $trimmedPolygon) as $point) {
             $parts = array_map('trim', explode(',', $point));
             if (count($parts) !== 2 || !is_numeric($parts[0]) || !is_numeric($parts[1])) {
-                continue;
+                return null;
             }
 
             $points[] = [(float) $parts[0], (float) $parts[1]];
