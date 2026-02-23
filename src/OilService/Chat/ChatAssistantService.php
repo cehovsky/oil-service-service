@@ -14,6 +14,7 @@ use RuntimeException;
 use stdClass;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ChatAssistantService
 {
@@ -42,14 +43,14 @@ class ChatAssistantService
         $this->model = $model !== null && $model !== '' ? $model : self::DEFAULT_MODEL;
     }
 
-    public function generateAssistantReply(ChatSession $session): string
+    public function generateAssistantReply(ChatSession $session, ?callable $onTextDelta = null): string
     {
         $messages = $this->buildMessages($session);
         $inputItems = $this->mapMessagesToInputItems($messages);
         $tools = $this->buildResponseTools();
 
         for ($i = 0; $i < 5; $i++) {
-            $responseData = $this->createResponse($inputItems, $tools, $i + 1, true);
+            $responseData = $this->createResponse($inputItems, $tools, $i + 1, true, $onTextDelta);
             $toolCalls = $this->extractFunctionCalls($responseData);
 
             if ($toolCalls === []) {
@@ -75,7 +76,7 @@ class ChatAssistantService
         }
 
         // Fallback attempt without tools if the model returned no content and no tool calls.
-        $plainResponseData = $this->createResponse($inputItems, null, null, false);
+        $plainResponseData = $this->createResponse($inputItems, null, null, false, $onTextDelta);
         $plainContent = $this->extractResponseText($plainResponseData);
 
         if ($plainContent !== '') {
@@ -186,9 +187,10 @@ class ChatAssistantService
      * @param array<int, array<string, mixed>> $inputItems
      * @param array<int, array<string, mixed>>|null $tools
      * @param int|null $attempt
+     * @param callable(string):void|null $onTextDelta
      * @return array<string, mixed>
      */
-    private function createResponse(array $inputItems, ?array $tools, ?int $attempt, bool $withTools): array
+    private function createResponse(array $inputItems, ?array $tools, ?int $attempt, bool $withTools, ?callable $onTextDelta = null): array
     {
         $payload = [
         'model' => $this->model,
@@ -228,12 +230,24 @@ class ChatAssistantService
             $headers['OpenAI-Project'] = $this->project;
         }
 
-        $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/responses', [
-        'headers' => $headers,
-        'json' => $payload,
-        ]);
+        if ($onTextDelta !== null) {
+            $payload['stream'] = true;
 
-        $responseData = $response->toArray(false);
+            $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/responses', [
+            'headers' => $headers,
+            'json' => $payload,
+            'buffer' => false,
+            ]);
+
+            $responseData = $this->consumeStreamedResponse($response, $onTextDelta);
+        } else {
+            $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/responses', [
+            'headers' => $headers,
+            'json' => $payload,
+            ]);
+
+            $responseData = $response->toArray(false);
+        }
 
         $this->logger->debug('OpenAI responses response', [
         'attempt' => $attempt,
@@ -243,6 +257,102 @@ class ChatAssistantService
         ]);
 
         return $responseData;
+    }
+
+    /**
+     * @param callable(string):void $onTextDelta
+     * @return array<string, mixed>
+     */
+    private function consumeStreamedResponse(ResponseInterface $response, callable $onTextDelta): array
+    {
+        $buffer = '';
+        $completedResponse = null;
+
+        foreach ($this->httpClient->stream($response) as $chunk) {
+            if ($chunk->isTimeout() || $chunk->isFirst()) {
+                continue;
+            }
+
+            if ($chunk->isLast()) {
+                break;
+            }
+
+            $buffer .= $chunk->getContent();
+
+            while (($separatorPosition = strpos($buffer, "\n\n")) !== false) {
+                $rawEvent = substr($buffer, 0, $separatorPosition);
+                $buffer = substr($buffer, $separatorPosition + 2);
+
+                $eventPayload = $this->parseServerSentEvent($rawEvent);
+
+                if ($eventPayload === null) {
+                    continue;
+                }
+
+                if (($eventPayload['type'] ?? '') === 'response.output_text.delta') {
+                    $delta = (string) ($eventPayload['delta'] ?? '');
+
+                    if ($delta !== '') {
+                        $onTextDelta($delta);
+                    }
+
+                    continue;
+                }
+
+                if (($eventPayload['type'] ?? '') === 'response.completed') {
+                    $responseData = $eventPayload['response'] ?? null;
+
+                    if (is_array($responseData)) {
+                        $completedResponse = $responseData;
+                    }
+
+                    continue;
+                }
+
+                if (($eventPayload['type'] ?? '') === 'error') {
+                    $message = (string) ($eventPayload['message'] ?? 'OpenAI streamed response failed.');
+                    throw new RuntimeException($message);
+                }
+            }
+        }
+
+        if (!is_array($completedResponse)) {
+            throw new RuntimeException('OpenAI streamed response did not contain completed payload.');
+        }
+
+        return $completedResponse;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function parseServerSentEvent(string $rawEvent): ?array
+    {
+        $dataLines = [];
+
+        foreach (preg_split('/\r?\n/', $rawEvent) as $line) {
+            if (str_starts_with($line, 'data:')) {
+                $dataLines[] = ltrim(substr($line, 5));
+            }
+        }
+
+        if ($dataLines === []) {
+            return null;
+        }
+
+        $rawData = implode("\n", $dataLines);
+
+        if ($rawData === '' || $rawData === '[DONE]') {
+            return null;
+        }
+
+        $decoded = json_decode($rawData, true);
+
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        return $decoded;
     }
 
     /**

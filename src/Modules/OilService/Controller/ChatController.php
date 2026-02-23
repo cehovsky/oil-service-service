@@ -22,11 +22,14 @@ use App\OilService\Chat\ChatPromptBuilder;
 use App\OilService\Chat\ChatAssistantService;
 use App\OilService\Chat\ChatMessageService;
 use App\OilService\Chat\ChatSessionService;
+use App\OilService\DBAL\Entity\ChatMessage;
+use App\OilService\DBAL\Entity\ChatSession;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -248,7 +251,7 @@ class ChatController extends AbstractController
         name: 'oil_service_chat_message_create',
         methods: ['POST']
     )]
-    public function sendMessage(Request $request, string $sessionId): JsonResponse
+    public function sendMessage(Request $request, string $sessionId): JsonResponse|StreamedResponse
     {
         try {
             /** @var ChatMessageRequestDTO $messageRequestDTO */
@@ -268,6 +271,10 @@ class ChatController extends AbstractController
             $this->chatSessionService->updateSessionLanguage($session, $messageRequestDTO->getLanguage());
 
             $this->chatMessageService->addUserMessage($session, $messageRequestDTO->getMessage());
+
+            if ($this->isStreamRequest($request)) {
+                return $this->createStreamedMessageResponse($session);
+            }
 
             $assistantReply = $this->chatAssistantService->generateAssistantReply($session);
             $assistantMessage = $this->chatMessageService->addAssistantMessage($session, $assistantReply);
@@ -294,6 +301,66 @@ class ChatController extends AbstractController
         } catch (Throwable $e) {
             throw new ServerErrorHttpException($e->getMessage(), $e);
         }
+    }
+
+    private function isStreamRequest(Request $request): bool
+    {
+        $acceptHeader = strtolower((string) $request->headers->get('Accept', ''));
+
+        return str_contains($acceptHeader, 'text/event-stream');
+    }
+
+    private function createStreamedMessageResponse(ChatSession $session): StreamedResponse
+    {
+        $response = new StreamedResponse(function () use ($session): void {
+            $sendEvent = static function (string $eventName, array $payload): void {
+                echo sprintf("event: %s\n", $eventName);
+                echo 'data: ' . json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n\n";
+
+                if (function_exists('ob_flush')) {
+                    @ob_flush();
+                }
+
+                flush();
+            };
+
+            try {
+                $assistantReply = $this->chatAssistantService->generateAssistantReply(
+                    $session,
+                    static function (string $delta) use ($sendEvent): void {
+                        $sendEvent('chunk', ['delta' => $delta]);
+                    }
+                );
+
+                $assistantMessage = $this->chatMessageService->addAssistantMessage($session, $assistantReply);
+                $messages = $this->chatMessageService->getMessages($session);
+
+                $sendEvent('done', [
+                    'sessionId' => $session->getId()->__toString(),
+                    'sessionStatus' => $session->getStatus()->value,
+                    'assistantMessage' => $assistantMessage->getContent(),
+                    'messages' => array_map(
+                        static fn (ChatMessage $message) => [
+                            'role' => $message->getRole()->value,
+                            'content' => $message->getContent(),
+                            'createdAt' => $message->getCreatedAt()->format(\DateTimeInterface::ATOM),
+                        ],
+                        $messages,
+                    ),
+                ]);
+            } catch (Throwable) {
+                $sendEvent('error', [
+                    'message' => 'Omlouváme se, zkuste to znovu.',
+                ]);
+            }
+        });
+
+        $response->headers->set('Content-Type', 'text/event-stream');
+        $response->headers->set('Cache-Control', 'no-cache');
+        $response->headers->set('Connection', 'keep-alive');
+        $response->headers->set('X-Accel-Buffering', 'no');
+
+        return $response;
     }
 
     #[OA\Post(
