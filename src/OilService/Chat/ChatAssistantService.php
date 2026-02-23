@@ -11,6 +11,7 @@ use App\OilService\Chat\ChatToolService;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Throwable;
 use stdClass;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -66,7 +67,20 @@ class ChatAssistantService
             $inputItems = $this->appendResponseOutput($inputItems, $responseData);
 
             foreach ($toolCalls as $toolCall) {
-                $toolResult = $this->executeToolByName($session, $toolCall['name'], $toolCall['arguments']);
+                try {
+                    $toolResult = $this->executeToolByName($session, $toolCall['name'], $toolCall['arguments']);
+                } catch (Throwable $e) {
+                    $this->logger->warning('Chat tool execution failed', [
+                    'sessionId' => $session->getId()->__toString(),
+                    'toolName' => $toolCall['name'],
+                    'message' => $e->getMessage(),
+                    ]);
+
+                    $toolResult = [
+                    'error' => $e->getMessage(),
+                    ];
+                }
+
                 $inputItems[] = [
                 'type' => 'function_call_output',
                 'call_id' => $toolCall['call_id'],

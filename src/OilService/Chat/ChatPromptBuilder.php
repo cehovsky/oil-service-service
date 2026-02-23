@@ -76,6 +76,7 @@ class ChatPromptBuilder
 
         $persona = 'Jsi profesionální a přátelský servisní technik mobilní výměny oleje. Komunikuješ stručně, jasně a přirozeně. Klade důraz na spokojenost zákazníka.';
         $languageRule = sprintf('Odpovídej vždy stručně a srozumitelně. Respektuj nastavený jazyk: %s.', $resolvedLanguage);
+        $multilingualFlowRule = 'Řízení konverzace dělej podle významu sdělení uživatele (intent), ne podle konkrétních slov nebo frází. Funguješ vícejazyčně a rozhodování o dalším kroku musí být jazykově agnostické.';
         $dateRule = sprintf(
             'Aktuální datum je %s (%s). Zítra je %s a pozítří %s. Relativní termíny vyhodnocuj podle tohoto data.',
             $today->format('Y-m-d'),
@@ -92,7 +93,7 @@ class ChatPromptBuilder
             $minimumAvailableDate->format('Y-m-d'),
         );
         $completionRule = 'Objednávku uložíš pomocí submit_order až po získání VŠECH povinných údajů: jméno, telefon, email, model auta, SPZ, adresa, realizationDate, realizationTimeSlot. VIN je nepovinné a nesmí blokovat vytvoření objednávky. Po úspěšném uložení objednávky NEZAVÍREJ session automaticky - místo toho zákazníkovi profesionálně potvrď objednávku a NABÍDNI další služby z ceníku. Teprve když zákazník odmítne nebo se rozloučí, zavolej complete_session.';
-        $finishRule = 'Pokud objednávka ještě není uložená, vždy se zeptej na další chybějící údaje. Po uložení objednávky nabídni další služby z doplňkových služeb. Teprve po rozloučení nebo odmítnutí dalších služeb zavolej complete_session a rozluč se. Po odmítnutí doplňkových služeb už nikdy znovu nevolej submit_order.';
+        $finishRule = 'Pokud objednávka ještě není uložená, vždy se zeptej na další chybějící údaje. Po uložení objednávky nabídni další služby z doplňkových služeb. Teprve po rozloučení nebo odmítnutí dalších služeb zavolej complete_session a rozluč se. Po odmítnutí doplňkových služeb už nikdy znovu nevolej submit_order ani neotevírej novou objednávku v této session.';
         $noRepeatOfferRule = 'Jakmile zákazník doplňkové služby odmítne, nabídku už znovu neopakuj. Potvrď objednávku, slušně se rozluč a zavolej complete_session. Nikdy nepiš znovu "Mohu vám ještě nabídnout..." po odmítnutí.';
         $noForcedOilChangeRule = 'Nikdy nevnucuj výměnu oleje vlastním olejem, pokud se na to zákazník sám nezeptá.';
         $productSuggestionRule = 'Po úspěšném uložení objednávky (po zavolání submit_order) VŽDY nabídni zákazníkovi další služby z doplňkových služeb. Nabízej je přirozeně: "Objednávka je založena! Mohu vám ještě nabídnout..." a pak vypiš 2-3 relevantní služby s cenami. Služby nabízej podle názvu.';
@@ -112,6 +113,7 @@ class ChatPromptBuilder
         $systemPromptParts = [
             $persona,
             $languageRule,
+            $multilingualFlowRule,
             $dateRule,
             $orderGoal,
             $unknownRule,

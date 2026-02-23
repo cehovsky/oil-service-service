@@ -44,35 +44,45 @@ class ChatToolService
      */
     public function submitOrder(ChatSession $session, array $payload): array
     {
-        $fullName = (string) ($payload['fullName'] ?? '');
-        $phone = (string) ($payload['phone'] ?? '');
-        $email = (string) ($payload['email'] ?? '');
-        $carModel = (string) ($payload['carModel'] ?? '');
-        $licensePlate = (string) ($payload['licensePlate'] ?? '');
-        $vinRaw = isset($payload['vin']) ? trim((string) $payload['vin']) : '';
+        $existingOrder = $session->getOrder();
+
+        $fullName = trim((string) ($payload['fullName'] ?? $existingOrder?->getFullName() ?? ''));
+        $phone = trim((string) ($payload['phone'] ?? $existingOrder?->getPhone() ?? ''));
+        $email = trim((string) ($payload['email'] ?? $existingOrder?->getEmail() ?? ''));
+        $carModel = trim((string) ($payload['carModel'] ?? $existingOrder?->getCarModel() ?? ''));
+        $licensePlate = trim((string) ($payload['licensePlate'] ?? $existingOrder?->getLicensePlate() ?? ''));
+        $vinRaw = isset($payload['vin'])
+            ? trim((string) $payload['vin'])
+            : trim((string) ($existingOrder?->getVin() ?? ''));
         $vin = $vinRaw !== '' ? $vinRaw : null;
-        $address = (string) ($payload['address'] ?? '');
+        $address = trim((string) ($payload['address'] ?? $existingOrder?->getAddress() ?? ''));
         $normalizedAddress = $this->normalizeAddress($address);
 
         if ($fullName === '' || $phone === '' || $email === '' || $carModel === '' || $licensePlate === '' || $address === '') {
             throw new RuntimeException('Missing required order fields.');
         }
 
-        $note = isset($payload['note']) ? (string) $payload['note'] : null;
-        $isCompany = isset($payload['isCompany']) ? (bool) $payload['isCompany'] : false;
-        $companyName = isset($payload['companyName']) ? (string) $payload['companyName'] : null;
-        $companyIdentificationNumber = isset($payload['companyIdentificationNumber']) ? (string) $payload['companyIdentificationNumber'] : null;
-        $companyTaxId = isset($payload['companyTaxId']) ? (string) $payload['companyTaxId'] : null;
-        $companyAddress = isset($payload['companyAddress']) ? (string) $payload['companyAddress'] : null;
+        $note = isset($payload['note']) ? (string) $payload['note'] : $existingOrder?->getNote();
+        $isCompany = isset($payload['isCompany']) ? (bool) $payload['isCompany'] : ($existingOrder?->getIsCompany() ?? false);
+        $companyName = isset($payload['companyName']) ? (string) $payload['companyName'] : $existingOrder?->getCompanyName();
+        $companyIdentificationNumber = isset($payload['companyIdentificationNumber']) ? (string) $payload['companyIdentificationNumber'] : $existingOrder?->getCompanyIdentificationNumber();
+        $companyTaxId = isset($payload['companyTaxId']) ? (string) $payload['companyTaxId'] : $existingOrder?->getCompanyTaxId();
+        $companyAddress = isset($payload['companyAddress']) ? (string) $payload['companyAddress'] : $existingOrder?->getCompanyAddress();
 
-        $realizationDateInput = isset($payload['realizationDate']) ? (string) $payload['realizationDate'] : '';
+        $existingRealizationDate = $existingOrder?->getRealizationDate();
+        $realizationDateInput = isset($payload['realizationDate'])
+            ? (string) $payload['realizationDate']
+            : ($existingRealizationDate?->format('Y-m-d') ?? '');
         if ($realizationDateInput === '') {
             throw new RuntimeException('Missing realization date.');
         }
 
         $realizationDate = $this->orderService->createRealizationDate($realizationDateInput);
 
-        $timeSlotValue = isset($payload['realizationTimeSlot']) ? (string) $payload['realizationTimeSlot'] : '';
+        $existingTimeSlot = $existingOrder?->getRealizationTimeSlot();
+        $timeSlotValue = isset($payload['realizationTimeSlot'])
+            ? (string) $payload['realizationTimeSlot']
+            : ($existingTimeSlot?->value ?? '');
         $timeSlot = RealizationTimeSlotEnum::tryFrom($timeSlotValue);
         if ($timeSlot === null) {
             throw new RuntimeException('Missing realization time slot.');
@@ -88,9 +98,18 @@ class ChatToolService
             throw new RuntimeException('Selected term is not available.');
         }
 
-        $rawPriceListItems = isset($payload['priceListItemIds']) && is_array($payload['priceListItemIds'])
-            ? array_values(array_map('strval', $payload['priceListItemIds']))
-            : [];
+        $rawPriceListItems = [];
+        if (isset($payload['priceListItemIds']) && is_array($payload['priceListItemIds'])) {
+            $rawPriceListItems = array_values(array_map('strval', $payload['priceListItemIds']));
+        } elseif ($existingOrder !== null) {
+            foreach ($existingOrder->getPriceListItems() as $priceListItem) {
+                if ($priceListItem->getIsDefault() || $priceListItem->getIsHiddenOnInvoice()) {
+                    continue;
+                }
+
+                $rawPriceListItems[] = $priceListItem->getId()->__toString();
+            }
+        }
         $priceListItemIds = $this->normalizePriceListItemIds($rawPriceListItems);
 
         $cachedAddressEvaluation = $this->resolveCachedAddressEvaluation($session, $normalizedAddress);
