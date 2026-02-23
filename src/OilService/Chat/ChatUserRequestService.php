@@ -14,6 +14,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ChatUserRequestService
 {
+    private const int MAX_CONTENT_LENGTH = 4000;
+
     public function __construct(
         private readonly EntityFactory $entityFactory,
         private readonly EntityManagerInterface $entityManager,
@@ -81,6 +83,17 @@ class ChatUserRequestService
             return $original;
         }
 
-        return $original . "\n\n" . $newContent;
+        if ($this->normalizeForComparison($original) === $this->normalizeForComparison($newContent)) {
+            return mb_substr($original, 0, self::MAX_CONTENT_LENGTH);
+        }
+
+        return mb_substr($original . "\n\n" . $newContent, 0, self::MAX_CONTENT_LENGTH);
+    }
+
+    private function normalizeForComparison(string $value): string
+    {
+        $collapsedWhitespace = preg_replace('/\s+/u', ' ', trim($value));
+
+        return mb_strtolower($collapsedWhitespace !== null ? $collapsedWhitespace : $value);
     }
 }

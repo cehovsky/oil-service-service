@@ -45,6 +45,9 @@ class OrderDTO
     #[OA\Property(example: 14.421, nullable: true)]
     private ?float $longitude;
 
+    #[OA\Property(example: true, nullable: true)]
+    private ?bool $isWithinServiceArea;
+
     #[OA\Property(example: 'Preferuji odpolední termín', nullable: true)]
     private ?string $note;
 
@@ -142,6 +145,7 @@ class OrderDTO
         string $address,
         ?float $latitude,
         ?float $longitude,
+        ?bool $isWithinServiceArea,
         ?string $note,
         bool $isCompany,
         ?string $companyName,
@@ -177,6 +181,7 @@ class OrderDTO
         $this->address = $address;
         $this->latitude = $latitude;
         $this->longitude = $longitude;
+        $this->isWithinServiceArea = $isWithinServiceArea;
         $this->note = $note;
         $this->isCompany = $isCompany;
         $this->companyName = $companyName;
@@ -255,6 +260,11 @@ class OrderDTO
     public function getLongitude(): ?float
     {
         return $this->longitude;
+    }
+
+    public function getIsWithinServiceArea(): ?bool
+    {
+        return $this->isWithinServiceArea;
     }
 
     public function getNote(): ?string

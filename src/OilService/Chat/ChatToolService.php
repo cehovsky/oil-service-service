@@ -11,12 +11,18 @@ use App\OilService\DBAL\Repository\ChatKnowledgeItemRepository;
 use App\OilService\DBAL\Repository\PriceListItemRepository;
 use App\OilService\DBAL\Repository\TermRepository;
 use App\OilService\OrderService;
+use App\OilService\ServiceArea\ServiceAreaAddressEvaluationResult;
+use App\OilService\ServiceArea\ServiceAreaAddressEvaluationService;
 use App\OilService\Term\TermAvailabilityPolicy;
+use App\Domain\Exception\ValidationException;
+use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 
 class ChatToolService
 {
     private const string UUID_PATTERN = '/^[0-9a-fA-F-]{36}$/';
+    private const int MAX_USER_REQUEST_CONTENT_LENGTH = 2000;
 
     public function __construct(
         private readonly OrderService $orderService,
@@ -26,6 +32,8 @@ class ChatToolService
         private readonly TermRepository $termRepository,
         private readonly ChatUserRequestService $chatUserRequestService,
         private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
+        private readonly ServiceAreaAddressEvaluationService $addressEvaluationService,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -44,6 +52,7 @@ class ChatToolService
         $vinRaw = isset($payload['vin']) ? trim((string) $payload['vin']) : '';
         $vin = $vinRaw !== '' ? $vinRaw : null;
         $address = (string) ($payload['address'] ?? '');
+        $normalizedAddress = $this->normalizeAddress($address);
 
         if ($fullName === '' || $phone === '' || $email === '' || $carModel === '' || $licensePlate === '' || $address === '') {
             throw new RuntimeException('Missing required order fields.');
@@ -84,35 +93,36 @@ class ChatToolService
             : [];
         $priceListItemIds = $this->normalizePriceListItemIds($rawPriceListItems);
 
-        $order = $this->orderService->createOrderWithUser(
-            $fullName,
-            $phone,
-            $email,
-            $carModel,
-            $licensePlate,
-            $vin,
-            $address,
-            $note,
-            $isCompany,
-            $companyName,
-            $companyIdentificationNumber,
-            $companyTaxId,
-            $companyAddress,
-            null,
-            null,
-            null,
-            null,
-            null,
-            [],
-            OrderStatusEnum::NEW,
-            $timeSlot,
-            $realizationDate,
-            $priceListItemIds,
-            null,
-            null,
-        );
+        $cachedAddressEvaluation = $this->resolveCachedAddressEvaluation($session, $normalizedAddress);
+
+        try {
+            $order = $this->orderService->upsertChatSessionOrderWithUser(
+                $session->getOrder(),
+                $fullName,
+                $phone,
+                $email,
+                $carModel,
+                $licensePlate,
+                $vin,
+                $address,
+                $note,
+                $isCompany,
+                $companyName,
+                $companyIdentificationNumber,
+                $companyTaxId,
+                $companyAddress,
+                OrderStatusEnum::NEW,
+                $timeSlot,
+                $realizationDate,
+                $priceListItemIds,
+                $cachedAddressEvaluation,
+            );
+        } catch (ValidationException) {
+            throw new RuntimeException('Address is not recognizable. Ask the customer to provide a more precise address.');
+        }
 
         $session->setOrder($order);
+        $this->entityManager->flush();
         // Removed automatic session completion - allow agent to offer additional services
 
         return [
@@ -123,6 +133,36 @@ class ChatToolService
             'status' => $order->getStatus()->value,
             'realizationDate' => $order->getRealizationDate()->format('Y-m-d'),
             'realizationTimeSlot' => $order->getRealizationTimeSlot()->value,
+            'latitude' => $order->getLatitude(),
+            'longitude' => $order->getLongitude(),
+            'isWithinServiceArea' => $order->getIsWithinServiceArea(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function validateServiceAddress(ChatSession $session, string $address): array
+    {
+        $evaluation = $this->addressEvaluationService->evaluateAddress($address);
+
+        $session->setValidatedServiceAddressState(
+            $address,
+            $this->normalizeAddress($address),
+            $evaluation->isRecognized(),
+            $evaluation->getWithinServiceArea(),
+            $evaluation->getLatitude(),
+            $evaluation->getLongitude(),
+            new DateTimeImmutable(),
+        );
+        $this->entityManager->flush();
+
+        return [
+            'isRecognized' => $evaluation->isRecognized(),
+            'isWithinServiceArea' => $evaluation->getWithinServiceArea(),
+            'latitude' => $evaluation->getLatitude(),
+            'longitude' => $evaluation->getLongitude(),
+            'message' => $evaluation->getMessage(),
         ];
     }
 
@@ -237,12 +277,60 @@ class ChatToolService
      */
     public function storeUserRequest(ChatSession $session, string $content): array
     {
-        $request = $this->chatUserRequestService->createRequest($session, $content);
+        $normalizedContent = $this->sanitizeUserRequestContent($content);
+        if ($normalizedContent === '') {
+            throw new RuntimeException('Missing content for user request.');
+        }
+
+        $request = $this->chatUserRequestService->createRequest($session, $normalizedContent);
 
         return [
             'requestId' => $request->getId()->__toString(),
             'requestIdent' => $request->getFormattedIdent(),
             'status' => $request->getStatus()->value,
         ];
+    }
+
+    private function normalizeAddress(string $address): string
+    {
+        $singleSpaced = preg_replace('/\s+/u', ' ', trim($address));
+
+        return mb_strtolower($singleSpaced ?? '');
+    }
+
+    private function resolveCachedAddressEvaluation(
+        ChatSession $session,
+        string $normalizedAddress,
+    ): ?ServiceAreaAddressEvaluationResult {
+        if ($normalizedAddress === '') {
+            return null;
+        }
+
+        if ($session->getValidatedServiceAddressNormalized() !== $normalizedAddress) {
+            return null;
+        }
+
+        if ($session->getValidatedServiceAddressRecognized() !== true) {
+            return null;
+        }
+
+        $latitude = $session->getValidatedServiceAddressLatitude();
+        $longitude = $session->getValidatedServiceAddressLongitude();
+        $withinServiceArea = $session->getValidatedServiceAddressWithinServiceArea();
+
+        if ($latitude === null || $longitude === null || $withinServiceArea === null) {
+            return null;
+        }
+
+        return ServiceAreaAddressEvaluationResult::recognized($latitude, $longitude, $withinServiceArea);
+    }
+
+    private function sanitizeUserRequestContent(string $content): string
+    {
+        $trimmed = trim($content);
+        $collapsedWhitespace = preg_replace('/\s+/u', ' ', $trimmed);
+        $normalized = $collapsedWhitespace !== null ? $collapsedWhitespace : $trimmed;
+
+        return mb_substr($normalized, 0, self::MAX_USER_REQUEST_CONTENT_LENGTH);
     }
 }

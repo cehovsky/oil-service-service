@@ -8,6 +8,7 @@ use App\Domain\Validation\Constraint\Iso8601DateTime;
 use App\Modules\OilService\Validation\Constraint\AvailableTermSlot;
 use App\Modules\OilService\Validation\Constraint\ExistingPriceListItemIds;
 use App\Modules\OilService\Validation\Constraint\FutureRealizationDate;
+use App\Modules\OilService\Validation\Constraint\ResolvableServiceAddress;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -48,6 +49,7 @@ class OrderPublicCreateRequestDTO
     #[OA\Property(example: 'Václavské náměstí 1, Praha 1, 110 00')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 500)]
+    #[ResolvableServiceAddress]
     private string $address;
 
     #[OA\Property(example: 'Preferuji odpolední termín', nullable: true)]

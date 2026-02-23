@@ -10,6 +10,7 @@ use App\Modules\OilService\Validation\Constraint\ExistingPriceListItemIds;
 use App\Modules\OilService\Validation\Constraint\ExistingRoute;
 use App\Modules\OilService\Validation\Constraint\ExistingOilServiceUser;
 use App\Modules\OilService\Validation\Constraint\ExistingCustomerCar;
+use App\Modules\OilService\Validation\Constraint\ResolvableServiceAddress;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use OpenApi\Attributes as OA;
@@ -50,6 +51,7 @@ class OrderUpdateRequestDTO
     #[OA\Property(example: 'Václavské náměstí 1, Praha 1, 110 00')]
     #[Assert\NotBlank]
     #[Assert\Length(max: 500)]
+    #[ResolvableServiceAddress]
     private string $address;
 
     #[OA\Property(example: 'Preferuji odpolední termín', nullable: true)]

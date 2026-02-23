@@ -137,6 +137,18 @@ class ChatAssistantService
         ],
         [
             'type' => 'function',
+            'name' => 'validate_service_address',
+            'description' => 'Ověří adresu: zda je rozpoznaná a zda spadá do servisní oblasti.',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'address' => ['type' => 'string'],
+                ],
+                'required' => ['address'],
+            ],
+        ],
+        [
+            'type' => 'function',
             'name' => 'fetch_knowledge',
             'description' => 'Dohledá konkrétní knowledge položky podle názvů a vrátí obsah v aktuálním jazyce.',
             'parameters' => [
@@ -475,6 +487,15 @@ class ChatAssistantService
             return $this->chatToolService->fetchKnowledge($session, $names);
         }
 
+        if ($name === 'validate_service_address') {
+            $address = (string) ($arguments['address'] ?? '');
+            if ($address === '') {
+                throw new RuntimeException('Missing address for validation.');
+            }
+
+            return $this->chatToolService->validateServiceAddress($session, $address);
+        }
+
         if ($name === 'complete_session') {
             return $this->chatToolService->completeSession($session);
         }
@@ -509,6 +530,15 @@ class ChatAssistantService
         ],
         ];
 
+        $sessionStateMessage = $this->buildSessionStateMessage($session);
+
+        if ($sessionStateMessage !== '') {
+            $messages[] = [
+            'role' => 'system',
+            'content' => $sessionStateMessage,
+            ];
+        }
+
         foreach ($this->chatMessageRepository->findBySession($session) as $message) {
             $role = $message->getRole();
 
@@ -521,5 +551,31 @@ class ChatAssistantService
         }
 
         return $messages;
+    }
+
+    private function buildSessionStateMessage(ChatSession $session): string
+    {
+        $stateParts = [];
+
+        if ($session->getOrder() !== null) {
+            $stateParts[] = sprintf(
+                'SESSION_STATE: Order already exists in this session (ID %s). Never create a second order for this session; if submit_order is called again, treat it as an update of the existing order.',
+                $session->getOrder()->getFormattedIdent(),
+            );
+        }
+
+        if ($session->getValidatedServiceAddressRecognized() !== null && $session->getValidatedServiceAddress() !== null) {
+            $stateParts[] = sprintf(
+                'SESSION_STATE: Last validated address is "%s" (normalized: "%s"); recognized=%s; withinServiceArea=%s. Do not ask for address validation again unless the customer explicitly changes the address.',
+                $session->getValidatedServiceAddress(),
+                $session->getValidatedServiceAddressNormalized() ?? '',
+                $session->getValidatedServiceAddressRecognized() ? 'true' : 'false',
+                $session->getValidatedServiceAddressWithinServiceArea() === null
+                    ? 'unknown'
+                    : ($session->getValidatedServiceAddressWithinServiceArea() ? 'true' : 'false'),
+            );
+        }
+
+        return implode("\n", $stateParts);
     }
 }

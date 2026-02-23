@@ -79,6 +79,9 @@ class Order
     #[ORM\Column(type: Types::FLOAT, nullable: true)]
     private ?float $longitude = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $isWithinServiceArea = null;
+
     #[Assert\Length(max: 1000)]
     #[ORM\Column(length: 1000, nullable: true)]
     private ?string $note = null;
@@ -209,6 +212,7 @@ class Order
         ?Route $route = null,
         ?float $latitude = null,
         ?float $longitude = null,
+        ?bool $isWithinServiceArea = null,
         ?CustomerCar $customerCar = null,
     ) {
         $this->id = $id;
@@ -222,6 +226,7 @@ class Order
         $this->address = $address;
         $this->latitude = $latitude;
         $this->longitude = $longitude;
+        $this->isWithinServiceArea = $isWithinServiceArea;
         $this->note = $note;
         $this->isCompany = $isCompany;
         $this->companyName = $companyName;
@@ -371,6 +376,18 @@ class Order
     public function setLongitude(?float $longitude): self
     {
         $this->longitude = $longitude;
+
+        return $this;
+    }
+
+    public function getIsWithinServiceArea(): ?bool
+    {
+        return $this->isWithinServiceArea;
+    }
+
+    public function setIsWithinServiceArea(?bool $isWithinServiceArea): self
+    {
+        $this->isWithinServiceArea = $isWithinServiceArea;
 
         return $this;
     }

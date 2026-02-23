@@ -56,6 +56,27 @@ class ChatSession
     #[ORM\JoinColumn(nullable: true, unique: true, onDelete: 'SET NULL')]
     private ?Order $order = null;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $validatedServiceAddress = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $validatedServiceAddressNormalized = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $validatedServiceAddressRecognized = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $validatedServiceAddressWithinServiceArea = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $validatedServiceAddressLatitude = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $validatedServiceAddressLongitude = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?DateTimeImmutable $validatedServiceAddressAt = null;
+
     public function __construct(
         Uuid $id,
         int $ident,
@@ -189,5 +210,61 @@ class ChatSession
     public function touch(): void
     {
         $this->updatedAt = new DateTimeImmutable();
+    }
+
+    public function getValidatedServiceAddress(): ?string
+    {
+        return $this->validatedServiceAddress;
+    }
+
+    public function getValidatedServiceAddressNormalized(): ?string
+    {
+        return $this->validatedServiceAddressNormalized;
+    }
+
+    public function getValidatedServiceAddressRecognized(): ?bool
+    {
+        return $this->validatedServiceAddressRecognized;
+    }
+
+    public function getValidatedServiceAddressWithinServiceArea(): ?bool
+    {
+        return $this->validatedServiceAddressWithinServiceArea;
+    }
+
+    public function getValidatedServiceAddressLatitude(): ?float
+    {
+        return $this->validatedServiceAddressLatitude;
+    }
+
+    public function getValidatedServiceAddressLongitude(): ?float
+    {
+        return $this->validatedServiceAddressLongitude;
+    }
+
+    public function getValidatedServiceAddressAt(): ?DateTimeImmutable
+    {
+        return $this->validatedServiceAddressAt;
+    }
+
+    public function setValidatedServiceAddressState(
+        string $address,
+        string $normalizedAddress,
+        bool $recognized,
+        ?bool $withinServiceArea,
+        ?float $latitude,
+        ?float $longitude,
+        DateTimeImmutable $validatedAt,
+    ): self {
+        $this->validatedServiceAddress = $address;
+        $this->validatedServiceAddressNormalized = $normalizedAddress;
+        $this->validatedServiceAddressRecognized = $recognized;
+        $this->validatedServiceAddressWithinServiceArea = $withinServiceArea;
+        $this->validatedServiceAddressLatitude = $latitude;
+        $this->validatedServiceAddressLongitude = $longitude;
+        $this->validatedServiceAddressAt = $validatedAt;
+        $this->touch();
+
+        return $this;
     }
 }

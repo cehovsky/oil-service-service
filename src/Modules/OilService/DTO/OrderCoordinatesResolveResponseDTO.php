@@ -21,6 +21,9 @@ class OrderCoordinatesResolveResponseDTO
     #[OA\Property(nullable: true, example: 'Address not found.')]
     private ?string $message;
 
+    #[OA\Property(example: true, nullable: true)]
+    private ?bool $isWithinServiceArea;
+
     #[OA\Property(ref: new Model(type: OrderDTO::class))]
     private OrderDTO $order;
 
@@ -29,12 +32,14 @@ class OrderCoordinatesResolveResponseDTO
         int $timestamp,
         bool $success,
         ?string $message,
+        ?bool $isWithinServiceArea,
         OrderDTO $order,
     ) {
         $this->result = $result;
         $this->timestamp = $timestamp;
         $this->success = $success;
         $this->message = $message;
+        $this->isWithinServiceArea = $isWithinServiceArea;
         $this->order = $order;
     }
 
@@ -56,6 +61,11 @@ class OrderCoordinatesResolveResponseDTO
     public function getMessage(): ?string
     {
         return $this->message;
+    }
+
+    public function getIsWithinServiceArea(): ?bool
+    {
+        return $this->isWithinServiceArea;
     }
 
     public function getOrder(): OrderDTO

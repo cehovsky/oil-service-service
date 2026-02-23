@@ -92,13 +92,14 @@ class ChatPromptBuilder
             $minimumAvailableDate->format('Y-m-d'),
         );
         $completionRule = 'Objednávku uložíš pomocí submit_order až po získání VŠECH povinných údajů: jméno, telefon, email, model auta, SPZ, adresa, realizationDate, realizationTimeSlot. VIN je nepovinné a nesmí blokovat vytvoření objednávky. Po úspěšném uložení objednávky NEZAVÍREJ session automaticky - místo toho zákazníkovi profesionálně potvrď objednávku a NABÍDNI další služby z ceníku. Teprve když zákazník odmítne nebo se rozloučí, zavolej complete_session.';
-        $finishRule = 'Pokud objednávka ještě není uložená, vždy se zeptej na další chybějící údaje. Po uložení objednávky nabídni další služby z doplňkových služeb. Teprve po rozloučení nebo odmítnutí dalších služeb zavolej complete_session a rozluč se.';
+        $finishRule = 'Pokud objednávka ještě není uložená, vždy se zeptej na další chybějící údaje. Po uložení objednávky nabídni další služby z doplňkových služeb. Teprve po rozloučení nebo odmítnutí dalších služeb zavolej complete_session a rozluč se. Po odmítnutí doplňkových služeb už nikdy znovu nevolej submit_order.';
         $noRepeatOfferRule = 'Jakmile zákazník doplňkové služby odmítne, nabídku už znovu neopakuj. Potvrď objednávku, slušně se rozluč a zavolej complete_session. Nikdy nepiš znovu "Mohu vám ještě nabídnout..." po odmítnutí.';
         $noForcedOilChangeRule = 'Nikdy nevnucuj výměnu oleje vlastním olejem, pokud se na to zákazník sám nezeptá.';
         $productSuggestionRule = 'Po úspěšném uložení objednávky (po zavolání submit_order) VŽDY nabídni zákazníkovi další služby z doplňkových služeb. Nabízej je přirozeně: "Objednávka je založena! Mohu vám ještě nabídnout..." a pak vypiš 2-3 relevantní služby s cenami. Služby nabízej podle názvu.';
         $locationPermissionRule = 'Během sbírání údajů se zeptej, zda bude výměna prováděna na pozemku zákazníka nebo zda má zákazník povolení k provedení výměny na daném místě. Upozorni, že výměna oleje na veřejné silnici není možná.';
         $oilAndVolumeRule = 'Pokud znáš typ oleje a objem náplně pro daný model auta, můžeš to zmínit pro informaci, ale nezpomaluj tím proces objednávky.';
-        $additionalServiceOfferRule = 'Po úspěšném vytvoření objednávky (po submit_order) VŽDY aktivně nabídni doplňkové služby z ceníku. Pokud zákazník chce přidat další služby, řekni mu že je přidáš a zavolej submit_order ZNOVU se VŠEMI údaji VČETNĚ nových priceListItemIds (služby které zákazník chce přidat). Důležité: Každé volání submit_order PŘEPÍŠE předchozí objednávku, takže vždy musíš předat kompletní seznam všech služeb které zákazník chce. Po přidání služeb nebo jejich odmítnutí se rozluč a zavolej complete_session.';
+        $additionalServiceOfferRule = 'Po úspěšném vytvoření objednávky (po submit_order) VŽDY aktivně nabídni doplňkové služby z ceníku. Pokud zákazník chce přidat další služby, řekni mu že je přidáš a zavolej submit_order ZNOVU se VŠEMI údaji VČETNĚ nových priceListItemIds (služby které zákazník chce přidat). Po přidání služeb se rozluč a zavolej complete_session. Pokud zákazník služby odmítne, submit_order už znovu nevolej a pouze zavolej complete_session.';
+        $addressValidationRule = 'Jakmile zákazník zadá nebo změní adresu, zavolej nástroj validate_service_address. Pokud isRecognized=false, profesionálně požádej o přesnější adresu a NEVOLAT submit_order. Pokud isRecognized=true a isWithinServiceArea=true, pokračuj bez komentáře k pokrytí. Pokud isRecognized=true a isWithinServiceArea=false, sděl zákazníkovi: "Adresu evidujeme mimo standardní servisní oblast. Lokality v okolí Prahy posuzujeme individuálně a následně vás kontaktuje technik." a pokračuj v objednávce. Bez rozpoznané adresy nikdy nevytvářej objednávku. Pokud už je adresa jednou úspěšně ověřená a zákazník ji nezměnil, znovu ji neověřuj.';
 
         $defaultServicesBlock = $defaultServiceLines === []
             ? ''
@@ -124,6 +125,7 @@ class ChatPromptBuilder
             $locationPermissionRule,
             $oilAndVolumeRule,
             $additionalServiceOfferRule,
+            $addressValidationRule,
             $defaultServicesBlock,
             $addonServicesBlock,
             $knowledgeBlock,

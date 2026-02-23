@@ -11,7 +11,6 @@ use App\Domain\Exception\ValidationException;
 use App\Files\DBAL\Entity\File;
 use App\Files\DBAL\Repository\FileRepository;
 use App\Geocoding\GeocodingResult;
-use App\Geocoding\GeocodingService;
 use App\OilService\DBAL\Entity\CustomerCar;
 use App\OilService\DBAL\Entity\Order;
 use App\OilService\DBAL\Entity\PriceListItem;
@@ -25,6 +24,8 @@ use App\OilService\DBAL\Repository\PriceListItemRepository;
 use App\OilService\DBAL\Repository\RouteRepository;
 use App\OilService\DBAL\Repository\UserRepository;
 use App\OilService\Factory\EntityFactory;
+use App\OilService\ServiceArea\ServiceAreaAddressEvaluationResult;
+use App\OilService\ServiceArea\ServiceAreaAddressEvaluationService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -41,7 +42,7 @@ class OrderService
         private readonly OrderRepository $orderRepository,
         private readonly CustomerCarRepository $customerCarRepository,
         private readonly CustomerCarService $customerCarService,
-        private readonly GeocodingService $geocodingService,
+        private readonly ServiceAreaAddressEvaluationService $addressEvaluationService,
     ) {
     }
 
@@ -79,6 +80,12 @@ class OrderService
     ): Order {
         if ($route !== null) {
             $realizationDate = $route->getDate();
+        }
+
+        $addressEvaluation = $this->addressEvaluationService->evaluateAddress($address);
+
+        if (!$addressEvaluation->isRecognized()) {
+            throw $this->createAddressNotResolvableException();
         }
 
         $user = $this->findOrCreateUser($email, $phone, $fullName);
@@ -123,6 +130,9 @@ class OrderService
             $realizationDate,
             $user,
             $route,
+            $addressEvaluation->getLatitude(),
+            $addressEvaluation->getLongitude(),
+            $addressEvaluation->getWithinServiceArea(),
             $customerCar,
         );
 
@@ -135,6 +145,104 @@ class OrderService
         $this->syncPriceListItems($order, $priceListItems);
 
         $this->entityManager->persist($order);
+        $this->entityManager->flush();
+
+        return $order;
+    }
+
+    /**
+     * @param string[] $priceListItemIds
+     */
+    public function upsertChatSessionOrderWithUser(
+        ?Order $order,
+        string $fullName,
+        string $phone,
+        string $email,
+        string $carModel,
+        string $licensePlate,
+        ?string $vin,
+        string $address,
+        ?string $note,
+        bool $isCompany,
+        ?string $companyName,
+        ?string $companyIdentificationNumber,
+        ?string $companyTaxId,
+        ?string $companyAddress,
+        OrderStatusEnum $status,
+        RealizationTimeSlotEnum $realizationTimeSlot,
+        DateTimeImmutable $realizationDate,
+        array $priceListItemIds,
+        ?ServiceAreaAddressEvaluationResult $addressEvaluation = null,
+    ): Order {
+        $resolvedAddressEvaluation = $this->resolveRecognizedAddressEvaluation($address, $addressEvaluation);
+        $user = $this->findOrCreateUser($email, $phone, $fullName);
+        $priceListItems = $this->resolvePublicPriceListItems($priceListItemIds);
+
+        if ($order === null) {
+            $order = $this->entityFactory->createOrder(
+                $fullName,
+                $phone,
+                $email,
+                $carModel,
+                $licensePlate,
+                $vin,
+                $address,
+                $note,
+                $isCompany,
+                $companyName,
+                $companyIdentificationNumber,
+                $companyTaxId,
+                $companyAddress,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                [],
+                $status,
+                $realizationTimeSlot,
+                $realizationDate,
+                $user,
+                null,
+                $resolvedAddressEvaluation->getLatitude(),
+                $resolvedAddressEvaluation->getLongitude(),
+                $resolvedAddressEvaluation->getWithinServiceArea(),
+                null,
+            );
+
+            $this->syncPriceListItems($order, $priceListItems);
+            $this->entityManager->persist($order);
+            $this->entityManager->flush();
+
+            return $order;
+        }
+
+        $order->setFullName($fullName);
+        $order->setPhone($phone);
+        $order->setEmail($email);
+        $order->setCarModel($carModel);
+        $order->setLicensePlate($licensePlate);
+        $order->setVin($vin);
+        $order->setAddress($address);
+        $order->setNote($note);
+        $order->setIsCompany($isCompany);
+        $order->setCompanyName($companyName);
+        $order->setCompanyIdentificationNumber($companyIdentificationNumber);
+        $order->setCompanyTaxId($companyTaxId);
+        $order->setCompanyAddress($companyAddress);
+        $order->setStatus($status);
+        $order->setRealizationDate($realizationDate);
+        $order->setRealizationTimeSlot($realizationTimeSlot);
+        $order->setLatitude($resolvedAddressEvaluation->getLatitude());
+        $order->setLongitude($resolvedAddressEvaluation->getLongitude());
+        $order->setIsWithinServiceArea($resolvedAddressEvaluation->getWithinServiceArea());
+
+        if ($order->getUser()->getId()->__toString() !== $user->getId()->__toString()) {
+            $order->setUser($user);
+        }
+
+        $this->syncPriceListItems($order, $priceListItems);
         $this->entityManager->flush();
 
         return $order;
@@ -175,6 +283,12 @@ class OrderService
     ): Order {
         if ($route !== null) {
             $realizationDate = $route->getDate();
+        }
+
+        $addressEvaluation = $this->addressEvaluationService->evaluateAddress($address);
+
+        if (!$addressEvaluation->isRecognized()) {
+            throw $this->createAddressNotResolvableException();
         }
 
         $user = $this->findUser($userId);
@@ -219,6 +333,9 @@ class OrderService
             $realizationDate,
             $user,
             $route,
+            $addressEvaluation->getLatitude(),
+            $addressEvaluation->getLongitude(),
+            $addressEvaluation->getWithinServiceArea(),
             $customerCar,
         );
 
@@ -285,6 +402,15 @@ class OrderService
         $order->setLicensePlate($licensePlate);
         $order->setVin($vin);
         $order->setAddress($address);
+        $addressEvaluation = $this->addressEvaluationService->evaluateAddress($address);
+
+        if (!$addressEvaluation->isRecognized()) {
+            throw $this->createAddressNotResolvableException();
+        }
+
+        $order->setLatitude($addressEvaluation->getLatitude());
+        $order->setLongitude($addressEvaluation->getLongitude());
+        $order->setIsWithinServiceArea($addressEvaluation->getWithinServiceArea());
         $order->setNote($note);
         $order->setIsCompany($isCompany);
         $order->setCompanyName($companyName);
@@ -379,6 +505,13 @@ class OrderService
     {
         $order->setLatitude($latitude);
         $order->setLongitude($longitude);
+        if ($latitude !== null && $longitude !== null) {
+            $order->setIsWithinServiceArea(
+                $this->addressEvaluationService->evaluateCoordinates($latitude, $longitude)
+            );
+        } else {
+            $order->setIsWithinServiceArea(null);
+        }
 
         $this->entityManager->flush();
 
@@ -465,18 +598,26 @@ class OrderService
 
     public function resolveOrderCoordinatesFromAddress(Order $order): GeocodingResult
     {
-        $result = $this->geocodingService->geocodeAddress($order->getAddress());
+        $evaluation = $this->addressEvaluationService->evaluateAddress($order->getAddress());
 
-        if (!$result->isSuccess()) {
-            return $result;
+        if (!$evaluation->isRecognized()) {
+            return GeocodingResult::failure($evaluation->getMessage() ?? 'Address not found.');
         }
 
-        $order->setLatitude($result->getLatitude());
-        $order->setLongitude($result->getLongitude());
+        $latitude = $evaluation->getLatitude();
+        $longitude = $evaluation->getLongitude();
+
+        if ($latitude === null || $longitude === null) {
+            return GeocodingResult::failure('Invalid coordinates returned by geocoding service.');
+        }
+
+        $order->setLatitude($latitude);
+        $order->setLongitude($longitude);
+        $order->setIsWithinServiceArea($evaluation->getWithinServiceArea());
 
         $this->entityManager->flush();
 
-        return $result;
+        return GeocodingResult::success($latitude, $longitude);
     }
 
     public function deleteOrder(Order $order): void
@@ -706,5 +847,32 @@ class OrderService
         );
 
         return new ValidationException(errorCollection: $errorCollection);
+    }
+
+    private function createAddressNotResolvableException(): ValidationException
+    {
+        $errorCollection = new ErrorCollection();
+        $errorCollection->add(
+            new ErrorItem(
+                'The service address could not be recognized. Please provide a more precise address.',
+                'address',
+                null,
+            )
+        );
+
+        return new ValidationException(errorCollection: $errorCollection);
+    }
+
+    private function resolveRecognizedAddressEvaluation(
+        string $address,
+        ?ServiceAreaAddressEvaluationResult $addressEvaluation,
+    ): ServiceAreaAddressEvaluationResult {
+        $resolvedAddressEvaluation = $addressEvaluation ?? $this->addressEvaluationService->evaluateAddress($address);
+
+        if (!$resolvedAddressEvaluation->isRecognized()) {
+            throw $this->createAddressNotResolvableException();
+        }
+
+        return $resolvedAddressEvaluation;
     }
 }

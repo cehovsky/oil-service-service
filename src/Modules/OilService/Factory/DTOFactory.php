@@ -234,6 +234,7 @@ class DTOFactory
             $order->getAddress(),
             $order->getLatitude(),
             $order->getLongitude(),
+            $order->getIsWithinServiceArea(),
             $order->getNote(),
             $order->getIsCompany(),
             $order->getCompanyName(),
@@ -322,6 +323,7 @@ class DTOFactory
             time(),
             $success,
             $message,
+            $order->getIsWithinServiceArea(),
             $this->createOrderDTO($order),
         );
     }
