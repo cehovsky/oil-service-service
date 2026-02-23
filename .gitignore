@@ -12,6 +12,7 @@ phpunit.xml
 /codenow/config/*.local*
 auth.json
 .vscode
+.tmp
 
 ###> phpunit/phpunit ###
 /phpunit.xml
