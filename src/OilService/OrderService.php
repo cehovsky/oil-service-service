@@ -518,6 +518,24 @@ class OrderService
         return $order;
     }
 
+    public function refreshOrderServiceAreaFromCoordinates(Order $order): Order
+    {
+        $latitude = $order->getLatitude();
+        $longitude = $order->getLongitude();
+
+        if ($latitude !== null && $longitude !== null) {
+            $order->setIsWithinServiceArea(
+                $this->addressEvaluationService->evaluateCoordinates($latitude, $longitude)
+            );
+        } else {
+            $order->setIsWithinServiceArea(null);
+        }
+
+        $this->entityManager->flush();
+
+        return $order;
+    }
+
     public function resolveCustomerCarFromOrder(Order $order): CustomerCar
     {
         $existingCar = $order->getCustomerCar();

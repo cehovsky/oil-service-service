@@ -546,6 +546,67 @@ class OrderController extends AbstractController
                 response: 200,
                 description: 'Updated',
                 content: new Model(
+                    type: OrderUpdateResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Not Found'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/orders/{orderId}/coordinates/service-area-refresh',
+        name: 'oil_service_order_coordinates_service_area_refresh',
+        methods: ['PUT']
+    )]
+    public function refreshCoordinatesServiceArea(string $orderId): JsonResponse
+    {
+        $this->requireAdminUser();
+
+        $order = $this->orderRepository->find($orderId);
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        try {
+            $order = $this->orderService->refreshOrderServiceAreaFromCoordinates($order);
+
+            $responseDTO = $this->dtoFactory->createOrderUpdateResponseDTO($order);
+
+            return $this->json($responseDTO);
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Put(
+        security: [
+            [
+                'Bearer' => []
+            ],
+        ],
+        tags: [
+            'Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated',
+                content: new Model(
                     type: OrderCoordinatesResolveResponseDTO::class
                 )
             ),
