@@ -142,7 +142,7 @@ class ChatAssistantService
                     'companyIdentificationNumber' => ['type' => 'string'],
                     'companyTaxId' => ['type' => 'string'],
                     'companyAddress' => ['type' => 'string'],
-                    'realizationDate' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
+                    'realizationDate' => ['type' => 'string', 'description' => 'Preferovaný formát pro komunikaci je j. n. Y (např. 5. 3. 2026), ale akceptován je i YYYY-MM-DD a další běžné formáty data.'],
                     'realizationTimeSlot' => ['type' => 'string', 'enum' => RealizationTimeSlotEnum::VALUES],
                     'priceListItemIds' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Doplňkové služby podle ID, kódu nebo názvu. Pokud nic nepřidává, nech prázdné.'],
                 ],

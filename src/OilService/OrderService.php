@@ -646,7 +646,48 @@ class OrderService
 
     public function createRealizationDate(string $realizationDate): DateTimeImmutable
     {
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $realizationDate);
+        $normalizedDate = trim($realizationDate);
+
+        if ($normalizedDate === '') {
+            throw new InvalidDataException('Invalid realization date format.');
+        }
+
+        $normalizedDate = preg_replace('/\s+/u', ' ', $normalizedDate) ?? $normalizedDate;
+        $normalizedDate = preg_replace('/\s*([.\/-])\s*/u', '$1', $normalizedDate) ?? $normalizedDate;
+
+        $supportedFormats = [
+            '!Y-m-d',
+            '!j.n.Y',
+            '!d.m.Y',
+            '!j/m/Y',
+            '!d/m/Y',
+            '!j-m-Y',
+            '!d-m-Y',
+        ];
+
+        $date = false;
+
+        foreach ($supportedFormats as $format) {
+            $candidate = DateTimeImmutable::createFromFormat($format, $normalizedDate);
+            if ($candidate === false) {
+                continue;
+            }
+
+            $errors = DateTimeImmutable::getLastErrors();
+            if (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0) {
+                continue;
+            }
+
+            $date = $candidate;
+            break;
+        }
+
+        if ($date === false) {
+            $timestamp = strtotime($normalizedDate);
+            if ($timestamp !== false) {
+                $date = (new DateTimeImmutable())->setTimestamp($timestamp)->setTime(0, 0);
+            }
+        }
 
         if ($date === false) {
             throw new InvalidDataException('Invalid realization date format.');

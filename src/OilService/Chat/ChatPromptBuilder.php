@@ -78,11 +78,11 @@ class ChatPromptBuilder
         $languageRule = sprintf('Odpovídej vždy stručně a srozumitelně. Respektuj nastavený jazyk: %s.', $resolvedLanguage);
         $multilingualFlowRule = 'Řízení konverzace dělej podle významu sdělení uživatele (intent), ne podle konkrétních slov nebo frází. Funguješ vícejazyčně a rozhodování o dalším kroku musí být jazykově agnostické.';
         $dateRule = sprintf(
-            'Aktuální datum je %s (%s). Zítra je %s a pozítří %s. Relativní termíny vyhodnocuj podle tohoto data.',
-            $today->format('Y-m-d'),
+            'Aktuální datum je %s (%s). Zítra je %s a pozítří %s. Veškerá datumová data ve zprávách zákazníkovi vypisuj výhradně ve formátu j. n. Y (např. 5. 3. 2026). Pokud zákazník zadá datum v jiném běžném formátu, akceptuj ho a interně si ho převeď.',
+            $today->format('j. n. Y'),
             $timezone,
-            $tomorrow->format('Y-m-d'),
-            $dayAfterTomorrow->format('Y-m-d'),
+            $tomorrow->format('j. n. Y'),
+            $dayAfterTomorrow->format('j. n. Y'),
         );
         $orderGoal = 'Tvým cílem je postupně získat údaje pro objednávku: jméno, telefon, email, model auta, SPZ, adresa, preferovaný termín a časový slot. VIN je nepovinné. Ptej se přirozeně a postupně, ne všechno najednou.';
         $unknownRule = 'Pokud ti chybí data, zeptej se postupně na 1-2 věci najednou, ne na všechno. Když nemůžeš odpovědět, řekni to narovinu a zapiš poznámku pro operátora.';
@@ -91,7 +91,7 @@ class ChatPromptBuilder
         $termRule = sprintf(
             'Preferovaný termín a čas vybírej pouze z dostupných termínů (aktivní, nejdříve za %d dny, volná kapacita). Nikdy nenabízej dnešní nebo zítřejší datum. Nejbližší možný termín je %s. Při navrhování termínů zavolej list_available_terms a uveď 2-3 nejbližší volné dny s časovými sloty. Pokud uživatel žádá obsazený termín, řekni mu to a nabídni nejbližší dostupné alternativy.',
             $minimumDaysAhead,
-            $minimumAvailableDate->format('Y-m-d'),
+            $minimumAvailableDate->format('j. n. Y'),
         );
         $completionRule = 'Objednávku uložíš pomocí submit_order až po získání VŠECH povinných údajů: jméno, telefon, email, model auta, SPZ, adresa, realizationDate, realizationTimeSlot. VIN je nepovinné a nesmí blokovat vytvoření objednávky. Po úspěšném uložení objednávky NEZAVÍREJ session automaticky - místo toho zákazníkovi profesionálně potvrď objednávku a NABÍDNI další služby z ceníku. Teprve když zákazník odmítne nebo se rozloučí, zavolej complete_session.';
         $preSubmitPriceRule = 'Ještě PŘED PRVNÍM zavoláním submit_order vždy zákazníkovi napiš stručné shrnutí objednávky a CELKOVOU cenu v Kč vč. DPH (součet všech základních služeb + vybraných doplňkových služeb). Poté si vyžádej explicitní potvrzení ve stylu "Mohu objednávku odeslat?". Dokud zákazník jasně nepotvrdí, submit_order nevolej. Pokud zákazník přidá/odebere doplňkové služby, cenu přepočítej a znovu potvrď ještě před odesláním.';
