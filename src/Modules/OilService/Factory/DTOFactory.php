@@ -116,6 +116,7 @@ use App\Modules\OilService\DTO\OrderCustomerCarConflictResponseDTO;
 use App\Modules\Users\DTO\UserDTO;
 use App\Modules\CarDatabase\DTO\EngineSummaryDTO;
 use App\Modules\CarDatabase\DTO\FilterSummaryDTO;
+use App\OilService\Report\OrderReportLinkService;
 use App\OilService\DBAL\Entity\Car;
 use App\OilService\DBAL\Entity\ChatKnowledgeItem;
 use App\OilService\DBAL\Entity\ChatMessage;
@@ -146,6 +147,11 @@ use DateTimeInterface;
 
 class DTOFactory
 {
+    public function __construct(
+        private readonly OrderReportLinkService $orderReportLinkService,
+    ) {
+    }
+
     public function createOrderCreateResponseDTO(): OrderCreateResponseDTO
     {
         return new OrderCreateResponseDTO(
@@ -221,6 +227,19 @@ class DTOFactory
         $priceListItems = $this->createPriceListItemDTOs($order->getPriceListItems()->toArray());
         $otherPhotos = $this->createFileDTOs($order->getOtherPhotos()->toArray());
         $customerCar = $order->getCustomerCar();
+        $isPublicReportAvailable = $order->getStatus() === \App\OilService\DBAL\Enum\OrderStatusEnum::COMPLETED;
+        $publicReportUrl = null;
+        $publicReportQrCodeDataUri = null;
+
+        if ($isPublicReportAvailable) {
+            $publicReportUrl = $this->orderReportLinkService->buildPublicReportUrl($order->getSecretKey());
+
+            try {
+                $publicReportQrCodeDataUri = $this->orderReportLinkService->buildQrCodeDataUri($publicReportUrl);
+            } catch (\Throwable) {
+                $publicReportQrCodeDataUri = null;
+            }
+        }
 
         return new OrderDTO(
             $order->getId()->__toString(),
@@ -258,6 +277,10 @@ class DTOFactory
             $inventoryItems,
             $priceListItems,
             $customerCar ? $this->createCustomerCarDTO($customerCar) : null,
+            $isPublicReportAvailable,
+            $publicReportUrl,
+            $isPublicReportAvailable ? $order->getSecretKey() : null,
+            $publicReportQrCodeDataUri,
         );
     }
 

@@ -14,9 +14,12 @@ use App\Domain\Http\ResponseFactory;
 use App\Modules\OilService\DTO\OrderPublicCreateRequestDTO;
 use App\Modules\OilService\DTO\OrderCreateResponseDTO;
 use App\Modules\OilService\DTO\AvailableTermListResponseDTO;
+use App\Modules\OilService\DTO\PublicOrderReportResponseDTO;
 use App\Modules\OilService\Factory\DTOFactory;
+use App\Modules\OilService\Factory\PublicOrderReportDTOFactory;
 use App\OilService\DBAL\Enum\RealizationTimeSlotEnum;
 use App\OilService\DBAL\Enum\OrderStatusEnum;
+use App\OilService\DBAL\Repository\OrderRepository;
 use App\OilService\OrderService;
 use App\OilService\Term\TermAvailabilityPolicy;
 use App\OilService\DBAL\Repository\TermRepository;
@@ -26,8 +29,11 @@ use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Uid\Uuid;
 use Throwable;
 
 class OrderPublicController extends AbstractController
@@ -37,6 +43,8 @@ class OrderPublicController extends AbstractController
         private readonly DTOFactory $dtoFactory,
         private readonly ResponseFactory $responseFactory,
         private readonly OrderService $orderService,
+        private readonly OrderRepository $orderRepository,
+        private readonly PublicOrderReportDTOFactory $publicOrderReportDTOFactory,
         private readonly TermRepository $termRepository,
         private readonly TermAvailabilityPolicy $termAvailabilityPolicy,
         private readonly DateTimeService $dateTimeService,
@@ -169,6 +177,64 @@ class OrderPublicController extends AbstractController
             );
         } catch (InvalidDataException) {
             throw new BadRequestHttpException();
+        } catch (Throwable $e) {
+            throw new ServerErrorHttpException($e->getMessage(), $e);
+        }
+    }
+
+    #[OA\Get(
+        tags: [
+            'Orders',
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Public digital report for completed order',
+                content: new Model(
+                    type: PublicOrderReportResponseDTO::class
+                )
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Report is not available for non-completed order'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Order not found by secret key'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server Error'
+            ),
+        ]
+    )]
+    #[Route(
+        '/oil-service/reports/{secretKey}',
+        name: 'oil_service_order_public_report',
+        methods: ['GET']
+    )]
+    public function report(string $secretKey): JsonResponse
+    {
+        if (!Uuid::isValid($secretKey)) {
+            throw new NotFoundHttpException();
+        }
+
+        try {
+            $order = $this->orderRepository->findOneBySecretKey($secretKey);
+
+            if ($order === null) {
+                throw new NotFoundHttpException();
+            }
+
+            if ($order->getStatus() !== OrderStatusEnum::COMPLETED) {
+                throw new AccessDeniedHttpException();
+            }
+
+            $responseDTO = $this->publicOrderReportDTOFactory->createResponseDTO($order);
+
+            return $this->json($responseDTO);
+        } catch (NotFoundHttpException | AccessDeniedHttpException $e) {
+            throw $e;
         } catch (Throwable $e) {
             throw new ServerErrorHttpException($e->getMessage(), $e);
         }

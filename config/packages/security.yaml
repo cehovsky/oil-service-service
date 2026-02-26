@@ -36,6 +36,10 @@ security:
             lazy: true
             pattern: ^/oil-service/terms/available$
             security: false
+        oilServiceReports:
+            lazy: true
+            pattern: ^/oil-service/reports/
+            security: false
         oilServiceAreaPublic:
             lazy: true
             pattern: ^/oil-service/service-area/(polygon|address-check)$
@@ -64,6 +68,7 @@ security:
         - { path: ^/auth, roles: PUBLIC_ACCESS }
         - { path: ^/health$, roles: PUBLIC_ACCESS }
         - { path: ^/oil-service/orders/submit$, roles: PUBLIC_ACCESS }
+        - { path: ^/oil-service/reports/, roles: PUBLIC_ACCESS }
         - { path: ^/oil-service/service-area/(polygon|address-check)$, roles: PUBLIC_ACCESS }
         - { path: ^/chat/(default-message|sessions(?:$|/.*)), roles: PUBLIC_ACCESS }
         # - { path: ^/admin, roles: ROLE_ADMIN }

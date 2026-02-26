@@ -99,6 +99,7 @@ class EntityFactory
         return new Order(
             $this->uuidFactory->timeBased()->create(),
             $this->orderRepository->getNextIdent(),
+            $this->uuidFactory->randomBased()->create()->toRfc4122(),
             $fullName,
             $phone,
             $email,

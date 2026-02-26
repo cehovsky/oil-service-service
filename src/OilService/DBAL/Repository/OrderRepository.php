@@ -124,6 +124,11 @@ class OrderRepository extends ServiceEntityRepository
         return $maxPosition !== null ? (int) $maxPosition : 0;
     }
 
+    public function findOneBySecretKey(string $secretKey): ?Order
+    {
+        return $this->findOneBy(['secretKey' => $secretKey]);
+    }
+
     /**
      * Find orders by ident number or formatted ident (OYYXXXXX format).
      *

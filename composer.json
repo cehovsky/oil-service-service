@@ -15,6 +15,7 @@
         "doctrine/orm": "^3.3",
         "google/cloud-translate": "^1.20",
         "azure-oss/storage-blob-flysystem": "^1.4",
+        "endroid/qr-code": "^5.1",
         "league/flysystem": "^3.28",
         "nelmio/api-doc-bundle": "^4.11",
         "nelmio/cors-bundle": "^2.3",

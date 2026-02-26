@@ -127,6 +127,18 @@ class OrderDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: PriceListItemDTO::class)))]
     private array $priceListItems;
 
+    #[OA\Property(example: true)]
+    private bool $isPublicReportAvailable;
+
+    #[OA\Property(example: 'https://web.example.com/report/9a6ad3a0-7e32-43d7-b3cb-0c2325f22d8f', nullable: true)]
+    private ?string $publicReportUrl;
+
+    #[OA\Property(example: '9a6ad3a0-7e32-43d7-b3cb-0c2325f22d8f', nullable: true)]
+    private ?string $publicReportSecretKey;
+
+    #[OA\Property(example: 'data:image/svg+xml;base64,...', nullable: true)]
+    private ?string $publicReportQrCodeDataUri;
+
     /**
      * @param OrderStorageContainerMaterialDTO[] $materials
      * @param OrderInventoryItemDTO[] $inventoryItems
@@ -169,6 +181,10 @@ class OrderDTO
         array $inventoryItems = [],
         array $priceListItems = [],
         ?CustomerCarDTO $customerCar = null,
+        bool $isPublicReportAvailable = false,
+        ?string $publicReportUrl = null,
+        ?string $publicReportSecretKey = null,
+        ?string $publicReportQrCodeDataUri = null,
     ) {
         $this->id = $id;
         $this->ident = $ident;
@@ -205,6 +221,10 @@ class OrderDTO
         $this->inventoryItems = $inventoryItems;
         $this->priceListItems = $priceListItems;
         $this->customerCar = $customerCar;
+        $this->isPublicReportAvailable = $isPublicReportAvailable;
+        $this->publicReportUrl = $publicReportUrl;
+        $this->publicReportSecretKey = $publicReportSecretKey;
+        $this->publicReportQrCodeDataUri = $publicReportQrCodeDataUri;
     }
 
     public function getId(): string
@@ -392,5 +412,25 @@ class OrderDTO
     public function getPriceListItems(): array
     {
         return $this->priceListItems;
+    }
+
+    public function getIsPublicReportAvailable(): bool
+    {
+        return $this->isPublicReportAvailable;
+    }
+
+    public function getPublicReportUrl(): ?string
+    {
+        return $this->publicReportUrl;
+    }
+
+    public function getPublicReportSecretKey(): ?string
+    {
+        return $this->publicReportSecretKey;
+    }
+
+    public function getPublicReportQrCodeDataUri(): ?string
+    {
+        return $this->publicReportQrCodeDataUri;
     }
 }

@@ -24,6 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_user', columns: ['user_id'])]
 #[ORM\Index(name: 'idx_customer_car', columns: ['customer_car_id'])]
+#[ORM\Index(name: 'idx_secret_key', columns: ['secret_key'])]
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 class Order
 {
@@ -35,6 +36,11 @@ class Order
 
     #[ORM\Column(type: 'integer', unique: true)]
     private int $ident;
+
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 36, max: 36)]
+    #[ORM\Column(length: 36, unique: true)]
+    private string $secretKey;
 
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
@@ -184,6 +190,7 @@ class Order
     public function __construct(
         Uuid $id,
         int $ident,
+        string $secretKey,
         string $fullName,
         string $phone,
         string $email,
@@ -217,6 +224,7 @@ class Order
     ) {
         $this->id = $id;
         $this->ident = $ident;
+        $this->secretKey = $secretKey;
         $this->fullName = $fullName;
         $this->phone = $phone;
         $this->email = $email;
@@ -260,6 +268,18 @@ class Order
     public function getIdent(): int
     {
         return $this->ident;
+    }
+
+    public function getSecretKey(): string
+    {
+        return $this->secretKey;
+    }
+
+    public function setSecretKey(string $secretKey): self
+    {
+        $this->secretKey = $secretKey;
+
+        return $this;
     }
 
     /**
