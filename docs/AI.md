@@ -10,6 +10,7 @@ Doména řeší mobilní výměnu oleje, objednávky, plánování tras, evidenc
 - Když se přidávají/upravují API endpointy pro frontend, web nebo mobilní appku.
 - Když se řeší autentizace, práva uživatelů, soubory, geokódování nebo integrace.
 - Když se mění schéma databáze a migrace.
+- Když pracuješ se soubory, používej stávající mechanismus s blovstorage a databází souborů
 
 ## Základní struktura projektu
 - `src/Modules/` — aplikační moduly podle domény (`Auth`, `CarApp`, `CarDatabase`, `Files`, `OilService`, `Users`, `Warehouse`).
@@ -29,4 +30,4 @@ Doména řeší mobilní výměnu oleje, objednávky, plánování tras, evidenc
 ## Praktické poznámky pro AI
 - Tento projekt ber jako source of truth pro doménová pravidla.
 - API kontrakty ověřuj proti `api.doc.swagger.yaml` v klientech.
-- Migrace negeneruj ručně; používej `php85 bin/console doctrine:migrations:diff`.
+- Pro změny databáze a migrací vždy použij skill `docs/skills/database-workflow.md`.

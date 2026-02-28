@@ -46,3 +46,6 @@ services:
     App\Files\FileManager:
         arguments:
             $blobFileSystem: '@azureBlobStorageAdapter'
+
+    App\Sepno\Gateway\SepnoGatewayInterface:
+        class: App\Sepno\Gateway\LocalSepnoGateway

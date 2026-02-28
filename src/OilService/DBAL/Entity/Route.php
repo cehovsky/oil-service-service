@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\OilService\DBAL\Entity;
 
+use App\Sepno\DBAL\Entity\SepnoRecord;
 use App\OilService\DBAL\Repository\RouteRepository;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -43,6 +44,10 @@ class Route
 
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
+
+    #[ORM\ManyToOne(targetEntity: SepnoRecord::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?SepnoRecord $currentSepnoRecord = null;
 
     /** @var Collection<int, Term> */
     #[ORM\ManyToMany(targetEntity: Term::class, inversedBy: 'routes')]
@@ -129,6 +134,18 @@ class Route
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getCurrentSepnoRecord(): ?SepnoRecord
+    {
+        return $this->currentSepnoRecord;
+    }
+
+    public function setCurrentSepnoRecord(?SepnoRecord $currentSepnoRecord): self
+    {
+        $this->currentSepnoRecord = $currentSepnoRecord;
+
+        return $this;
     }
 
     /**
