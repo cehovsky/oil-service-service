@@ -225,9 +225,30 @@ class EngineController extends AbstractController
             new OA\Parameter(name: self::FILTER_ENGINE_FAMILY_KEY, description: 'Filter by engine family (contains)', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: self::FILTER_FUEL_KEY, description: 'Filter by fuel (equals)', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: ApiGridPropertyHelper::PAGE_KEY, description: 'Number of page, default value 1', in: 'query', required: false, schema: new OA\Schema(type: 'integer'), example: 1),
-            new OA\Parameter(name: ApiGridPropertyHelper::MAX_RESULTS_KEY, description: 'Number of items on the page, default value ' . ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE, in: 'query', required: false, schema: new OA\Schema(type: 'integer'), example: ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE),
-            new OA\Parameter(name: ApiGridPropertyHelper::SORT_KEY, description: 'Sorting by values, default value manufacturer', in: 'query', required: false, schema: new OA\Schema(type: 'string'), example: 'manufacturer'),
-            new OA\Parameter(name: ApiGridPropertyHelper::ORDER_KEY, description: 'Select ordering, default value ASC, values: ASC, DESC', in: 'query', required: false, schema: new OA\Schema(type: 'string'), example: 'ASC'),
+            new OA\Parameter(
+                name: ApiGridPropertyHelper::MAX_RESULTS_KEY,
+                description: 'Number of items on the page, default value ' . ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE,
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer'),
+                example: ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE,
+            ),
+            new OA\Parameter(
+                name: ApiGridPropertyHelper::SORT_KEY,
+                description: 'Sorting by values, default value manufacturer',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string'),
+                example: 'manufacturer',
+            ),
+            new OA\Parameter(
+                name: ApiGridPropertyHelper::ORDER_KEY,
+                description: 'Select ordering, default value ASC, values: ASC, DESC',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string'),
+                example: 'ASC',
+            ),
         ],
         responses: [
             new OA\Response(response: 200, description: 'Success', content: new Model(type: EngineListResponseDTO::class)),
@@ -295,6 +316,7 @@ class EngineController extends AbstractController
         $engineQueryBuilder = $this->engineRepository->getQueryBuilderWithAlias();
         $enginePaginator = $this->apiGridManager->createPaginator($engineQueryBuilder, $queryModifier);
 
+        /** @var \App\CarDatabase\DBAL\Entity\Engine[] $engines */
         $engines = $this->apiGridManager->fetchData(
             $engineQueryBuilder,
             $sortEnum,

@@ -34,6 +34,7 @@ class OilServiceUserWithOrdersDTO
 
     /**
      * @param OrderDTO[] $orders
+     * @param CustomerCarDTO[] $cars
      */
     public function __construct(
         string $id,

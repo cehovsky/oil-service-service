@@ -45,6 +45,10 @@ class PublicOrderReportDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: PublicOrderReportPhotoDTO::class)))]
     private array $photos;
 
+    /**
+     * @param PublicOrderReportServiceItemDTO[] $services
+     * @param PublicOrderReportPhotoDTO[] $photos
+     */
     public function __construct(
         string $orderIdent,
         string $realizationDate,

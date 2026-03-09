@@ -1441,6 +1441,9 @@ class DTOFactory
         );
     }
 
+    /**
+     * @param CustomerCar[] $cars
+     */
     public function createCustomerCarListResponseDTO(array $cars, int $pageCount): CustomerCarListResponseDTO
     {
         return new CustomerCarListResponseDTO(

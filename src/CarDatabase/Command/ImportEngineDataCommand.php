@@ -9,6 +9,7 @@ use App\CarDatabase\FilterService;
 use App\CarDatabase\EngineFilterService;
 use App\CarDatabase\DBAL\Enum\FilterTypeEnum;
 use App\CarDatabase\DBAL\Repository\EngineRepository;
+use App\CarDatabase\DBAL\Entity\Engine;
 use App\CarDatabase\DBAL\Repository\FilterRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -307,7 +308,7 @@ class ImportEngineDataCommand extends Command
     }
 
     private function addOilFiltersForEngine(
-        $engine,
+        Engine $engine,
         string $filterCode,
         string $manufacturer,
         string $oemCode,

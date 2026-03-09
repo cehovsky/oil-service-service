@@ -28,6 +28,9 @@ class OilServiceUserDTO
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: CustomerCarDTO::class)))]
     private array $cars;
 
+    /**
+     * @param CustomerCarDTO[] $cars
+     */
     public function __construct(
         string $id,
         string $email,

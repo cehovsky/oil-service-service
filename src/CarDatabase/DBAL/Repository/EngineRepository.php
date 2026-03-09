@@ -112,6 +112,7 @@ class EngineRepository extends ServiceEntityRepository
                 ->setParameter('fuel', $fuel);
         }
 
+        /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();
 
         return array_values(array_filter($result, static fn (mixed $item): bool => $item instanceof Engine));

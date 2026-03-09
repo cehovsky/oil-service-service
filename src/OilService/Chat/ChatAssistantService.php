@@ -142,7 +142,11 @@ class ChatAssistantService
                     'companyIdentificationNumber' => ['type' => 'string'],
                     'companyTaxId' => ['type' => 'string'],
                     'companyAddress' => ['type' => 'string'],
-                    'realizationDate' => ['type' => 'string', 'description' => 'Preferovaný formát pro komunikaci je j. n. Y (např. 5. 3. 2026), ale akceptován je i YYYY-MM-DD a další běžné formáty data.'],
+                    'realizationDate' => [
+                        'type' => 'string',
+                        'description' => 'Preferovaný formát pro komunikaci je j. n. Y (např. 5. 3. 2026), '
+                            . 'ale akceptován je i YYYY-MM-DD a další běžné formáty data.',
+                    ],
                     'realizationTimeSlot' => ['type' => 'string', 'enum' => RealizationTimeSlotEnum::VALUES],
                     'priceListItemIds' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Doplňkové služby podle ID, kódu nebo názvu. Pokud nic nepřidává, nech prázdné.'],
                 ],
@@ -356,7 +360,13 @@ class ChatAssistantService
     {
         $dataLines = [];
 
-        foreach (preg_split('/\r?\n/', $rawEvent) as $line) {
+        $lines = preg_split('/\r?\n/', $rawEvent);
+
+        if ($lines === false) {
+            return null;
+        }
+
+        foreach ($lines as $line) {
             if (str_starts_with($line, 'data:')) {
                 $dataLines[] = ltrim(substr($line, 5));
             }
@@ -368,7 +378,7 @@ class ChatAssistantService
 
         $rawData = implode("\n", $dataLines);
 
-        if ($rawData === '' || $rawData === '[DONE]') {
+        if ($rawData === '[DONE]') {
             return null;
         }
 
@@ -573,14 +583,16 @@ class ChatAssistantService
 
         if ($session->getOrder() !== null) {
             $stateParts[] = sprintf(
-                'SESSION_STATE: Order already exists in this session (ID %s). Never create a second order for this session; if submit_order is called again, treat it as an update of the existing order.',
+                'SESSION_STATE: Order already exists in this session (ID %s). Never create a second order '
+                    . 'for this session; if submit_order is called again, treat it as an update of the existing order.',
                 $session->getOrder()->getFormattedIdent(),
             );
         }
 
         if ($session->getValidatedServiceAddressRecognized() !== null && $session->getValidatedServiceAddress() !== null) {
             $stateParts[] = sprintf(
-                'SESSION_STATE: Last validated address is "%s" (normalized: "%s"); recognized=%s; withinServiceArea=%s. Do not ask for address validation again unless the customer explicitly changes the address.',
+                'SESSION_STATE: Last validated address is "%s" (normalized: "%s"); recognized=%s; withinServiceArea=%s. '
+                    . 'Do not ask for address validation again unless the customer explicitly changes the address.',
                 $session->getValidatedServiceAddress(),
                 $session->getValidatedServiceAddressNormalized() ?? '',
                 $session->getValidatedServiceAddressRecognized() ? 'true' : 'false',

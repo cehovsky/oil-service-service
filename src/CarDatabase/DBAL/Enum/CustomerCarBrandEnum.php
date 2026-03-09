@@ -216,6 +216,9 @@ enum CustomerCarBrandEnum: string
     case ZENVO = 'zenvo';
     case UNASSIGNED = 'unassigned';
 
+    /**
+     * @return array<string>
+     */
     public static function values(): array
     {
         return self::VALUES;

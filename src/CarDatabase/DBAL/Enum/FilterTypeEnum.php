@@ -18,6 +18,9 @@ enum FilterTypeEnum: string
     case FUEL = 'fuel';
     case CABIN = 'cabin';
 
+    /**
+     * @return array<string>
+     */
     public static function values(): array
     {
         return self::VALUES;

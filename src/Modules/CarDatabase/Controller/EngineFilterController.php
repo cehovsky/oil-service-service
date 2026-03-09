@@ -201,9 +201,30 @@ class EngineFilterController extends AbstractController
             new OA\Parameter(name: self::FILTER_FILTER_ID_KEY, description: 'Filter by filter ID', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: self::FILTER_IS_PRIMARY_KEY, description: 'Filter by primary flag', in: 'query', required: false, schema: new OA\Schema(type: 'boolean')),
             new OA\Parameter(name: ApiGridPropertyHelper::PAGE_KEY, description: 'Number of page, default value 1', in: 'query', required: false, schema: new OA\Schema(type: 'integer'), example: 1),
-            new OA\Parameter(name: ApiGridPropertyHelper::MAX_RESULTS_KEY, description: 'Number of items on the page, default value ' . ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE, in: 'query', required: false, schema: new OA\Schema(type: 'integer'), example: ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE),
-            new OA\Parameter(name: ApiGridPropertyHelper::SORT_KEY, description: 'Sorting by values, default value createdAt', in: 'query', required: false, schema: new OA\Schema(type: 'string'), example: 'createdAt'),
-            new OA\Parameter(name: ApiGridPropertyHelper::ORDER_KEY, description: 'Select ordering, default value ASC, values: ASC, DESC', in: 'query', required: false, schema: new OA\Schema(type: 'string'), example: 'ASC'),
+            new OA\Parameter(
+                name: ApiGridPropertyHelper::MAX_RESULTS_KEY,
+                description: 'Number of items on the page, default value ' . ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE,
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer'),
+                example: ApiGridPropertyHelper::MAX_RESULTS_DEFAULT_VALUE,
+            ),
+            new OA\Parameter(
+                name: ApiGridPropertyHelper::SORT_KEY,
+                description: 'Sorting by values, default value createdAt',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string'),
+                example: 'createdAt',
+            ),
+            new OA\Parameter(
+                name: ApiGridPropertyHelper::ORDER_KEY,
+                description: 'Select ordering, default value ASC, values: ASC, DESC',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string'),
+                example: 'ASC',
+            ),
         ],
         responses: [
             new OA\Response(response: 200, description: 'Success', content: new Model(type: EngineFilterListResponseDTO::class)),
@@ -259,6 +280,7 @@ class EngineFilterController extends AbstractController
         $engineFilterQueryBuilder = $this->engineFilterRepository->getQueryBuilderWithAlias();
         $engineFilterPaginator = $this->apiGridManager->createPaginator($engineFilterQueryBuilder, $queryModifier);
 
+        /** @var \App\CarDatabase\DBAL\Entity\EngineFilter[] $engineFilters */
         $engineFilters = $this->apiGridManager->fetchData(
             $engineFilterQueryBuilder,
             $sortEnum,

@@ -54,6 +54,9 @@ enum FilterManufacturerEnum: string
     case PSA = 'psa';
     case HYUNDAI_KIA = 'hyundai_kia';
 
+    /**
+     * @return array<string>
+     */
     public static function values(): array
     {
         return self::VALUES;

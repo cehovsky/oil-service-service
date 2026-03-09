@@ -442,6 +442,9 @@ class CustomerCar
         return $this->orders;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function applyDataCubeData(array $data): self
     {
         $map = [

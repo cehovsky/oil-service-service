@@ -49,8 +49,8 @@ class SepnoController extends AbstractController
     {
         $this->requireAdminUser();
 
-        $page = max(1, (int) $request->query->get('page', 1));
-        $perPage = max(1, min(100, (int) $request->query->get('perPage', 30)));
+        $page = max(1, (int) $request->query->get('page', '1'));
+        $perPage = max(1, min(100, (int) $request->query->get('perPage', '30')));
         $routeId = $request->query->get('routeId');
         $statusRaw = $request->query->get('status');
 
